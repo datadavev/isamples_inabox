@@ -3,7 +3,7 @@
 The iSamples export service export iSamples records that match [solr queries](https://solr.apache.org/guide/solr/latest/query-guide/query-syntax-and-parsers.html).  Only users that have been authenticated using [orcid](https://orcid.org) are allowed to access the export services.  Additionally, users have to be granted access using the iSamples admin API in order to export results.
 
 ## Logging In
-All of the export services are protected by authentication and require a JWT.  The login URL is at [iSamples Central](https://central.isample.xyz/isamples_central/manage).  Make sure your orcid is allowed by talking to your iSamples in a Box administrator.  
+All of the export services are protected by authentication and require a JWT.  The login URL is at [iSamples Central](https://central.isample.xyz/isamples_central/manage/login?raw_jwt=true).  Make sure your orcid is allowed by talking to your iSamples in a Box administrator.  
 
 Once you've obtained your JWT, you include it in curl requests like so:
 

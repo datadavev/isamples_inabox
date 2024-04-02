@@ -10,6 +10,8 @@ import isb_lib.core
 import isb_web.config
 import isb_lib.sesar_adapter
 from isamples_metadata.Transformer import geo_to_h3, Transformer
+from isamples_metadata.solr_field_constants import SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_SPECIMEN_CATEGORY, \
+    SOLR_HAS_CONTEXT_CATEGORY
 from isb_lib.vocabulary import vocab_adapter
 from isb_web.isb_solr_query import ISBCoreSolrRecordIterator
 from isb_web.sqlmodel_database import SQLModelDAO
@@ -53,7 +55,27 @@ MATERIAL_CATEGORY_DICT = {
 }
 
 CONTEXT_CATEGORY_DICT = {
-
+    "not provided": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature",
+    "site of past human activities": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/pasthumanoccupationsite",
+    "earth interior": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthinterior",
+    "animalia": "https://w3id.org/isample/biology/biosampledfeature/1.0/Animalia",
+    " ": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature",
+    "subaerial surface environment": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/subaerialsurfaceenvironment",
+    "marine environment": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody",
+    "plantae": "https://w3id.org/isample/biology/biosampledfeature/1.0/Plantae",
+    "marine water body bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbodybottom",
+    "terrestrial water body": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/terrestrialwaterbody",
+    "fungi": "https://w3id.org/isample/biology/biosampledfeature/1.0/Fungi",
+    "marine water body": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/waterbody",
+    "lake, river or stream bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom",
+    "subsurface fluid reservoir": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/subsurfacefluidreservoir",
+    "marine biome": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody",
+    "chromista": "",
+    "subaerial terrestrial biome": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/subaerialsurfaceenvironment",
+    "bacteria": "https://w3id.org/isample/biology/biosampledfeature/1.0/bacteria",
+    "protozoa": "https://w3id.org/isample/biology/biosampledfeature/1.0/protozoa",
+    "active human occupation site": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/activehumanoccupationsite",
+    "lake river or stream bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom"
 }
 
 SPECIMEN_CATEGORY_DICT = {
@@ -93,15 +115,12 @@ def main(ctx):
     solr_url = isb_web.config.Settings().solr_url
     db_url = isb_web.config.Settings().database_url
     isb_lib.core.things_main(ctx, db_url, solr_url)
-    session = SQLModelDAO(db_url).get_session()
-    convert_to_controlled_vocabulary_identifiers(solr_url, session)
+    # session = SQLModelDAO(db_url).get_session()
+    convert_to_controlled_vocabulary_identifiers(solr_url, None)
 
 
 def convert_to_controlled_vocabulary_identifiers(solr_url: str, session: Session):
     repository = term_store.get_repository(session)
-    specimen_dict = vocab_adapter.uijson_vocabulary_dict(TOP_LEVEL_SPECIMEN_URI, repository)
-    context_dict = vocab_adapter.uijson_vocabulary_dict(TOP_LEVEL_CONTEXT_URI, repository)
-    material_dict = vocab_adapter.uijson_vocabulary_dict(TOP_LEVEL_MATERIAL_URI, repository)
     total_records = 0
     batch_size = 100
     current_mutated_batch = []
@@ -130,36 +149,50 @@ def save_mutated_batch(current_mutated_batch, rsession, solr_url):
     logging.info(f"Just saved {len(current_mutated_batch)} records")
 
 
-def _uri_for_label(label: str, solr_field: str) -> str:
-    if label == "" or label == Transformer.NOT_PROVIDED:
-        if solr_field == "hasMaterialCategory":
-            return TOP_LEVEL_MATERIAL_URI
-        elif solr_field == "hasSpecimenCategory":
-            return TOP_LEVEL_SPECIMEN_URI
-        else:
-            return TOP_LEVEL_CONTEXT_URI
-    else:
-
-
 def mutate_record(record: dict) -> Optional[dict]:
     # Do whatever work is required to mutate the record to update things…
     record_copy = record.copy()
     # Remove old problematic fields
-    current_material = record.pop("hasMaterialCategory")
-    current_specimen = record.pop("hasSpecimenCategory")
-    current_context = record.pop("hasContextCategory")
+    current_materials: list[str] = record.pop(SOLR_HAS_MATERIAL_CATEGORY)
+    current_specimens: list[str] = record.pop(SOLR_HAS_SPECIMEN_CATEGORY)
+    current_contexts: list[str] = record.pop(SOLR_HAS_CONTEXT_CATEGORY)
 
-    if current_context is None or current_context == Transformer.NOT_PROVIDED
-        record["hasMaterialCategory"] =
+    new_materials = []
+    for label in current_materials:
+        if label.startswith("https://w3id.org"):
+            # we've already touched it, bail
+            return None
+        identifier = MATERIAL_CATEGORY_DICT.get(label.lower())
+        if identifier is None:
+            logging.error(f"Unable to look up material value for label {label}")
+        else:
+            new_materials.append(identifier)
+    record_copy[SOLR_HAS_MATERIAL_CATEGORY] = new_materials
 
-    for index in range(0, 16):
-        h3_at_resolution = geo_to_h3(
-            record.get("producedBy_samplingSite_location_latitude"),
-            record.get("producedBy_samplingSite_location_longitude"),
-            index,
-        )
-        field_name = f"producedBy_samplingSite_location_h3_{index}"
-        record_copy[field_name] = h3_at_resolution
+    new_specimens = []
+    for label in current_specimens:
+        if label.startswith("https://w3id.org"):
+            # we've already touched it, bail
+            return None
+        identifier = SPECIMEN_CATEGORY_DICT.get(label.lower())
+        if identifier is None:
+            logging.error(f"Unable to look up specimen value for label {label}")
+        else:
+            new_specimens.append(identifier)
+    record_copy[SOLR_HAS_SPECIMEN_CATEGORY] = new_specimens
+
+    new_contexts = []
+    for label in current_contexts:
+        if label.startswith("https://w3id.org"):
+            # we've already touched it, bail
+            return None
+        identifier = CONTEXT_CATEGORY_DICT.get(label.lower())
+        if identifier is None:
+            logging.error(f"Unable to look up context value for label {label}")
+        else:
+            new_contexts.append(identifier)
+    record_copy[SOLR_HAS_CONTEXT_CATEGORY] = new_contexts
+
     return record_copy
 
 

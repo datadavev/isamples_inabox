@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import typing
-from typing import Optional
+from typing import Optional, Callable
 
 import h3
 
@@ -327,7 +327,7 @@ class Transformer(ABC):
 
 class AbstractCategoryMapper(ABC):
     _destination: str
-    _controlled_vocabulary: ControlledVocabulary
+    _controlled_vocabulary_callable: Callable
 
     @abstractmethod
     def matches(
@@ -346,7 +346,7 @@ class AbstractCategoryMapper(ABC):
     ):
         if self.matches(potential_match, auxiliary_match):
             if self._destination != NOT_PROVIDED:
-                categories_list.append(self._controlled_vocabulary.term_for_label(self._destination))
+                categories_list.append(self._controlled_vocabulary_callable().term_for_label(self._destination))
 
     @property
     def destination(self):
@@ -398,10 +398,10 @@ class StringConstantCategoryMapper(AbstractCategoryMapper):
     def __init__(
         self,
         destination_category: str,
-        controlled_vocabulary: ControlledVocabulary
+        controlled_vocabulary_callable: Callable
     ):
         self._destination = destination_category
-        self._controlled_vocabulary = controlled_vocabulary
+        self._controlled_vocabulary_callable = controlled_vocabulary_callable
 
     def matches(
         self,
@@ -418,13 +418,13 @@ class StringEqualityCategoryMapper(AbstractCategoryMapper):
         self,
         categories: list[str],
         destination_category: str,
-        controlled_vocabulary: ControlledVocabulary
+        controlled_vocabulary_callable: Callable
     ):
         categories = [keyword.lower() for keyword in categories]
         categories = [keyword.strip() for keyword in categories]
         self._categories = categories
         self._destination = destination_category
-        self._controlled_vocabulary = controlled_vocabulary
+        self._controlled_vocabulary_callable = controlled_vocabulary_callable
 
     def matches(
         self,
@@ -437,10 +437,10 @@ class StringEqualityCategoryMapper(AbstractCategoryMapper):
 class StringEndsWithCategoryMapper(AbstractCategoryMapper):
     """A mapper that matches if the potentialMatch ends with the specified string"""
 
-    def __init__(self, ends_with: str, destination_category: str, controlled_vocabulary: ControlledVocabulary):
+    def __init__(self, ends_with: str, destination_category: str, controlled_vocabulary_callable: Callable):
         self._endsWith = ends_with.lower().strip()
         self._destination = destination_category
-        self._controlled_vocabulary = controlled_vocabulary
+        self._controlled_vocabulary_callable = controlled_vocabulary_callable
 
     def matches(
         self,
@@ -465,7 +465,7 @@ class StringOrderedCategoryMapper(AbstractCategoryMapper):
             if mapper.matches(potential_match, auxiliary_match):
                 # Note that this isn't thread-safe -- we expect one of these objects per thread
                 self.destination = mapper.destination
-                self.controlled_vocabulary = mapper.controlled_vocabulary
+                self.controlled_vocabulary_callable = mapper._controlled_vocabulary_callable
                 return True
         return False
 
@@ -478,12 +478,12 @@ class StringPairedCategoryMapper(AbstractCategoryMapper):
         primary_match: str,
         auxiliary_match: str,
         destination_category: str,
-        controlled_vocabulary: ControlledVocabulary
+        controlled_vocabulary_callable: Callable
     ):
         self._primaryMatch = primary_match.lower().strip()
         self._auxiliaryMatch = auxiliary_match.lower().strip()
         self._destination = destination_category
-        self._controlled_vocabulary = controlled_vocabulary
+        self._controlled_vocabulary_callable = controlled_vocabulary_callable
 
     def matches(
         self,

@@ -25,7 +25,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "DNA, RNA, Proteins; Unknown DNA, RNA, or Protein"
         ],
         "organismpart",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
     _biome_aggregation_mapper = StringEqualityCategoryMapper(
@@ -34,7 +34,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Environmental Sample; Host-Associated; Small Intestine RNA",
         ],
         "biomeaggregation",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
     _whole_organism_mapper = StringEqualityCategoryMapper(
@@ -42,10 +42,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Tissue & Parts; Egg; Multiple eggs",
         ],
         "wholeorganism",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
-    _default_organism_part_mapper = StringConstantCategoryMapper("Organism part", vocabulary_mapper.SPECIMEN_TYPE)
+    _default_organism_part_mapper = StringConstantCategoryMapper("Organism part", vocabulary_mapper.specimen_type)
 
     @classmethod
     def categories_mappers(cls) -> typing.List[AbstractCategoryMapper]:
@@ -133,14 +133,14 @@ class SmithsonianTransformer(Transformer):
                 self.source_record.get("higherClassification", ""),
             ]
         )
-        return [vocabulary_mapper.SAMPLED_FEATURE.term_for_label(category).metadata_dict() for category in categories]
+        return [vocabulary_mapper.sampled_feature_type().term_for_label(category).metadata_dict() for category in categories]
 
     def has_material_categories(self) -> typing.List[dict[str, str]]:
         material_sample_type = self.source_record.get("materialSampleType")
         if material_sample_type == "Environmental sample":
-            return [vocabulary_mapper.MATERIAL_TYPE.term_for_key("mat:biogenicnonorganicmaterial").metadata_dict()]
+            return [vocabulary_mapper.material_type().term_for_key("mat:biogenicnonorganicmaterial").metadata_dict()]
         else:
-            return [vocabulary_mapper.MATERIAL_TYPE.term_for_key("mat:organicmaterial").metadata_dict()]
+            return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial").metadata_dict()]
 
     def has_specimen_categories(self) -> typing.List[dict[str, str]]:
         preparation_type = self.source_record.get("preparationType", "")

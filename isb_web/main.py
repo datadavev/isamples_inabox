@@ -21,6 +21,7 @@ import geojson
 
 import isb_web
 import isamples_metadata.GEOMETransformer
+from isamples_metadata.vocabularies import vocabulary_mapper
 from isb_lib.core import MEDIA_GEO_JSON, MEDIA_JSON, MEDIA_NQUADS, SOLR_TIME_FORMAT
 from isb_lib.models.thing import Thing
 from isb_lib.utilities import h3_utilities
@@ -129,6 +130,9 @@ def on_startup():
     vocab_adapter.uijson_vocabulary_dict(SAMPLEDFEATURE_URI, repository)
     vocab_adapter.uijson_vocabulary_dict(MATERIAL_URI, repository)
     vocab_adapter.uijson_vocabulary_dict(PHYSICALSPECIMEN_URI, repository)
+    vocabulary_mapper.sampled_feature_type()
+    vocabulary_mapper.material_type()
+    vocabulary_mapper.specimen_type()
     session.close()
     # Superusers are allowed to mint identifiers as well, so make sure they're in the list.
     orcid_ids.extend(isb_web.config.Settings().orcid_superusers)

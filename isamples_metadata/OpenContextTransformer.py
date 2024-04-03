@@ -25,49 +25,49 @@ class MaterialCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Glass",
         ],
         "anyanthropogenicmaterial",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _anthropogenicMetalMapper = StringEqualityCategoryMapper(
         ["Coin"],
         "anthropogenicmetal",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _biogenicMapper = StringEqualityCategoryMapper(
         ["Animal Bone", "Human Bone", "Non Diagnostic Bone", "Shell"],
         "biogenicnonorganicmaterial",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _organicMapper = StringEqualityCategoryMapper(
         ["Plant remains"],
         "organicmaterial",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _materialMapper = StringEqualityCategoryMapper(
         ["Biological record", "Biological subject, Ecofact"],
         "material",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _rockMapper = StringEqualityCategoryMapper(
         ["Bulk Lithic", "Groundstone"],
         "rock",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _naturalSolidMaterialMapper = StringEqualityCategoryMapper(
         ["Natural solid material"],
         "earthmaterial",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _mineralMapper = StringEqualityCategoryMapper(
         ["Mineral"],
         "mineral",
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     _notSampleMapper = StringEqualityCategoryMapper(
@@ -77,7 +77,7 @@ class MaterialCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Reference Collection",
         ],
         Transformer.NOT_PROVIDED,
-        vocabulary_mapper.MATERIAL_TYPE
+        vocabulary_mapper.material_type
     )
 
     @classmethod
@@ -102,7 +102,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Non Diagnostic Bone",
         ],
         "organismpart",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
     _artifactMapper = StringEqualityCategoryMapper(
         [
@@ -117,14 +117,14 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Sample",
         ],
         "artifact",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
     _biologicalSpecimenMapper = StringEqualityCategoryMapper(
         [
             "Biological record",
             "Biological subject, Ecofact",
             "Plant remains",
-        ], "biologicalspecimen", vocabulary_mapper.SPECIMEN_TYPE
+        ], "biologicalspecimen", vocabulary_mapper.specimen_type
     )
     _physicalSpecimenMapper = StringEqualityCategoryMapper(
         [
@@ -132,10 +132,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Object"
         ],
         "physicalspecimen",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
     _organismProductMapper = StringEqualityCategoryMapper(
-        ["Shell"], "organismproduct", vocabulary_mapper.SPECIMEN_TYPE
+        ["Shell"], "organismproduct", vocabulary_mapper.specimen_type
     )
     _notSampleMapper = StringEqualityCategoryMapper(
         [
@@ -144,7 +144,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Reference Collection",
         ],
         Transformer.NOT_PROVIDED,
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
     @classmethod
@@ -252,7 +252,7 @@ class OpenContextTransformer(Transformer):
         return ""
 
     def has_context_categories(self) -> typing.List[dict[str, str]]:
-        return [vocabulary_mapper.SAMPLED_FEATURE.term_for_key("sf:pasthumanoccupationsite").metadata_dict()]
+        return [vocabulary_mapper.sampled_feature_type().term_for_key("sf:pasthumanoccupationsite").metadata_dict()]
 
     def _compute_material_prediction_results(self) -> typing.Optional[typing.List[PredictionResult]]:
         item_category = self._item_category()
@@ -276,7 +276,7 @@ class OpenContextTransformer(Transformer):
         if item_category in to_classify_items:
             prediction_results = self._compute_material_prediction_results()
             if prediction_results is not None:
-                return [vocabulary_mapper.MATERIAL_TYPE.term_for_label(prediction.value).metadata_dict() for prediction in prediction_results]
+                return [vocabulary_mapper.material_type().term_for_label(prediction.value).metadata_dict() for prediction in prediction_results]
             else:
                 return []
         return MaterialCategoryMetaMapper.categories(item_category)
@@ -308,7 +308,7 @@ class OpenContextTransformer(Transformer):
         if item_category in to_classify_items:
             prediction_results = self._compute_specimen_prediction_results()
             if prediction_results is not None:
-                return [vocabulary_mapper.SPECIMEN_TYPE.term_for_label(prediction.value).metadata_dict() for prediction in prediction_results]
+                return [vocabulary_mapper.specimen_type().term_for_label(prediction.value).metadata_dict() for prediction in prediction_results]
             else:
                 return []
         return [term.metadata_dict() for term in SpecimenCategoryMetaMapper.categories(item_category)]

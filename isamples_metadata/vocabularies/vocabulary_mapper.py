@@ -1,9 +1,8 @@
-import os
-import csv
-from pathlib import Path
 from typing import Optional, Any
 
 from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_IDENTIFIER
+from isb_lib.vocabulary import vocab_adapter
+from isb_web.vocabulary import SAMPLEDFEATURE_URI, PHYSICALSPECIMEN_URI, MATERIAL_URI
 
 """
 Note that this module operates on a CSV-derived form of the vocabulary sourced at
@@ -45,7 +44,7 @@ class ControlledVocabulary:
                         "en": "Material"
                     },
                     "children":
-                    [            
+                    [
             """
             uri = dict_key
             label = value.get("label").get("en")
@@ -53,10 +52,9 @@ class ControlledVocabulary:
             term_key = f"{key_prefix}:{last_piece_of_uri}"
             term = VocabularyTerm(term_key, label, uri)
             self.vocabulary_terms_by_key[term_key] = term
-            self.vocabulary_terms_by_label[label] = label
+            self.vocabulary_terms_by_label[label] = term
             for child in value.get("children"):
                 self._process_uijson_dict(child, key_prefix)
-
 
     def term_for_key(self, key: str) -> VocabularyTerm:
         return self.vocabulary_terms_by_key.get(key, VocabularyTerm(None, key, None))
@@ -65,8 +63,30 @@ class ControlledVocabulary:
         return self.vocabulary_terms_by_label.get(label, VocabularyTerm(None, label, None))
 
 
-# parent_dir = Path(__file__).parent
-# MATERIAL_TYPE = ControlledVocabulary(os.path.join(parent_dir, "materialType.txt"), "https://w3id.org/isample/vocabulary/material/0.9/")
-# SAMPLED_FEATURE = ControlledVocabulary(os.path.join(parent_dir, "sampledfeature.txt"), "https://w3id.org/isample/vocabulary/sampledfeature/0.9")
-# SPECIMEN_TYPE = ControlledVocabulary(os.path.join(parent_dir, "specimenType.txt"), "https://w3id.org/isample/vocabulary/specimentype/0.9")
-# print()
+SPECIMEN_TYPE = None
+MATERIAL_TYPE = None
+SAMPLED_FEATURE_TYPE = None
+
+
+def specimen_type() -> ControlledVocabulary:
+    global SPECIMEN_TYPE
+    if SPECIMEN_TYPE is None:
+        uijson = vocab_adapter.VOCAB_CACHE.get(PHYSICALSPECIMEN_URI)
+        SPECIMEN_TYPE = ControlledVocabulary(uijson, "spec")
+    return SPECIMEN_TYPE
+
+
+def material_type() -> ControlledVocabulary:
+    global MATERIAL_TYPE
+    if MATERIAL_TYPE is None:
+        uijson = vocab_adapter.VOCAB_CACHE.get(MATERIAL_URI)
+        MATERIAL_TYPE = ControlledVocabulary(uijson, "mat")
+    return MATERIAL_TYPE
+
+
+def sampled_feature_type() -> ControlledVocabulary:
+    global SAMPLED_FEATURE_TYPE
+    if SAMPLED_FEATURE_TYPE is None:
+        uijson = vocab_adapter.VOCAB_CACHE.get(SAMPLEDFEATURE_URI)
+        SAMPLED_FEATURE_TYPE = ControlledVocabulary(uijson, "sf")
+    return SAMPLED_FEATURE_TYPE

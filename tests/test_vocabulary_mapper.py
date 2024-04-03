@@ -1,17 +1,39 @@
 import json
-from isamples_metadata.vocabularies import vocabulary_mapper
-from isamples_metadata.vocabularies.vocabulary_mapper import ControlledVocabulary
+from isamples_metadata.vocabularies.vocabulary_mapper import ControlledVocabulary, VocabularyTerm
 
 
-def test_controlled_vocabularies():
-    sampled_feature_type = "./test_data/controlled_vocabulary_uijson/sampled_feature_type.json"
-    with open(sampled_feature_type) as source_file:
-        sampled_feature_type_uijson = json.load(source_file)
-        sampled_feature_type_vocabulary = ControlledVocabulary(sampled_feature_type_uijson, "sf")
-        past_human_activities = sampled_feature_type_vocabulary.term_for_key("sf:pasthumanoccupationsite")
-        assert past_human_activities is not None
-        metadata_dict = past_human_activities.metadata_dict()
-        assert metadata_dict.get("label") is not None
-        assert metadata_dict.get("identifier") is not None
-        past_human_activities_by_label = sampled_feature_type_vocabulary.term_for_label("Site of past human activities")
-        assert past_human_activities_by_label is not None
+def _construct_controlled_vocabulary(filename: str, prefix: str) -> ControlledVocabulary:
+    with open(f"./test_data/controlled_vocabulary_uijson/{filename}") as source_file:
+        uijson = json.load(source_file)
+        return ControlledVocabulary(uijson, prefix)
+
+
+def _assert_on_vocabulary_term(term: VocabularyTerm):
+    assert term is not None
+    metadata_dict = term.metadata_dict()
+    assert metadata_dict.get("label") is not None
+    assert metadata_dict.get("identifier") is not None
+
+
+def test_sampled_feature():
+    sampled_feature_type_vocabulary = _construct_controlled_vocabulary("sampled_feature_type.json", "sf")
+    past_human_activities = sampled_feature_type_vocabulary.term_for_key("sf:pasthumanoccupationsite")
+    _assert_on_vocabulary_term(past_human_activities)
+    past_human_activities_by_label = sampled_feature_type_vocabulary.term_for_label("Site of past human activities")
+    _assert_on_vocabulary_term(past_human_activities_by_label)
+
+
+def test_material_sample_type():
+    material_sample_type_vocabulary = _construct_controlled_vocabulary("material_sample_type.json", "spec")
+    whole_organism = material_sample_type_vocabulary.term_for_key("spec:wholeorganism")
+    _assert_on_vocabulary_term(whole_organism)
+    organism_part = material_sample_type_vocabulary.term_for_key("spec:organismpart")
+    _assert_on_vocabulary_term(organism_part)
+
+
+def test_material_type():
+    material_type_vocabulary = _construct_controlled_vocabulary("material_type.json", "mat")
+    organic_material = material_type_vocabulary.term_for_key("mat:organicmaterial")
+    _assert_on_vocabulary_term(organic_material)
+    biogenicnonorganicmaterial = material_type_vocabulary.term_for_key("mat:biogenicnonorganicmaterial")
+    _assert_on_vocabulary_term(biogenicnonorganicmaterial)

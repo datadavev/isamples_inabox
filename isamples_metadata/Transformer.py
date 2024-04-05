@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 import typing
 from typing import Optional, Callable
@@ -346,7 +347,14 @@ class AbstractCategoryMapper(ABC):
     ):
         if self.matches(potential_match, auxiliary_match):
             if self._destination != NOT_PROVIDED:
-                categories_list.append(self._controlled_vocabulary_callable().term_for_label(self._destination))
+                # accept either a label or a key
+                term = self._controlled_vocabulary_callable().term_for_label(self._destination)
+                if term is None:
+                    term = self._controlled_vocabulary_callable().term_for_key(self._destination)
+                if term is not None:
+                    categories_list.append(term)
+                else:
+                    logging.warning(f"Missing vocabulary mapping for {potential_match}: missing destination {self._destination}")
 
     @property
     def destination(self):
@@ -381,7 +389,7 @@ class AbstractCategoryMetaMapper(ABC):
                     source_category, auxiliary_source_category, categories
                 )
         if len(categories) == 0:
-            categories.append(cls.controlled_vocabulary_callable(cls)().root_term())
+            categories.append(cls.controlled_vocabulary_callable()().root_term())
         return categories
 
     @classmethod

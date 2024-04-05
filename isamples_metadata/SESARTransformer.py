@@ -259,6 +259,7 @@ class ContextCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._creekBankMapper,
         ]
 
+    @classmethod
     def controlled_vocabulary_callable(cls) -> Callable:
         return vocabulary_mapper.sampled_feature_type
 
@@ -346,8 +347,9 @@ class SESARTransformer(Transformer):
         material = self._material_type()
         if not material:
             prediction_results = self._compute_material_prediction_results()
+            material_cv = vocabulary_mapper.material_type()
             if prediction_results is not None:
-                return [prediction.value for prediction in prediction_results]
+                return [material_cv.term_for_label(prediction.value) for prediction in prediction_results]
             else:
                 return []
         return MaterialCategoryMetaMapper.categories(material)

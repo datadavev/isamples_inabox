@@ -31,10 +31,14 @@ class ControlledVocabulary:
     def __init__(self, uijson_dict: dict[str, Any], key_prefix: str):
         self.vocabulary_terms_by_key = {}
         self.vocabulary_terms_by_label = {}
+        self._key_prefix = key_prefix
         self._is_first = True
-        self._process_uijson_dict(uijson_dict, key_prefix)
+        self._process_uijson_dict(uijson_dict)
 
-    def _process_uijson_dict(self, uijson_dict: dict[str, Any], key_prefix: str):
+    def _term_key_for_label(self, label: str):
+        return f"{self._key_prefix}:{label}"
+
+    def _process_uijson_dict(self, uijson_dict: dict[str, Any]):
         for dict_key, value in uijson_dict.items():
             # structure looks like this:
             """
@@ -50,24 +54,27 @@ class ControlledVocabulary:
             uri = dict_key
             label = value.get("label").get("en")
             last_piece_of_uri = dict_key.rsplit("/", 1)[-1]
-            term_key = f"{key_prefix}:{last_piece_of_uri}"
+            term_key = self._term_key_for_label(last_piece_of_uri)
             term = VocabularyTerm(term_key, label, uri)
-            self.vocabulary_terms_by_key[term_key] = term
-            self.vocabulary_terms_by_label[label] = term
+            self.vocabulary_terms_by_key[term_key.lower()] = term
+            self.vocabulary_terms_by_label[label.lower()] = term
             if self._is_first:
                 self._root_term = term
                 self._is_first = False
             for child in value.get("children"):
-                self._process_uijson_dict(child, key_prefix)
+                self._process_uijson_dict(child)
 
     def root_term(self) -> VocabularyTerm:
         return self._root_term
 
     def term_for_key(self, key: str) -> VocabularyTerm:
-        return self.vocabulary_terms_by_key.get(key, VocabularyTerm(None, key, None))
+        term = self.vocabulary_terms_by_key.get(key.lower())
+        if term is None:
+            term = self.vocabulary_terms_by_label.get(self._term_key_for_label(key.lower()))
+        return term
 
     def term_for_label(self, label: str) -> VocabularyTerm:
-        return self.vocabulary_terms_by_label.get(label, VocabularyTerm(None, label, None))
+        return self.vocabulary_terms_by_label.get(label.lower())
 
 
 SPECIMEN_TYPE = None

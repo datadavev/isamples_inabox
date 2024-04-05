@@ -1,5 +1,6 @@
 import typing
 import logging
+from typing import Callable
 
 import igsn_lib
 import isamples_metadata.Transformer
@@ -250,6 +251,8 @@ class ContextCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._creekBankMapper,
         ]
 
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.sampled_feature_type
 
 class SESARTransformer(Transformer):
     """Concrete transformer class for going from a SESAR record to an iSamples record"""

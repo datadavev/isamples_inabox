@@ -31,6 +31,7 @@ class ControlledVocabulary:
     def __init__(self, uijson_dict: dict[str, Any], key_prefix: str):
         self.vocabulary_terms_by_key = {}
         self.vocabulary_terms_by_label = {}
+        self._is_first = True
         self._process_uijson_dict(uijson_dict, key_prefix)
 
     def _process_uijson_dict(self, uijson_dict: dict[str, Any], key_prefix: str):
@@ -53,8 +54,14 @@ class ControlledVocabulary:
             term = VocabularyTerm(term_key, label, uri)
             self.vocabulary_terms_by_key[term_key] = term
             self.vocabulary_terms_by_label[label] = term
+            if self._is_first:
+                self._root_term = term
+                self._is_first = False
             for child in value.get("children"):
                 self._process_uijson_dict(child, key_prefix)
+
+    def root_term(self) -> VocabularyTerm:
+        return self._root_term
 
     def term_for_key(self, key: str) -> VocabularyTerm:
         return self.vocabulary_terms_by_key.get(key, VocabularyTerm(None, key, None))

@@ -381,12 +381,16 @@ class AbstractCategoryMetaMapper(ABC):
                     source_category, auxiliary_source_category, categories
                 )
         if len(categories) == 0:
-            categories.append(VocabularyTerm(None, Transformer.NOT_PROVIDED, None))
+            categories.append(cls.controlled_vocabulary_callable(cls)().root_term())
         return categories
 
     @classmethod
     def categories_mappers(cls) -> list[AbstractCategoryMapper]:
         return []
+
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return None
 
     def __init_subclass__(cls, **kwargs):
         cls._categoriesMappers = cls.categories_mappers()

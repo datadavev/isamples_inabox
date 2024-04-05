@@ -21,6 +21,7 @@ def test_sampled_feature():
     _assert_on_vocabulary_term(past_human_activities)
     past_human_activities_by_label = sampled_feature_type_vocabulary.term_for_label("Site of past human activities")
     _assert_on_vocabulary_term(past_human_activities_by_label)
+    assert sampled_feature_type_vocabulary.root_term().uri == "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
 
 
 def test_material_sample_type():
@@ -29,6 +30,7 @@ def test_material_sample_type():
     _assert_on_vocabulary_term(whole_organism)
     organism_part = material_sample_type_vocabulary.term_for_key("spec:organismpart")
     _assert_on_vocabulary_term(organism_part)
+    assert material_sample_type_vocabulary.root_term().uri == "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
 
 
 def test_material_type():
@@ -37,3 +39,4 @@ def test_material_type():
     _assert_on_vocabulary_term(organic_material)
     biogenicnonorganicmaterial = material_type_vocabulary.term_for_key("mat:biogenicnonorganicmaterial")
     _assert_on_vocabulary_term(biogenicnonorganicmaterial)
+    assert material_type_vocabulary.root_term().uri == "https://w3id.org/isample/vocabulary/material/1.0/material"

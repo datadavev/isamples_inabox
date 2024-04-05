@@ -1,5 +1,5 @@
 import typing
-from typing import Optional
+from typing import Optional, Callable
 import re
 
 import isamples_metadata.Transformer
@@ -93,6 +93,11 @@ class MaterialCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._notSampleMapper
         ]
 
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.material_type
+
+
 
 class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
     _organismPartMapper = StringEqualityCategoryMapper(
@@ -157,6 +162,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._organismProductMapper,
             cls._notSampleMapper
         ]
+
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.specimen_type
 
 
 class OpenContextTransformer(Transformer):

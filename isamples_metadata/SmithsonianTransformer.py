@@ -1,5 +1,6 @@
 import typing
 import re
+from typing import Callable
 
 import isamples_metadata.Transformer
 from isamples_metadata.Transformer import (
@@ -54,6 +55,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._whole_organism_mapper,
             cls._default_organism_part_mapper,
         ]
+
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.specimen_type
 
 
 class SmithsonianTransformer(Transformer):

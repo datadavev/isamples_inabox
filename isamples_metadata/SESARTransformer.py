@@ -114,6 +114,10 @@ class MaterialCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._equalsMaterialMapper
         ]
 
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.material_type
+
 
 class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
     _otherSolidObjectsMapper = StringEqualityCategoryMapper(
@@ -182,6 +186,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._analyticalPreparationsMapper,
             cls._aggregationsMapper,
         ]
+
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.specimen_type
 
 
 class ContextCategoryMetaMapper(AbstractCategoryMetaMapper):

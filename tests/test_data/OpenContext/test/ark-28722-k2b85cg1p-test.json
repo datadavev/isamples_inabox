@@ -15,7 +15,8 @@
     ],
     "has_material_category": [
         {
-            "label": "anyanthropogenicmaterial"
+            "label": "anyanthropogenicmaterial",
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:pasthumanoccupationsite"
         }
     ],
     "has_material_category_confidence": [
@@ -23,7 +24,8 @@
     ],
     "has_specimen_category": [
         {
-            "label": "artifact"
+            "label": "artifact",
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:pasthumanoccupationsite"
         }
     ],
     "has_specimen_category_confidence": [

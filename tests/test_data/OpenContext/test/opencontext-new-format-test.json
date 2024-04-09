@@ -24,7 +24,8 @@
     ],
     "has_specimen_category": [
         {
-            "label": "physicalspecimen"
+            "label": "physicalspecimen",
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:pasthumanoccupationsite"
         }
     ],
     "has_specimen_category_confidence": [

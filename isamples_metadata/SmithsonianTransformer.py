@@ -11,6 +11,7 @@ from isamples_metadata.Transformer import (
 )
 from isamples_metadata.taxonomy.metadata_model_client import MODEL_SERVER_CLIENT
 from isamples_metadata.vocabularies import vocabulary_mapper
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 
 class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
@@ -140,16 +141,16 @@ class SmithsonianTransformer(Transformer):
         )
         return [vocabulary_mapper.sampled_feature_type().term_for_label(category).metadata_dict() for category in categories]
 
-    def has_material_categories(self) -> typing.List[dict[str, str]]:
+    def has_material_categories(self) -> typing.List[VocabularyTerm]:
         material_sample_type = self.source_record.get("materialSampleType")
         if material_sample_type == "Environmental sample":
-            return [vocabulary_mapper.material_type().term_for_key("mat:biogenicnonorganicmaterial").metadata_dict()]
+            return [vocabulary_mapper.material_type().term_for_key("mat:biogenicnonorganicmaterial")]
         else:
-            return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial").metadata_dict()]
+            return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial")]
 
-    def has_specimen_categories(self) -> typing.List[dict[str, str]]:
+    def has_specimen_categories(self) -> typing.List[VocabularyTerm]:
         preparation_type = self.source_record.get("preparationType", "")
-        return [term.metadata_dict() for term in SpecimenCategoryMetaMapper.categories(preparation_type)]
+        return SpecimenCategoryMetaMapper.categories(preparation_type)
 
     def informal_classification(self) -> typing.List[str]:
         return [self.source_record.get("scientificName", "")]

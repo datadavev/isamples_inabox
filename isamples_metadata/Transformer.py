@@ -186,7 +186,7 @@ class Transformer(ABC):
         return confidences
 
     @abstractmethod
-    def has_context_categories(self) -> typing.List[dict[str, str]]:
+    def has_context_categories(self) -> typing.List[VocabularyTerm]:
         """Map from the source record into an iSamples context category"""
         pass
 
@@ -195,7 +195,7 @@ class Transformer(ABC):
         return Transformer._rule_based_confidence_list_for_categories_list(context_categories)
 
     @abstractmethod
-    def has_material_categories(self) -> typing.List[dict[str, str]]:
+    def has_material_categories(self) -> typing.List[VocabularyTerm]:
         """Map from the source record into an iSamples material category"""
         pass
 
@@ -204,7 +204,7 @@ class Transformer(ABC):
         return Transformer._rule_based_confidence_list_for_categories_list(material_categories)
 
     @abstractmethod
-    def has_specimen_categories(self) -> typing.List[dict[str, str]]:
+    def has_specimen_categories(self) -> typing.List[VocabularyTerm]:
         """Map from the source record into an iSamples specimen category"""
         pass
 

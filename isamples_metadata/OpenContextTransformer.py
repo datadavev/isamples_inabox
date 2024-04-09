@@ -12,6 +12,7 @@ from isamples_metadata.Transformer import (
 from isamples_metadata.metadata_exceptions import MissingIdentifierException
 from isamples_metadata.taxonomy.metadata_model_client import MODEL_SERVER_CLIENT, PredictionResult
 from isamples_metadata.vocabularies import vocabulary_mapper
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 AAT_NAME = "Getty Art & Architecture Thesaurus"
 GETTY_AAT_REGEX = re.compile("\[([^\]]+)\]")  # noqa: W605
@@ -260,8 +261,8 @@ class OpenContextTransformer(Transformer):
     def sample_sampling_purpose(self) -> str:
         return ""
 
-    def has_context_categories(self) -> typing.List[dict[str, str]]:
-        return [vocabulary_mapper.sampled_feature_type().term_for_key("sf:pasthumanoccupationsite").metadata_dict()]
+    def has_context_categories(self) -> typing.List[VocabularyTerm]:
+        return [vocabulary_mapper.sampled_feature_type().term_for_key("sf:pasthumanoccupationsite")]
 
     def _compute_material_prediction_results(self) -> typing.Optional[typing.List[PredictionResult]]:
         item_category = self._item_category()
@@ -279,13 +280,13 @@ class OpenContextTransformer(Transformer):
     def _item_category(self):
         return self.source_record.get("item category", "")
 
-    def has_material_categories(self) -> list:
+    def has_material_categories(self) -> list[VocabularyTerm]:
         item_category = self._item_category()
         to_classify_items = ["Object", "Pottery", "Sample", "Sculpture"]
         if item_category in to_classify_items:
             prediction_results = self._compute_material_prediction_results()
             if prediction_results is not None:
-                return [vocabulary_mapper.material_type().term_for_label(prediction.value).metadata_dict() for prediction in prediction_results]
+                return [vocabulary_mapper.material_type().term_for_label(prediction.value) for prediction in prediction_results]
             else:
                 return []
         return MaterialCategoryMetaMapper.categories(item_category)
@@ -311,13 +312,13 @@ class OpenContextTransformer(Transformer):
             self._specimen_prediction_results = MODEL_SERVER_CLIENT.make_opencontext_sample_request(self.source_record)
             return self._specimen_prediction_results
 
-    def has_specimen_categories(self) -> list:
+    def has_specimen_categories(self) -> list[VocabularyTerm]:
         item_category = self._item_category()
         to_classify_items = ["Animal Bone"]
         if item_category in to_classify_items:
             prediction_results = self._compute_specimen_prediction_results()
             if prediction_results is not None:
-                return [vocabulary_mapper.specimen_type().term_for_label(prediction.value).metadata_dict() for prediction in prediction_results]
+                return [vocabulary_mapper.specimen_type().term_for_label(prediction.value) for prediction in prediction_results]
             else:
                 return []
         return [term.metadata_dict() for term in SpecimenCategoryMetaMapper.categories(item_category)]

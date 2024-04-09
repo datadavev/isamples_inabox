@@ -56,7 +56,10 @@ class ControlledVocabulary:
             last_piece_of_uri = dict_key.rsplit("/", 1)[-1]
             term_key = self._term_key_for_label(last_piece_of_uri)
             term = VocabularyTerm(term_key, label, uri)
+            # There's a mix of callers that use both namespaced and non-namespaced keys to look terms up.
+            # We should support both, e.g. "biogenicnonorganicmaterial" and "spec:biogenicnonorganicmaterial"
             self.vocabulary_terms_by_key[term_key.lower()] = term
+            self.vocabulary_terms_by_key[last_piece_of_uri] = term
             self.vocabulary_terms_by_label[label.lower()] = term
             if self._is_first:
                 self._root_term = term

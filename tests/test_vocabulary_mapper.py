@@ -19,6 +19,8 @@ def test_sampled_feature():
     sampled_feature_type_vocabulary = _construct_controlled_vocabulary("sampled_feature_type.json", "sf")
     past_human_activities = sampled_feature_type_vocabulary.term_for_key("sf:pasthumanoccupationsite")
     _assert_on_vocabulary_term(past_human_activities)
+    past_human_activities_no_namespace = past_human_activities = sampled_feature_type_vocabulary.term_for_key("pasthumanoccupationsite")
+    _assert_on_vocabulary_term(past_human_activities_no_namespace)
     past_human_activities_by_label = sampled_feature_type_vocabulary.term_for_label("Site of past human activities")
     _assert_on_vocabulary_term(past_human_activities_by_label)
     # labels should be case-insensitive

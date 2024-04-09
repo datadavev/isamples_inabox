@@ -129,8 +129,8 @@ class SmithsonianTransformer(Transformer):
         )
         return Transformer.DESCRIPTION_SEPARATOR.join(description_pieces)
 
-    def has_context_categories(self) -> typing.List[dict[str, str]]:
-        categories = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request(
+    def has_context_categories(self) -> typing.List[VocabularyTerm]:
+        category = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request(
             [
                 self.source_record.get("collectionCode", ""),
                 self.source_record.get("habitat", ""),
@@ -139,7 +139,7 @@ class SmithsonianTransformer(Transformer):
                 self.source_record.get("higherClassification", ""),
             ]
         )
-        return [vocabulary_mapper.sampled_feature_type().term_for_label(category).metadata_dict() for category in categories]
+        return [vocabulary_mapper.sampled_feature_type().term_for_label(category)]
 
     def has_material_categories(self) -> typing.List[VocabularyTerm]:
         material_sample_type = self.source_record.get("materialSampleType")

@@ -263,6 +263,7 @@ class ContextCategoryMetaMapper(AbstractCategoryMetaMapper):
     def controlled_vocabulary_callable(cls) -> Callable:
         return vocabulary_mapper.sampled_feature_type
 
+
 class SESARTransformer(Transformer):
     """Concrete transformer class for going from a SESAR record to an iSamples record"""
 

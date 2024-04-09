@@ -3,32 +3,26 @@ from typing import Optional
 
 import click
 import requests
-import term_store
 from sqlmodel import Session
 
 import isb_lib.core
 import isb_web.config
 import isb_lib.sesar_adapter
-from isamples_metadata.Transformer import geo_to_h3, Transformer
 from isamples_metadata.solr_field_constants import SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_SPECIMEN_CATEGORY, \
     SOLR_HAS_CONTEXT_CATEGORY
-from isb_lib.vocabulary import vocab_adapter
 from isb_web.isb_solr_query import ISBCoreSolrRecordIterator
-from isb_web.sqlmodel_database import SQLModelDAO
 
 TOP_LEVEL_SPECIMEN_URI = "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
 TOP_LEVEL_CONTEXT_URI = "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
 TOP_LEVEL_MATERIAL_URI = "https://w3id.org/isample/vocabulary/material/1.0/material"
 
 
-
-
 MATERIAL_CATEGORY_DICT = {
     "natural solid material": "https://w3id.org/isample/vocabulary/material/1.0/earthmaterial",
-    "organic material":"https://w3id.org/isample/vocabulary/material/1.0/organicmaterial",
-    "rock":"https://w3id.org/isample/vocabulary/material/1.0/rock",
-    "sediment":"https://w3id.org/isample/vocabulary/material/1.0/sediment",
-    "mixed soil":"https://w3id.org/isample/vocabulary/material/1.0/mixedsoilsedimentrock",
+    "organic material": "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial",
+    "rock": "https://w3id.org/isample/vocabulary/material/1.0/rock",
+    "sediment": "https://w3id.org/isample/vocabulary/material/1.0/sediment",
+    "mixed soil": "https://w3id.org/isample/vocabulary/material/1.0/mixedsoilsedimentrock",
     "biogenicnonorganicmaterial": "https://w3id.org/isample/vocabulary/material/1.0/biogenicnonorganicmaterial",
     "material": "https://w3id.org/isample/vocabulary/material/1.0/material",
     "mineral": "https://w3id.org/isample/vocabulary/material/1.0/mineral",
@@ -120,7 +114,6 @@ def main(ctx):
 
 
 def convert_to_controlled_vocabulary_identifiers(solr_url: str, session: Session):
-    repository = term_store.get_repository(session)
     total_records = 0
     batch_size = 100
     current_mutated_batch = []

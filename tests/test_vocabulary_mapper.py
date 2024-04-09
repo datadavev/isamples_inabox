@@ -25,7 +25,7 @@ def test_sampled_feature():
     _assert_on_vocabulary_term(past_human_activities_by_label)
     # labels should be case-insensitive
     past_human_activities_by_label_lower = sampled_feature_type_vocabulary.term_for_label("site of past human activities")
-    _assert_on_vocabulary_term(past_human_activities_by_label)
+    _assert_on_vocabulary_term(past_human_activities_by_label_lower)
     assert sampled_feature_type_vocabulary.root_term().uri == "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
 
 

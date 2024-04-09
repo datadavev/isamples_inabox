@@ -77,7 +77,7 @@ class MaterialCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Human Subject",
             "Reference Collection",
         ],
-        Transformer.NOT_PROVIDED,
+        "material",
         vocabulary_mapper.material_type
     )
 
@@ -97,7 +97,6 @@ class MaterialCategoryMetaMapper(AbstractCategoryMetaMapper):
     @classmethod
     def controlled_vocabulary_callable(cls) -> Callable:
         return vocabulary_mapper.material_type
-
 
 
 class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
@@ -149,7 +148,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Human Subject",
             "Reference Collection",
         ],
-        Transformer.NOT_PROVIDED,
+        "physicalspecimen",
         vocabulary_mapper.specimen_type
     )
 
@@ -291,11 +290,11 @@ class OpenContextTransformer(Transformer):
                 return []
         return MaterialCategoryMetaMapper.categories(item_category)
 
-    def has_material_category_confidences(self, material_categories: list[dict[str, str]]) -> typing.Optional[typing.List[float]]:
+    def has_material_category_confidences(self, material_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         prediction_results = self._compute_material_prediction_results()
         if prediction_results is None:
-            material_categories = self.has_material_categories()
-            return Transformer._rule_based_confidence_list_for_categories_list(material_categories)
+            material_categories_terms = self.has_material_categories()
+            return Transformer._rule_based_confidence_list_for_categories_list(material_categories_terms)
         else:
             return [prediction.confidence for prediction in prediction_results]
 
@@ -321,14 +320,14 @@ class OpenContextTransformer(Transformer):
                 return [vocabulary_mapper.specimen_type().term_for_label(prediction.value) for prediction in prediction_results]
             else:
                 return []
-        return [term.metadata_dict() for term in SpecimenCategoryMetaMapper.categories(item_category)]
+        return SpecimenCategoryMetaMapper.categories(item_category)
 
-    def has_specimen_category_confidences(self, specimen_categories: list[dict[str, str]]) -> typing.Optional[typing.List[float]]:
+    def has_specimen_category_confidences(self, specimen_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         prediction_results = self._compute_specimen_prediction_results()
         if prediction_results is None:
             # Not computed, so default to human entered confidence
-            specimen_categories = self.has_specimen_categories()
-            return Transformer._rule_based_confidence_list_for_categories_list(specimen_categories)
+            specimen_category_terms = self.has_specimen_categories()
+            return Transformer._rule_based_confidence_list_for_categories_list(specimen_category_terms)
         else:
             return [prediction.confidence for prediction in prediction_results]
 

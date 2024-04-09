@@ -191,8 +191,8 @@ class SmithsonianTransformer(Transformer):
         return Transformer.NOT_PROVIDED
 
     def _add_to_responsibilities(self, source_label: str, dict_label: str, responsibilities: list[dict[str, str]]):
-        value = self.source_record[source_label]
-        if len(value) > 0:
+        value = self.source_record.get(source_label)
+        if value is not None and len(value) > 0:
             for current in self.RESPONSIBILITIES_SPLIT_RE.split(value):
                 responsibilities.append({"role": dict_label, "name": current.strip()})
 
@@ -202,8 +202,8 @@ class SmithsonianTransformer(Transformer):
         self._add_to_responsibilities("scientificNameAuthorship", "scientific name authorship", responsibilities)
 
         # unfortunately it looks like this field uses a ; separator for multiple people
-        identified_by = self.source_record["identifiedBy"]
-        if len(identified_by) > 0:
+        identified_by = self.source_record.get("identifiedBy")
+        if identified_by is not None and len(identified_by) > 0:
             for current in identified_by.split(";"):
                 responsibilities.append({"role": "identified by", "name": current.strip()})
         return responsibilities

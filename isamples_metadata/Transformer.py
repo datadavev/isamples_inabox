@@ -11,7 +11,7 @@ from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, MET
     METADATA_RESPONSIBILITY, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_RESULT_TIME, METADATA_SAMPLING_SITE, METADATA_ELEVATION, METADATA_LATITUDE, METADATA_LONGITUDE, \
     METADATA_REGISTRANT, METADATA_SAMPLING_PURPOSE, METADATA_CURATION, METADATA_ACCESS_CONSTRAINTS, METADATA_CURATION_LOCATION, METADATA_RELATED_RESOURCE, METADATA_AUTHORIZED_BY, \
     METADATA_COMPLIES_WITH, METADATA_INFORMAL_CLASSIFICATION, METADATA_PLACE_NAME, METADATA_ROLE, METADATA_NAME, METADATA_SAMPLE_LOCATION
-from isamples_metadata.vocabularies.vocabulary_mapper import ControlledVocabulary, VocabularyTerm
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 NOT_PROVIDED = "Not Provided"
 
@@ -190,7 +190,7 @@ class Transformer(ABC):
         """Map from the source record into an iSamples context category"""
         pass
 
-    def has_context_category_confidences(self, context_categories: list[dict[str, str]]) -> typing.Optional[typing.List[float]]:
+    def has_context_category_confidences(self, context_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         """If a machine-predicted label is used for context, subclasses should return non-None confidence values"""
         return Transformer._rule_based_confidence_list_for_categories_list(context_categories)
 
@@ -199,7 +199,7 @@ class Transformer(ABC):
         """Map from the source record into an iSamples material category"""
         pass
 
-    def has_material_category_confidences(self, material_categories: list[dict[str, str]]) -> typing.Optional[typing.List[float]]:
+    def has_material_category_confidences(self, material_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         """If a machine-predicted label is used for material, subclasses should return non-None confidence values"""
         return Transformer._rule_based_confidence_list_for_categories_list(material_categories)
 
@@ -208,7 +208,7 @@ class Transformer(ABC):
         """Map from the source record into an iSamples specimen category"""
         pass
 
-    def has_specimen_category_confidences(self, specimen_categories: list[dict[str, str]]) -> typing.Optional[typing.List[float]]:
+    def has_specimen_category_confidences(self, specimen_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         """If a machine-predicted label is used for specimen, subclasses should return non-None confidence values"""
         return Transformer._rule_based_confidence_list_for_categories_list(specimen_categories)
 
@@ -398,7 +398,7 @@ class AbstractCategoryMetaMapper(ABC):
 
     @classmethod
     def controlled_vocabulary_callable(cls) -> Callable:
-        return None
+        return lambda *args: None
 
     def __init_subclass__(cls, **kwargs):
         cls._categoriesMappers = cls.categories_mappers()
@@ -477,7 +477,7 @@ class StringOrderedCategoryMapper(AbstractCategoryMapper):
             if mapper.matches(potential_match, auxiliary_match):
                 # Note that this isn't thread-safe -- we expect one of these objects per thread
                 self.destination = mapper.destination
-                self.controlled_vocabulary_callable = mapper._controlled_vocabulary_callable
+                self._controlled_vocabulary_callable = mapper._controlled_vocabulary_callable
                 return True
         return False
 

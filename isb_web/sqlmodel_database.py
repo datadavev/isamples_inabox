@@ -11,7 +11,7 @@ from typing import Optional, List
 from isb_lib.identifiers.noidy.n2tminter import N2TMinter
 from isb_lib.models.export_job import ExportJob
 from isb_lib.models.namespace import Namespace
-from sqlalchemy import Index, update, or_
+from sqlalchemy import Index, update, or_, func
 from sqlalchemy.exc import ProgrammingError
 from sqlmodel import SQLModel, create_engine, Session, select
 from sqlmodel.sql.expression import SelectOfScalar
@@ -204,6 +204,11 @@ def get_thing_with_id(session: Session, identifier: str) -> Optional[Thing]:
         )
         result = session.exec(identifiers_statement).first()
     return result
+
+
+def random_things_with_authority(session: Session, authority: str, count: int) -> list[Thing]:
+    statement = select(Thing).where(Thing.authority_id == authority).limit(count).order_by(func.random())
+    return session.exec(statement).all()
 
 
 def get_things_with_ids(session: Session, identifiers: list[str]) -> list[Thing]:

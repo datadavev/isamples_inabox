@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Any
 
 from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_IDENTIFIER
@@ -29,8 +30,8 @@ class VocabularyTerm(dict):
 
 class ControlledVocabulary:
     def __init__(self, uijson_dict: dict[str, Any], key_prefix: str):
-        self.vocabulary_terms_by_key = {}
-        self.vocabulary_terms_by_label = {}
+        self.vocabulary_terms_by_key: dict[str, VocabularyTerm] = {}
+        self.vocabulary_terms_by_label: dict[str, VocabularyTerm] = {}
         self._key_prefix = key_prefix
         self._is_first = True
         self._process_uijson_dict(uijson_dict)
@@ -74,10 +75,17 @@ class ControlledVocabulary:
         term = self.vocabulary_terms_by_key.get(key.lower())
         if term is None:
             term = self.vocabulary_terms_by_label.get(self._term_key_for_label(key.lower()))
+        if term is None:
+            logging.warning(f"Unable to look up vocabulary term for key {key}, returning root term instead.")
+            term = self.root_term()
         return term
 
     def term_for_label(self, label: str) -> VocabularyTerm:
-        return self.vocabulary_terms_by_label.get(label.lower())
+        term = self.vocabulary_terms_by_label.get(label.lower())
+        if term is None:
+            logging.warning(f"Unable to look up vocabulary term for label {label}, returning root term instead.")
+            term = self.root_term()
+        return term
 
 
 SPECIMEN_TYPE = None
@@ -89,6 +97,7 @@ def specimen_type() -> ControlledVocabulary:
     global SPECIMEN_TYPE
     if SPECIMEN_TYPE is None:
         uijson = vocab_adapter.VOCAB_CACHE.get(PHYSICALSPECIMEN_URI)
+        assert uijson is not None
         SPECIMEN_TYPE = ControlledVocabulary(uijson, "spec")
     return SPECIMEN_TYPE
 
@@ -97,6 +106,7 @@ def material_type() -> ControlledVocabulary:
     global MATERIAL_TYPE
     if MATERIAL_TYPE is None:
         uijson = vocab_adapter.VOCAB_CACHE.get(MATERIAL_URI)
+        assert uijson is not None
         MATERIAL_TYPE = ControlledVocabulary(uijson, "mat")
     return MATERIAL_TYPE
 
@@ -105,5 +115,6 @@ def sampled_feature_type() -> ControlledVocabulary:
     global SAMPLED_FEATURE_TYPE
     if SAMPLED_FEATURE_TYPE is None:
         uijson = vocab_adapter.VOCAB_CACHE.get(SAMPLEDFEATURE_URI)
+        assert uijson is not None
         SAMPLED_FEATURE_TYPE = ControlledVocabulary(uijson, "sf")
     return SAMPLED_FEATURE_TYPE

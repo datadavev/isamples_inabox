@@ -13,6 +13,7 @@ from isamples_metadata.Transformer import (
 )
 from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_AUTHORIZED_BY, METADATA_COMPLIES_WITH, METADATA_RELATIONSHIP, METADATA_TARGET
 from isamples_metadata.vocabularies import vocabulary_mapper
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 PERMIT_STRINGS_TO_IGNORE = ['nan', 'na', 'no data', 'unknown', 'none_required']
 
@@ -143,18 +144,18 @@ class GEOMETransformer(Transformer):
 
         return Transformer.DESCRIPTION_SEPARATOR.join(description_pieces)
 
-    def has_context_categories(self) -> list:
+    def has_context_categories(self) -> list[VocabularyTerm]:
         # TODO: resolve https://github.com/isamplesorg/isamples_inabox/issues/312
         # This should probably return the biological kingdom once that is hooked into the vocabulary
-        return [vocabulary_mapper.SAMPLED_FEATURE.term_for_key("sf:marinewaterbody").metadata_dict()]
+        return [vocabulary_mapper.sampled_feature_type().term_for_key("sf:marinewaterbody")]
 
-    def has_material_categories(self) -> list:
+    def has_material_categories(self) -> list[VocabularyTerm]:
         # TODO: implement
         # ["'Organic material' unless record/entity, record/basisOfRecord, or record/collectionCode indicate otherwise"]
-        return [vocabulary_mapper.MATERIAL_TYPE.term_for_key("mat:organicmaterial").metadata_dict()]
+        return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial")]
 
-    def has_specimen_categories(self) -> list:
-        return [vocabulary_mapper.SPECIMEN_TYPE.term_for_key("spec:wholeorganism").metadata_dict()]
+    def has_specimen_categories(self) -> list[VocabularyTerm]:
+        return [vocabulary_mapper.specimen_type().term_for_key("spec:wholeorganism")]
 
     def informal_classification(self) -> typing.List[str]:
         main_record = self._source_record_main_record()
@@ -576,7 +577,7 @@ class GEOMEChildTransformer(GEOMETransformer):
         return ""
 
     def has_specimen_categories(self) -> list:
-        return [vocabulary_mapper.SPECIMEN_TYPE.term_for_key("spec:organismpart").metadata_dict()]
+        return [vocabulary_mapper.specimen_type().term_for_key("spec:organismpart").metadata_dict()]
 
     def produced_by_label(self) -> str:
         return f"tissue subsample from {self._source_record_main_record()['materialSampleID']}"

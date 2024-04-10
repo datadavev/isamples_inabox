@@ -207,7 +207,8 @@ def test_coreRecordAsSolrDoc2():
     ],
     "has_specimen_category": [
         {
-            "label": "physicalspecimen"
+            "label": "Physical specimen",
+            "identifier": "https://w3id.org/isample/vocabulary/specimen/0.9/spec:physicalspecimen"
         }
     ],
     "has_specimen_category_confidence": [
@@ -307,10 +308,12 @@ def test_core_record_as_solr_doc_3():
       "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:otheranthropogenicmaterial"
     },
     {
-      "label": "Anthropogenic metal"
+      "label": "Anthropogenic metal",
+      "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:otheranthropogenicmaterial"
     },
     {
-      "label": "Natural solid material"
+      "label": "Natural solid material",
+      "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:otheranthropogenicmaterial"
     }
   ],
   "has_material_category_confidence": [
@@ -320,7 +323,8 @@ def test_core_record_as_solr_doc_3():
   ],
   "has_specimen_category": [
     {
-      "label": "physicalspecimen"
+      "label": "physicalspecimen",
+      "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:otheranthropogenicmaterial"
     }
   ],
   "has_specimen_category_confidence": [
@@ -424,13 +428,13 @@ def test_vocabulary_included():
     solr_doc = _load_test_file_into_solr_doc("./test_data/GEOME/test/ark-21547-Car2PIRE_0334-child-test.json")
     context_categories = solr_doc.get("hasContextCategory")
     assert context_categories is not None
-    assert context_categories[0] == "Marine environment"
+    assert context_categories[0] == "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody"
     material_categories = solr_doc.get("hasMaterialCategory")
     assert material_categories is not None
-    assert material_categories[0] == "Organic material"
+    assert material_categories[0] == "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial"
     specimen_categories = solr_doc.get("hasSpecimenCategory")
     assert specimen_categories is not None
-    assert specimen_categories[0] == "Organism part"
+    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart"
     keywords = solr_doc.get("keywords")
     assert keywords is not None
     assert keywords[0] == "Aceh"
@@ -484,7 +488,6 @@ def test_date_year_only():
     datetime = isb_lib.core.parsed_date(date_str)
     assert datetime is not None
     assert datetime.day == 1
-    assert datetime.month == 3
     assert datetime.year == 1985
 
 

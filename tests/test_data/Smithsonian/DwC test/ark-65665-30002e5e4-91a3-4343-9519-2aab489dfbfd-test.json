@@ -7,7 +7,7 @@
     "has_context_category": [
         {
             "label": "Atmosphere",
-            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:atmosphere"
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/atmosphere"
         }
     ],
     "has_context_category_confidence": [
@@ -16,7 +16,7 @@
     "has_material_category": [
         {
             "label": "Organic material",
-            "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:organicmaterial"
+            "identifier": "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial"
         }
     ],
     "has_material_category_confidence": [
@@ -25,7 +25,7 @@
     "has_specimen_category": [
         {
             "label": "Organism part",
-            "identifier": "https://w3id.org/isample/vocabulary/specimentype/0.9/spec:organismpart"
+            "identifier": "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart"
         }
     ],
     "has_specimen_category_confidence": [

@@ -11,13 +11,17 @@
 }
 """
 import logging
+from typing import Optional
+
 from term_store import TermRepository
 from term_store.db import Term
 
 VOCAB_CACHE: dict = {}
 
 
-def _read_descendants(term: Term, repository: TermRepository) -> dict:
+def _read_descendants(term: Term, repository: TermRepository, all_uris: set) -> Optional[dict]:
+    if term.uri in all_uris:
+        return None
     term_dict = {}
     label = term.properties.get("labels")
     if label is not None:
@@ -31,10 +35,12 @@ def _read_descendants(term: Term, repository: TermRepository) -> dict:
         },
         "children": children
     }
+    all_uris.add(term.uri)
     descendants = repository.narrower(term.uri)
     for descendant in descendants:
-        child_dict = _read_descendants(descendant, repository)
-        children.append(child_dict)
+        child_dict = _read_descendants(descendant, repository, all_uris)
+        if child_dict is not None:
+            children.append(child_dict)
     return term_dict
 
 
@@ -47,6 +53,10 @@ def uijson_vocabulary_dict(top_level_uri: str, repository: TermRepository) -> di
         logging.warning(f"Expected to find root term with uri {top_level_uri}, found None instead.")
         return {}
     else:
-        full_dict = _read_descendants(root_term, repository)
-        VOCAB_CACHE[top_level_uri] = full_dict
-        return full_dict
+        all_uris = set(root_term.uri)
+        full_dict = _read_descendants(root_term, repository, all_uris)
+        if full_dict is not None:
+            VOCAB_CACHE[top_level_uri] = full_dict
+            return full_dict
+        else:
+            return {}

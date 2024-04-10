@@ -6,7 +6,8 @@
     "description": "",
     "has_context_category": [
         {
-            "label": "earthinterior"
+            "label": "Any sampled feature",
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
         }
     ],
     "has_context_category_confidence": [
@@ -14,13 +15,15 @@
     ],
     "has_material_category": [
         {
-            "label": "rock"
+            "label": "Rock",
+            "identifier": "https://w3id.org/isample/vocabulary/material/1.0/rock"
         }
     ],
     "has_material_category_confidence": null,
     "has_specimen_category": [
         {
-            "label": "othersolidobject"
+            "label": "Physical specimen",
+            "identifier": "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
         }
     ],
     "has_specimen_category_confidence": [

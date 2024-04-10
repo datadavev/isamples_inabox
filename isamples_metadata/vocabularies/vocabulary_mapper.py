@@ -32,6 +32,7 @@ class ControlledVocabulary:
     def __init__(self, uijson_dict: dict[str, Any], key_prefix: str):
         self.vocabulary_terms_by_key: dict[str, VocabularyTerm] = {}
         self.vocabulary_terms_by_label: dict[str, VocabularyTerm] = {}
+        self._uijson_dict = uijson_dict
         self._key_prefix = key_prefix
         self._is_first = True
         self._process_uijson_dict(uijson_dict)

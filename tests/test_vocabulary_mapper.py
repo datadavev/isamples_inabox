@@ -1,11 +1,5 @@
-import json
-from isamples_metadata.vocabularies.vocabulary_mapper import ControlledVocabulary, VocabularyTerm
-
-
-def _construct_controlled_vocabulary(filename: str, prefix: str) -> ControlledVocabulary:
-    with open(f"./test_data/controlled_vocabulary_uijson/{filename}") as source_file:
-        uijson = json.load(source_file)
-        return ControlledVocabulary(uijson, prefix)
+from isamples_metadata.vocabularies import vocabulary_mapper
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 
 def _assert_on_vocabulary_term(term: VocabularyTerm):
@@ -15,8 +9,11 @@ def _assert_on_vocabulary_term(term: VocabularyTerm):
     assert metadata_dict.get("identifier") is not None
 
 
+# Note that all of these are initialized/installed in the controlled_vocabularies() session fixture in conftest.py
+
+
 def test_sampled_feature():
-    sampled_feature_type_vocabulary = _construct_controlled_vocabulary("sampled_feature_type.json", "sf")
+    sampled_feature_type_vocabulary = vocabulary_mapper.SAMPLED_FEATURE_TYPE
     past_human_activities = sampled_feature_type_vocabulary.term_for_key("sf:pasthumanoccupationsite")
     _assert_on_vocabulary_term(past_human_activities)
     past_human_activities_no_namespace = past_human_activities = sampled_feature_type_vocabulary.term_for_key("pasthumanoccupationsite")
@@ -30,7 +27,7 @@ def test_sampled_feature():
 
 
 def test_material_sample_type():
-    material_sample_type_vocabulary = _construct_controlled_vocabulary("material_sample_type.json", "spec")
+    material_sample_type_vocabulary = vocabulary_mapper.SPECIMEN_TYPE
     whole_organism = material_sample_type_vocabulary.term_for_key("spec:wholeorganism")
     _assert_on_vocabulary_term(whole_organism)
     organism_part = material_sample_type_vocabulary.term_for_key("spec:organismpart")
@@ -39,7 +36,7 @@ def test_material_sample_type():
 
 
 def test_material_type():
-    material_type_vocabulary = _construct_controlled_vocabulary("material_type.json", "mat")
+    material_type_vocabulary = vocabulary_mapper.MATERIAL_TYPE
     organic_material = material_type_vocabulary.term_for_key("mat:organicmaterial")
     _assert_on_vocabulary_term(organic_material)
     biogenicnonorganicmaterial = material_type_vocabulary.term_for_key("mat:biogenicnonorganicmaterial")

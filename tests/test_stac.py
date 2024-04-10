@@ -22,6 +22,9 @@ def stac_collection_schema_json() -> typing.Dict:
         return json.load(schema)
 
 
+@pytest.mark.skipif(
+    os.environ.get("CI") is not None, reason="Don't run live requests in CI"
+)
 @pytest.mark.parametrize("solr_file_path", SOLR_items)
 def test_stac_item_valid(solr_file_path, stac_item_schema_json):
     with open(solr_file_path) as source_file:
@@ -33,6 +36,9 @@ def test_stac_item_valid(solr_file_path, stac_item_schema_json):
         validate(instance=stac_item, schema=stac_item_schema_json)
 
 
+@pytest.mark.skipif(
+    os.environ.get("CI") is not None, reason="Don't run live requests in CI"
+)
 @pytest.mark.parametrize("solr_file_path", SOLR_items)
 def test_stac_collection_valid(solr_file_path, stac_collection_schema_json):
     with open(solr_file_path) as source_file:

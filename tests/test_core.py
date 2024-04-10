@@ -428,13 +428,13 @@ def test_vocabulary_included():
     solr_doc = _load_test_file_into_solr_doc("./test_data/GEOME/test/ark-21547-Car2PIRE_0334-child-test.json")
     context_categories = solr_doc.get("hasContextCategory")
     assert context_categories is not None
-    assert context_categories[0] == "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:marinewaterbody"
+    assert context_categories[0] == "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody"
     material_categories = solr_doc.get("hasMaterialCategory")
     assert material_categories is not None
-    assert material_categories[0] == "https://w3id.org/isample/vocabulary/material/0.9/mat:organicmaterial"
+    assert material_categories[0] == "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial"
     specimen_categories = solr_doc.get("hasSpecimenCategory")
     assert specimen_categories is not None
-    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/specimentype/0.9/spec:organismpart"
+    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart"
     keywords = solr_doc.get("keywords")
     assert keywords is not None
     assert keywords[0] == "Aceh"

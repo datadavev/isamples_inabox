@@ -428,7 +428,7 @@ def test_vocabulary_included():
     solr_doc = _load_test_file_into_solr_doc("./test_data/GEOME/test/ark-21547-Car2PIRE_0334-child-test.json")
     context_categories = solr_doc.get("hasContextCategory")
     assert context_categories is not None
-    assert context_categories[0] == "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody"
+    assert context_categories[0] == "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
     material_categories = solr_doc.get("hasMaterialCategory")
     assert material_categories is not None
     assert material_categories[0] == "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial"

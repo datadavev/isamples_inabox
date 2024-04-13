@@ -204,7 +204,7 @@ def test_geome_transformer_for_identifier():
         assert type(transformer) is GEOMETransformer
         child_transformer = (
             isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
-                "ark:/21547/Cat2INDO106431.1", source_record, None,  None
+                "ark:/21547/Cat2INDO106431.1", source_record, None, None
             )
         )
         assert type(child_transformer) is GEOMEChildTransformer

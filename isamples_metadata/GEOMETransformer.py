@@ -31,19 +31,24 @@ class GEOMETransformer(Transformer):
     """Concrete transformer class for going from a GEOME record to an iSamples record"""
 
     def __init__(
-        self, source_record: typing.Dict, last_updated_time: Optional[datetime.datetime] = None, session: Optional[Session] = None
+        self,
+        source_record: typing.Dict,
+        last_updated_time: Optional[datetime.datetime] = None,
+        session: Optional[Session] = None,
+        taxonomy_name_to_kingdom_map: dict[str, str] = {}
     ):
         super().__init__(source_record)
         self._child_transformers = []
         self._last_updated_time = last_updated_time
         self._session = session
+        self._taxonomy_name_to_kingdom_map = taxonomy_name_to_kingdom_map
         children = self._get_children()
         for child_record in children:
             entity = child_record.get("entity")
             if entity == TISSUE_ENTITY:
                 self._child_transformers.append(
                     GEOMEChildTransformer(
-                        source_record, child_record, last_updated_time, session
+                        source_record, child_record, last_updated_time, session, taxonomy_name_to_kingdom_map
                     )
                 )
 
@@ -147,7 +152,30 @@ class GEOMETransformer(Transformer):
     def has_context_categories(self) -> list[VocabularyTerm]:
         # TODO: resolve https://github.com/isamplesorg/isamples_inabox/issues/312
         # This should probably return the biological kingdom once that is hooked into the vocabulary
-        return [vocabulary_mapper.sampled_feature_type().term_for_key("sf:marinewaterbody")]
+        kingdom = None
+        ranks = ["kingdom", "phylum", "genus"]
+        ranks_to_check = []
+        for rank in ranks:
+            value = self._source_record_main_record().get(rank)
+            if value is not None and value != "unidentified":
+                ranks_to_check.append(value)
+        for rank in ranks_to_check:
+            kingdom = self._taxonomy_name_to_kingdom_map.get(rank)
+            if kingdom is not None:
+                break
+        if kingdom is None:
+            informal_classification = self.informal_classification()
+            if len(informal_classification) > 0:
+                kingdom = self._taxonomy_name_to_kingdom_map.get(informal_classification[0])
+        if kingdom is not None:
+            if kingdom == "Chromista":
+                # Make a fake Chromista until the real one shows up (https://github.com/isamplesorg/vocabularies/issues/17)
+                mapped_term = VocabularyTerm("chromista", "Chromista", "https://w3id.org/isample/biology/biosampledfeature/1.0/Chromista")
+            else:
+                mapped_term = vocabulary_mapper.sampled_feature_type().term_for_label(kingdom)
+            return [mapped_term]
+        else:
+            return [vocabulary_mapper.sampled_feature_type().root_term()]
 
     def has_material_categories(self) -> list[VocabularyTerm]:
         # TODO: implement
@@ -556,12 +584,14 @@ class GEOMEChildTransformer(GEOMETransformer):
         source_record: typing.Dict,
         child_record: typing.Dict,
         last_updated_time: Optional[datetime.datetime],
-        session: Optional[Session] = None
+        session: Optional[Session] = None,
+        taxonomy_name_to_kingdom_map: dict = {}
     ):
         self.source_record = source_record
         self.child_record = child_record
         self._last_updated_time = last_updated_time
         self._session = session
+        self._taxonomy_name_to_kingdom_map = taxonomy_name_to_kingdom_map
 
     def _id_minus_prefix(self) -> str:
         return self.child_record["bcid"].removeprefix(self.ARK_PREFIX)
@@ -635,12 +665,12 @@ class GEOMEChildTransformer(GEOMETransformer):
 # Function to iterate through the identifiers and instantiate the proper GEOME Transformer based on the identifier
 # used for lookup
 def geome_transformer_for_identifier(
-    identifier: str, source_record: typing.Dict, session: Session
+    identifier: str, source_record: typing.Dict, session: Session, taxon_map: dict
 ) -> Optional[GEOMETransformer]:
     # Two possibilities:
     # (1) It's the sample, so instantiate the main one
     # (2) It's one of the children, so grab the child transformer
-    transformer = GEOMETransformer(source_record, None, session)
+    transformer = GEOMETransformer(source_record, None, session, taxon_map)
     # Sample identifier string for GEOM is the ARK
     if identifier == transformer.sample_identifier_string():
         return transformer

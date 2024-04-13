@@ -9,7 +9,7 @@ from isamples_metadata.SmithsonianTransformer import SmithsonianTransformer
 from isamples_metadata.metadata_constants import METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_HAS_SPECIMEN_CATEGORY
 from isb_lib.vocabulary import vocab_adapter
-from isb_web.sqlmodel_database import SQLModelDAO, random_things_with_authority
+from isb_web.sqlmodel_database import SQLModelDAO, random_things_with_authority, taxonomy_name_to_kingdom_map
 from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, PHYSICALSPECIMEN_URI
 
 
@@ -37,6 +37,7 @@ def main(ctx, db_url, authority, verbosity):
     vocab_adapter.uijson_vocabulary_dict(PHYSICALSPECIMEN_URI, repository)
 
     authorities = ["SMITHSONIAN", "GEOME", "OPENCONTEXT", "SESAR"]
+    taxon_name_map = taxonomy_name_to_kingdom_map(session)
     for authority in authorities:
         print(f"About to check {authority}")
         random_things = random_things_with_authority(session, authority, 1000)
@@ -44,7 +45,7 @@ def main(ctx, db_url, authority, verbosity):
             if authority == "SMITHSONIAN":
                 transformer = SmithsonianTransformer(thing.resolved_content)
             elif authority == "GEOME":
-                transformer = GEOMETransformer(thing.resolved_content)
+                transformer = GEOMETransformer(thing.resolved_content, None, session, taxon_name_map)
             elif authority == "OPENCONTEXT":
                 transformer = OpenContextTransformer(thing.resolved_content)
             elif authority == "SESAR":

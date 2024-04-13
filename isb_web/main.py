@@ -43,7 +43,7 @@ import logging
 
 from isb_web.api_types import ThingsSitemapParams, ReliqueryResponse, ReliqueryParams
 from isb_web.schemas import ThingPage
-from isb_web.sqlmodel_database import SQLModelDAO
+from isb_web.sqlmodel_database import SQLModelDAO, taxonomy_name_to_kingdom_map
 import isb_lib.stac
 from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, PHYSICALSPECIMEN_URI
 
@@ -68,6 +68,8 @@ tags_metadata = [
 THING_URL_PATH = config.Settings().thing_url_path
 STAC_ITEM_URL_PATH = config.Settings().stac_item_url_path
 STAC_COLLECTION_URL_PATH = config.Settings().stac_collection_url_path
+
+TAXONOMY_NAME_TO_KINGDOM_MAP = {}
 
 app = fastapi.FastAPI(openapi_tags=tags_metadata)
 dao = SQLModelDAO(None)
@@ -133,6 +135,9 @@ def on_startup():
     vocabulary_mapper.sampled_feature_type()
     vocabulary_mapper.material_type()
     vocabulary_mapper.specimen_type()
+    # Force this into memory so it's cached when we need it later
+    global TAXONOMY_NAME_TO_KINGDOM_MAP
+    TAXONOMY_NAME_TO_KINGDOM_MAP = taxonomy_name_to_kingdom_map(session)
     session.close()
     # Superusers are allowed to mint identifiers as well, so make sure they're in the list.
     orcid_ids.extend(isb_web.config.Settings().orcid_superusers)
@@ -595,7 +600,7 @@ async def thing_resolved_content(identifier: str, item: Thing, session: Session)
     elif authority_id == "GEOME":
         content = (
             isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
-                identifier, item.resolved_content, session
+                identifier, item.resolved_content, session, TAXONOMY_NAME_TO_KINGDOM_MAP
             ).transform()
         )
     elif authority_id == "OPENCONTEXT":

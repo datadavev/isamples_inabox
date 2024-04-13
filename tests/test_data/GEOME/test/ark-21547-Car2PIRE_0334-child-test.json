@@ -6,8 +6,8 @@
     "description": "",
     "has_context_category": [
         {
-            "label": "Marine environment",
-            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody"
+            "label": "Any sampled feature",
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
         }
     ],
     "has_context_category_confidence": [

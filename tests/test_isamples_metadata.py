@@ -198,13 +198,13 @@ def test_geome_transformer_for_identifier():
         source_record = json.load(source_file)
         transformer = (
             isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
-                "ark:/21547/Car2PIRE_0334", source_record, None
+                "ark:/21547/Car2PIRE_0334", source_record, None, None
             )
         )
         assert type(transformer) is GEOMETransformer
         child_transformer = (
             isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
-                "ark:/21547/Cat2INDO106431.1", source_record, None
+                "ark:/21547/Cat2INDO106431.1", source_record, None,  None
             )
         )
         assert type(child_transformer) is GEOMEChildTransformer

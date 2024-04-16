@@ -11,10 +11,10 @@ from isamples_metadata.vocabularies import vocabulary_mapper
 @pytest.fixture
 def soil_mapper():
     endsWithSoilMapper = StringEndsWithCategoryMapper(
-        "Soil", "Subaerial surface environment", vocabulary_mapper.SAMPLED_FEATURE
+        "Soil", "Subaerial surface environment", vocabulary_mapper.sampled_feature_type
     )
     soilFloodplainMapper = StringPairedCategoryMapper(
-        "Microbiology>Soil", "floodplain", "Subaerial surface environment", vocabulary_mapper.SAMPLED_FEATURE
+        "Microbiology>Soil", "floodplain", "Subaerial surface environment", vocabulary_mapper.sampled_feature_type
     )
     soilMapper = StringOrderedCategoryMapper(
         # Order matters here, the generic one needs to be last

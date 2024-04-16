@@ -7,7 +7,7 @@
     "has_context_category": [
         {
             "label": "Site of past human activities",
-            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:pasthumanoccupationsite"
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/pasthumanoccupationsite"
         }
     ],
     "has_context_category_confidence": [
@@ -15,7 +15,8 @@
     ],
     "has_material_category": [
         {
-            "label": "anyanthropogenicmaterial"
+            "label": "Material",
+            "identifier": "https://w3id.org/isample/vocabulary/material/1.0/material"
         }
     ],
     "has_material_category_confidence": [
@@ -23,7 +24,8 @@
     ],
     "has_specimen_category": [
         {
-            "label": "artifact"
+            "label": "Artifact",
+            "identifier": "https://w3id.org/isample/vocabulary/specimentype/1.0/artifact"
         }
     ],
     "has_specimen_category_confidence": [
@@ -33,7 +35,7 @@
     "keywords": [],
     "produced_by": {
         "@id": "",
-        "label": "Petra Great Temple Excavations",
+        "label": "",
         "description": "",
         "has_feature_of_interest": "",
         "responsibility": [
@@ -53,19 +55,13 @@
         "result_time": "2007-11-11T00:00:00Z",
         "sampling_site": {
             "description": "",
-            "label": "Jordan/Petra Great Temple/Upper Temenos/Trench 105-106/Locus 22",
+            "label": "",
             "sample_location": {
                 "elevation": "",
                 "latitude": 30.3287,
                 "longitude": 35.4421
             },
-            "place_name": [
-                "Jordan",
-                "Petra Great Temple",
-                "Upper Temenos",
-                "Trench 105-106",
-                "Locus 22"
-            ]
+            "place_name": []
         }
     },
     "registrant": {

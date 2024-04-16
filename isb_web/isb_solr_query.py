@@ -1,12 +1,16 @@
 import typing
-from typing import Optional, Tuple, Mapping
+from typing import Optional, Tuple, Mapping, Any
 
 import requests
 import geojson
 import fastapi
 import logging
 import urllib.parse
+
+from requests import Response
+
 import isb_web.config
+from isb_lib.core import MEDIA_JSON
 
 BASE_URL = isb_web.config.Settings().solr_url
 _RPT_FIELD = "producedBy_samplingSite_location_rpt"
@@ -86,6 +90,89 @@ def get_solr_url(path_component: str):
     return urllib.parse.urljoin(BASE_URL, path_component)
 
 
+def set_default_params(params, defs, dict: bool = False):
+    for k in defs.keys():
+        fnd = False
+        for row in params:
+            if k == row[0]:
+                fnd = True
+                break
+        if not fnd:
+            if not dict:
+                params.append([k, defs[k]])
+            else:
+                params[k] = defs[k]
+    return params
+
+
+def replace_param_value(params: list, replacement: dict) -> list:
+    for k in replacement.keys():
+        for row in params:
+            if k == row[0]:
+                row[1] = replacement[k]
+    return params
+
+
+def read_param_value(params: list, key: str) -> Optional[Any]:
+    for row in params:
+        if key == row[0]:
+            return row[1]
+    return None
+
+
+solr_api_defparams = {
+    "wt": "json",
+    "q": "*:*",
+    "fl": "id",
+    "rows": 10,
+    "start": 0,
+}
+
+
+def get_solr_params_from_request(request: fastapi.Request, defparams: dict = solr_api_defparams, supported_params: Optional[list[str]] = None) -> Tuple[list[list[str]], dict]:
+    """Turns a GET request into a list of parameters suitable for querying Solr."""
+    if request.method != "GET":
+        raise ValueError("get_solr_params_from_request only works with GET requests.")
+
+    # Construct a list of K,V pairs to hand on to the solr request.
+    # Can't use a standard dict here because we need to support possible
+    # duplicate keys in the request query string.
+    properties = {
+        "q": defparams["q"]
+    }
+    params = []
+    # Update params with the provided parameters
+    for k, v in request.query_params.multi_items():
+        if supported_params is None or k in supported_params:
+            params.append([k, v])
+            if k in properties:
+                properties[k] = v
+    params = set_default_params(params, defparams)
+    return params, properties
+
+
+def get_solr_params_from_request_as_dict(request: fastapi.Request, defparams: dict = solr_api_defparams, supported_params: Optional[list[str]] = None) -> Tuple[dict, dict]:
+    """Turns a GET request into a list of parameters suitable for querying Solr."""
+    if request.method != "GET":
+        raise ValueError("get_solr_params_from_request only works with GET requests.")
+
+    # Construct a list of K,V pairs to hand on to the solr request.
+    # Can't use a standard dict here because we need to support possible
+    # duplicate keys in the request query string.
+    properties = {
+        "q": defparams["q"]
+    }
+    params = {}
+    # Update params with the provided parameters
+    for k, v in request.query_params.multi_items():
+        if supported_params is None or k in supported_params:
+            params[k] = v
+            if k in properties:
+                properties[k] = v
+    params = set_default_params(params, defparams, True)
+    return params, properties
+
+
 def _get_heatmap(
     q: str,
     bb: typing.Dict,
@@ -103,7 +190,7 @@ def _get_heatmap(
     bb[MIN_LON] = clip_float(bb[MIN_LON], -180.0, 180.0)
     bb[MAX_LON] = clip_float(bb[MAX_LON], -180.0, 180.0)
     # logging.warning(bb)
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": MEDIA_JSON}
     params: dict = {
         "q": q,
         "rows": 0,
@@ -313,7 +400,7 @@ def solr_leaflet_heatmap(q, bb, fq=None, grid_level=None):
     }
 
 
-def solr_query(params, query=None):
+def solr_query(params, query=None, handler: str = "select", wrap_response: bool = True):
     """
     Issue a request against the solr select endpoint.
 
@@ -326,9 +413,9 @@ def solr_query(params, query=None):
     Returns:
         Iterator for the solr response.
     """
-    url = get_solr_url("select")
-    headers = {"Accept": "application/json"}
-    content_type = "application/json"
+    url = get_solr_url(handler)
+    headers = {"Accept": MEDIA_JSON}
+    content_type = MEDIA_JSON
     wt_map = {
         "csv": "text/plain",
         "xml": "application/xml",
@@ -336,9 +423,10 @@ def solr_query(params, query=None):
         "smile": "application/x-jackson-smile",
         "json": "application/json",
     }
-    for k, v in params:
-        if k == "wt":
-            content_type = wt_map.get(v.lower(), "json")
+    if type(params) is list:
+        for k, v in params:
+            if k == "wt":
+                content_type = wt_map.get(v.lower(), "json")
 
     if query is None:
         response = requests.get(url, headers=headers, params=params, stream=True)
@@ -360,7 +448,7 @@ def reliquery_solr_query(query: str) -> dict:
     Returns: The solr response from executing the reliquery query
     """
     url = get_solr_url("select")
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": MEDIA_JSON}
     params: Mapping = {
         "q": query,
         "rows": MAX_RELIQUERY_ROWS,
@@ -391,7 +479,7 @@ def solr_get_record(identifier):
         "start": 0,
     }
     url = get_solr_url("select")
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": MEDIA_JSON}
     response = requests.get(url, headers=headers, params=params)
     if response.status_code != 200:
         return response.status_code, None
@@ -401,7 +489,7 @@ def solr_get_record(identifier):
     return 200, docs["response"]["docs"][0]
 
 
-def solr_searchStream(params, collection=DEFAULT_COLLECTION_NAME):  # noqa: C901
+def solr_searchStream(params: list[list[str]], collection: str = DEFAULT_COLLECTION_NAME) -> Response:  # noqa: C901
     """
     Requests a streaming search response from solr.
 
@@ -454,9 +542,9 @@ def solr_searchStream(params, collection=DEFAULT_COLLECTION_NAME):  # noqa: C901
     # TODO: C901 -- need to examine computational complexity
 
     point_rollup = False
-    qparams = {}
+    qparams: dict = {}
     url = get_solr_url("stream")
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": MEDIA_JSON}
     selection_method = "search"
     _params = []
     for kv in params:
@@ -485,7 +573,6 @@ def solr_searchStream(params, collection=DEFAULT_COLLECTION_NAME):  # noqa: C901
         else:
             _params.append(f'{kv[0]}="{kv[1]}"')
     L.debug("_params = %s", _params)
-    content_type = "application/json"
     request = {
         "expr": f'{selection_method}({collection},{",".join(_params)},qt="/select")'
     }
@@ -504,9 +591,7 @@ def solr_searchStream(params, collection=DEFAULT_COLLECTION_NAME):  # noqa: C901
         url, headers=headers, params=qparams, data=request, stream=True
     )
     logging.info("Returning response")
-    return fastapi.responses.StreamingResponse(
-        response.iter_content(chunk_size=4096), media_type=content_type
-    )
+    return response
 
 
 def solr_luke():
@@ -519,10 +604,10 @@ def solr_luke():
     """
     url = get_solr_url("admin/luke")
     params = {"show": "schema", "wt": "json"}
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": MEDIA_JSON}
     response = requests.get(url, headers=headers, params=params, stream=True)
     return fastapi.responses.StreamingResponse(
-        response.iter_content(chunk_size=2048), media_type="application/json"
+        response.iter_content(chunk_size=2048), media_type=MEDIA_JSON
     )
 
 
@@ -535,7 +620,7 @@ def _fetch_solr_records(
     sort: typing.Optional[str] = None,
     additional_query: typing.Optional[str] = None,
 ):
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": MEDIA_JSON}
     if additional_query is not None:
         if authority_id is not None:
             query = f"{additional_query} AND source:{authority_id}"
@@ -620,7 +705,7 @@ def solr_records_forh3_counts(
     query: str, field_name: str, max_rows: int = -1
 ) -> dict:
     url = get_solr_url("stream")
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": MEDIA_JSON}
     dlm = ",\n"
     facet = (f'facet({DEFAULT_COLLECTION_NAME}{dlm}'
              f'q="{query}"{dlm}'
@@ -634,7 +719,7 @@ def solr_records_forh3_counts(
 
 def solr_counts_by_authority(rsession=requests.session()) -> dict[str, int]:
     url = get_solr_url("select")
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": MEDIA_JSON}
     params = {
         "q": "*:*",
         "facet": "true",

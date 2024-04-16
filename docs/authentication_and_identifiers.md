@@ -134,3 +134,26 @@ python scripts/examples/mint_identifiers_cli.py mint_noidy_identifiers -t <JWT> 
 
 For the shoulder (`-s`) parameter, you'll need to ensure that the namespace with the specified shoulder exists in the database and that your orcid id has access to it 
 prior to calling the service.  You'll also need to have logged in to the iSamples WebUI and copied the JWT string value before attempting to hit the service.
+
+## Local Development Tips
+### Use Chrome
+Safari has been observed behaving oddly during the oauth dance in local development.  It's recommended to use Chrome as it doesn't appear to exhibit the same issues.
+
+### Hardcoded local orcid
+During local development, it's easier to edit config to allow certain orcids through at all times.  The config key to edit is
+
+```
+    # The list of orcid ids that are allowed to add other orcid ids to the iSB instance.
+    orcid_superusers: list[str] = [""]
+```
+
+### Obtaining JWT through web browser
+Similarly, not needing to run the JavaScript app to obtain a JWT for development is quite helpful.  Including the `raw_jwt` query parameter will just echo the JWT to the web browser, and you can copy/paste it to pass along as an `Authorization: Bearer <token>` header.  The flow is:
+
+1. Hit the local server with the `raw_jwt` query parameter, e.g. `http://localhost:8000/login?raw_jwt=true`
+2. Copy the JWT from the web browser after authenticating via orcid.
+3. Include the copied JWT in the curl request to the API requiring authentication, e.g.
+
+```
+ curl -H "Authorization: Bearer eyJraWQiOiJzYW5kYm94LW9yY2lkLW9yZy0zaHBnb3NsM2I2bGFwZW5oMWV3c2dkb2IzZmF3ZXBvaiIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiTXU1NmZVOU5UeFgtQmRxZjFvU2ozZyIsImF1ZCI6IkFQUC1STzFJUDdQR0xYQlhCOU5EIiwic3ViIjoiMDAwMC0wMDAzLTIxMDktNzY5MiIsImF1dGhfdGltZSI6MTcwOTA2MzIyNywiaXNzIjoiaHR0cHM6XC9cL3NhbmRib3gub3JjaWQub3JnIiwiZXhwIjoxNzA5MTQ5NjMyLCJnaXZlbl9uYW1lIjoiRGFubnkiLCJpYXQiOjE3MDkwNjMyMzIsIm5vbmNlIjoidm5HZmFteGRVYkJaQzl2R2JYNFoiLCJmYW1pbHlfbmFtZSI6Ik9yYWxlIiwianRpIjoiM2UxOTJhNzYtNjQzMy00NzYzLThkNTQtNzVlMGI2N2U4NjkwIn0.ncY5TwAQOZSe2fIlGfgOplMDqqd5eElVXe7zVD0VWpkAVP9aXQihTa6MIHefx2d4Gb7C5Qp3vqyt1-XzpmU2IINLlY8rUlAVXb8GxC14y01hEdTJPNaTaUMf-BQmurmdE0UiGnmEWMt9KPdZLttEHjJfXBO4ZmBxC49MX5gBjiwTeXJYT7on7zXit_StzPiq9BUDPHRqUlOvfmGuHGyyhjPHYIv-pNBbPPu5uh6EriJBEwCFxTnJkzsP2hoCvSIjtuXTDgPaviRsyTgX7Rz1ha8M13ZOrWcsItmUnPTrT9Dr14yhdrL-KR5rhOURLtAmh1EzFgcgMYQWIz2JorpYcQ" "http://localhost:8000/export/create?fq=searchText:Tucson&fl=id&fl=searchText"
+```

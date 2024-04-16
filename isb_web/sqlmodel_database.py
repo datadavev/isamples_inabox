@@ -1,6 +1,7 @@
 import datetime
 import typing
 import json
+import uuid
 
 import igsn_lib.time
 import sqlalchemy
@@ -8,8 +9,9 @@ import logging
 from typing import Optional, List
 
 from isb_lib.identifiers.noidy.n2tminter import N2TMinter
+from isb_lib.models.export_job import ExportJob
 from isb_lib.models.namespace import Namespace
-from sqlalchemy import Index, update, or_
+from sqlalchemy import Index, update, or_, func
 from sqlalchemy.exc import ProgrammingError
 from sqlmodel import SQLModel, create_engine, Session, select
 from sqlmodel.sql.expression import SelectOfScalar
@@ -202,6 +204,11 @@ def get_thing_with_id(session: Session, identifier: str) -> Optional[Thing]:
         )
         result = session.exec(identifiers_statement).first()
     return result
+
+
+def random_things_with_authority(session: Session, authority: str, count: int) -> list[Thing]:
+    statement = select(Thing).where(Thing.authority_id == authority).limit(count).order_by(func.random())
+    return session.exec(statement).all()
 
 
 def get_things_with_ids(session: Session, identifiers: list[str]) -> list[Thing]:
@@ -605,3 +612,19 @@ def taxonomy_name_to_kingdom_map(session: Session) -> dict:
 def kingdom_for_taxonomy_name(session: Session, name: str) -> Optional[str]:
     kingdom_select = select(TaxonomyName.kingdom).where(or_(TaxonomyName.name == name, TaxonomyName.kingdom == name))
     return session.exec(kingdom_select).first()
+
+
+def save_or_update_export_job(session: Session, export_job: ExportJob) -> ExportJob:
+    now = igsn_lib.time.dtnow()
+    if export_job.primary_key is None:
+        export_job.tcreated = now
+        export_job.uuid = str(uuid.uuid4())
+    session.add(export_job)
+    session.commit()
+    return export_job
+
+
+def export_job_with_uuid(session: Session, uuid: str) -> Optional[ExportJob]:
+    export_job_select = select(ExportJob).where(ExportJob.uuid == uuid)
+    result = session.exec(export_job_select)
+    return result.first()

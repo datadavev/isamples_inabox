@@ -67,7 +67,7 @@ class ModelServerClient:
         url = f"{self.base_url}sesar"
         return ModelServerClient._convert_to_prediction_result_list(self._make_json_request(url, params, rsession))
 
-    def make_smithsonian_sampled_feature_request(self, input_strs: list[str], rsession: requests.Session = requests.Session()) -> Any:
+    def make_smithsonian_sampled_feature_request(self, input_strs: list[str], rsession: requests.Session = requests.Session()) -> str:
         params: dict = {"input": input_strs, "type": "context"}
         url = f"{self.base_url}smithsonian"
         return self._make_json_request(url, params, rsession)

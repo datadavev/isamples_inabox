@@ -3,7 +3,7 @@ from typing import Optional, Any
 import isamples_frictionless
 from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import Session
-from starlette.responses import Response
+from starlette.responses import Response, PlainTextResponse
 
 from isb_lib.identifiers import datacite
 import json
@@ -15,15 +15,13 @@ import starlette.middleware.cors
 import starlette.middleware.sessions
 import starlette.types
 import starlette.datastructures
-import starlette_oauth2_api
-import authlib.integrations.starlette_client
 import jwt
 import datetime
 
 from isb_lib.models.namespace import Namespace
 from isb_lib.utilities import url_utilities
 from isb_lib.utilities.url_utilities import full_url_from_suffix
-from isb_web import config, sqlmodel_database
+from isb_web import config, sqlmodel_database, auth as isbweb_auth
 from isb_web.api_types import MintDataciteIdentifierParams, MintDraftIdentifierParams, ManageOrcidForNamespaceParams, \
     AddNamespaceParams, MintNoidyIdentifierParams
 from isb_web.sqlmodel_database import SQLModelDAO
@@ -36,131 +34,13 @@ dao: Optional[SQLModelDAO] = None
 main_app: Optional[FastAPI] = None
 MANAGE_PREFIX = "/manage"
 
-logging.basicConfig(level=logging.DEBUG)
-_L = logging.getLogger("manage")
 
-
-# use the same db connection from the main handler
 def get_session():
     with dao.get_session() as session:
         yield session
 
 
-allowed_orcid_ids: list = []
-
-
-class AuthenticateMiddleware(starlette_oauth2_api.AuthenticateMiddleware):
-    """
-    Override the __call__ method of the AuthenticateMiddleware to also check
-    cookies for auth information. This enables access by either a JWT or the
-    authentication information stored in a cookie.
-    """
-
-    async def __call__(
-        self,
-        scope: starlette.types.Scope,
-        receive: starlette.types.Receive,
-        send: starlette.types.Send,
-    ) -> None:
-        request = starlette.requests.HTTPConnection(scope)
-        last_path_component = url_utilities.last_path_component(request.url)
-        if "/" + last_path_component in self._public_paths:
-            return await self._app(scope, receive, send)
-
-        token = None
-        user = request.session.get("user")
-
-        # Cookie set with auth info
-        if user is not None:
-            token = user.get("id_token", None)
-            orcid_id = user.get("orcid", None)
-            if orcid_id not in allowed_orcid_ids:
-                return await self._prepare_error_response(
-                    "orcid id is not authorized to manage identifiers",
-                    401,
-                    scope,
-                    receive,
-                    send,
-                )
-
-        # check for authorization header and token on it.
-        elif "authorization" in request.headers and request.headers[
-            "authorization"
-        ].startswith("Bearer "):
-            token = request.headers["authorization"][len("Bearer "):]
-
-        elif "authorization" in request.headers:
-            _L.debug('No "Bearer" in authorization header')
-            return await self._prepare_error_response(
-                'The "authorization" header must start with "Bearer "',
-                400,
-                scope,
-                receive,
-                send,
-            )
-        else:
-            _L.debug("No authorization header")
-            return await self._prepare_error_response(
-                'The request does not contain an "authorization" header',
-                400,
-                scope,
-                receive,
-                send,
-            )
-
-        try:
-            provider, claims = self.claims(token)
-            scope["oauth2-claims"] = claims
-            scope["oauth2-provider"] = provider
-            scope["oauth2-jwt"] = token
-        except starlette_oauth2_api.InvalidToken as e:
-            return await self._prepare_error_response(
-                e.errors, 401, scope, receive, send
-            )
-
-        return await self._app(scope, receive, send)
-
-
-oauth = authlib.integrations.starlette_client.OAuth()
-
-# https://gitlab.com/jorgecarleitao/starlette-oauth2-api#how-to-use
-manage_api.add_middleware(
-    AuthenticateMiddleware,
-    providers={
-        "orcid": {
-            "issuer": config.Settings().orcid_issuer,
-            "keys": config.Settings().orcid_issuer + "/oauth/jwks",
-            "audience": config.Settings().orcid_client_id,
-        }
-    },
-    public_paths={"/login", "/auth", "/logout", "/hypothesis_jwt"},
-)
-
-manage_api.add_middleware(
-    starlette.middleware.sessions.SessionMiddleware,
-    secret_key=config.Settings().session_middleware_key,
-)
-
-# https://www.starlette.io/middleware/#corsmiddleware
-manage_api.add_middleware(
-    starlette.middleware.cors.CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET", "HEAD", "POST"],
-    allow_headers=["authorization"],
-)
-
-
-# Registration here is using openid, which is a higher level wrapper
-# around the oauth end points. Take a look at the info at the
-# server_metadata_url
-oauth.register(
-    name="orcid",
-    client_id=config.Settings().orcid_client_id,
-    client_secret=config.Settings().orcid_client_secret,
-    server_metadata_url=config.Settings().orcid_issuer + "/.well-known/openid-configuration",
-    client_kwargs={"scope": "openid"},
-    api_base_url=config.Settings().orcid_issuer,
-)
+isbweb_auth.add_auth_middleware_to_app(manage_api, {"/login", "/auth", "/logout", "/hypothesis_jwt"})
 
 
 @manage_api.post("/mint_datacite_identifier", include_in_schema=False)
@@ -215,7 +95,9 @@ async def login(request: starlette.requests.Request):
         redirect_uri += "?annotation=true"
     elif "thing" in request.query_params:
         redirect_uri += f"?thing={request.query_params['thing']}"
-    orcid_auth_uri = await oauth.orcid.authorize_redirect(request, redirect_uri)
+    elif "raw_jwt" in request.query_params and request.query_params["raw_jwt"] == "true":
+        redirect_uri += "?raw_jwt=true"
+    orcid_auth_uri = await isbweb_auth.oauth.orcid.authorize_redirect(request, redirect_uri)
     return orcid_auth_uri
 
 
@@ -225,11 +107,15 @@ async def auth(request: starlette.requests.Request):
     This method is called back by ORCID oauth. It needs to be in the
     registered callbacks of the ORCID Oauth configuration.
     """
-    token = await oauth.orcid.authorize_access_token(request)
-    request.session["user"] = dict(token)
+
+    token = await isbweb_auth.oauth.orcid.authorize_access_token(request)
+    token_dict = dict(token)
+    request.session["user"] = token_dict
     redirect_url = url_utilities.joined_url(str(request.url), config.Settings().auth_response_redirect_fragment)
     # redirect_url = "http://localhost:3000/#/dois"
-    if "annotation" in request.query_params and request.query_params["annotation"] == "true":
+    if "raw_jwt" in request.query_params and request.query_params["raw_jwt"] == "true":
+        return PlainTextResponse(content=token_dict["id_token"])
+    elif "annotation" in request.query_params and request.query_params["annotation"] == "true":
         # if login is for annotation purpose, add access token as query param
         redirect_url += "?access_token=" + token["access_token"]
         return starlette.responses.RedirectResponse(url=redirect_url)
@@ -285,7 +171,7 @@ def add_orcid_id(request: starlette.requests.Request, session: Session = Depends
         if orcid_id is None:
             raise HTTPException(401, "orcid_id is a required parameter")
         person = sqlmodel_database.save_person_with_orcid_id(session, orcid_id)
-        allowed_orcid_ids.append(orcid_id)
+        isbweb_auth.allowed_orcid_ids.append(orcid_id)
         return person.primary_key
     else:
         # I think the middleware should prevent this, but just in case…
@@ -294,7 +180,7 @@ def add_orcid_id(request: starlette.requests.Request, session: Session = Depends
 
 @manage_api.post("/add_namespace")
 def add_namespace(params: AddNamespaceParams, request: starlette.requests.Request, session: Session = Depends(get_session)):
-    orcid_id = _orcid_id_from_session_or_scope(request)
+    orcid_id = isbweb_auth.orcid_id_from_session_or_scope(request)
     if orcid_id is None:
         raise HTTPException(401, "no session")
     elif orcid_id not in config.Settings().orcid_superusers:
@@ -332,17 +218,6 @@ def manage_orcid_id_for_namespace(params: ManageOrcidForNamespaceParams, request
         raise HTTPException(401, "no session")
 
 
-def _orcid_id_from_session_or_scope(request: starlette.requests.Request) -> Optional[str]:
-    user = request.session.get("user")
-    if user is not None:
-        return user.get("orcid", None)
-    else:
-        oauth_claims = request.scope.get("oauth2-claims")
-        if oauth_claims is not None:
-            return oauth_claims.get("sub")
-    return None
-
-
 @manage_api.post("/mint_noidy_identifiers", include_in_schema=False)
 def mint_noidy_identifiers(params: MintNoidyIdentifierParams, request: starlette.requests.Request,
                            session: Session = Depends(get_session)) -> Any:
@@ -351,7 +226,7 @@ def mint_noidy_identifiers(params: MintNoidyIdentifierParams, request: starlette
         params: Class that contains the shoulder and number of identifiers to mint
     Return: A list of all the minted identifiers, or a 404 if the namespace doesn't exist.
     """
-    orcid_id = _orcid_id_from_session_or_scope(request)
+    orcid_id = isbweb_auth.orcid_id_from_session_or_scope(request)
     if orcid_id is None:
         raise HTTPException(401, "no session")
     namespace = sqlmodel_database.namespace_with_shoulder(session, params.shoulder)
@@ -373,7 +248,7 @@ def mint_noidy_identifiers(params: MintNoidyIdentifierParams, request: starlette
 
 @manage_api.post("/hypothesis_jwt", include_in_schema=False)
 def hypothesis_jwt(request: starlette.requests.Request, session: Session = Depends(get_session)) -> Optional[str]:
-    orcid_id = _orcid_id_from_session_or_scope(request)
+    orcid_id = isbweb_auth.orcid_id_from_session_or_scope(request)
     if orcid_id is None:
         raise HTTPException(401, "no session")
     else:

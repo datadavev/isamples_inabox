@@ -19,13 +19,14 @@ uvicorn = {version = "^0.23.2", extras=["standard"]}
 aiofiles = "^23.2.1"
 igsn-lib = {git = "https://github.com/isamplesorg/igsn_lib.git", rev = "main"}
 isamples_frictionless = {git = "https://github.com/isamplesorg/isamples_frictionless.git", rev = "main"}
+term_store = {git = "https://github.com/isamplesorg/term_store.git", rev = "main"}
 accept-types = "^0.4.1"
 shapely = "^2.0.2"
 geojson = "^2.5.0"
 Jinja2 = "^3.1.2"
 aiofile = "^3.8.8"
 
-sqlmodel = "^0.0.8"
+sqlmodel = "^0.0.12"
 Authlib = "^1.2.1"
 itsdangerous = "^2.1.2"
 starlette-oauth2-api = "^0.2.6"
@@ -42,6 +43,8 @@ openpyxl = "^3.1.2"
 xlrd = "^2.0.1"
 
 PyJWT = "^2.8.0"
+petl = "^1.7.14"
+ijson = "^3.2.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"

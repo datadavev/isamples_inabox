@@ -1,6 +1,6 @@
 import pytest
 from isamples_metadata.GEOMETransformer import GEOMETransformer
-from isamples_metadata.metadata_constants import COMPLIES_WITH, AUTHORIZED_BY
+from isamples_metadata.metadata_constants import METADATA_COMPLIES_WITH, METADATA_AUTHORIZED_BY
 
 iterator_testcases = [
     ("1187/SU/KS/2006, 04239/ SU.3/KS/2019",
@@ -118,5 +118,5 @@ structured_data_test_values = [
 @pytest.mark.parametrize("source_text,complies_with,authorized_by", structured_data_test_values)
 def test_parse_structured_data(source_text: str, complies_with: list[str], authorized_by: list[str]):
     parse_result = GEOMETransformer.parse_permit_structured_text(source_text)
-    assert complies_with == parse_result.get(COMPLIES_WITH)
-    assert authorized_by == parse_result.get(AUTHORIZED_BY)
+    assert complies_with == parse_result.get(METADATA_COMPLIES_WITH)
+    assert authorized_by == parse_result.get(METADATA_AUTHORIZED_BY)

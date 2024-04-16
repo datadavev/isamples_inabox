@@ -33,6 +33,7 @@ class AnalyticsEvent(_NoValue):
     STAC_COLLECTION = "stac_collection"
     RELATION_METADATA = "relation_metadata"
     RELATED_SOLR = "related_solr"
+    THINGS_DOWNLOAD = "things_download"
 
 
 def attach_analytics_state_to_request(

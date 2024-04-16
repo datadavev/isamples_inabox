@@ -73,7 +73,7 @@ def mutate_record(record: dict) -> Optional[dict]:
 def thing_id_to_h3(session: Session) -> dict:
     thing_select = (
         select(Thing.id, Thing.h3)
-        .filter(Thing.h3 != None)  # noqa: E711
+        .filter(Thing.h3 is not None)  # type: ignore
     )
     results = session.exec(thing_select).all()
     id_to_h3 = {}

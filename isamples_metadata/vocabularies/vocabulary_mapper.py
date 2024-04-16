@@ -1,9 +1,9 @@
-import os
-import csv
-from pathlib import Path
-from typing import Optional
+import logging
+from typing import Optional, Any
 
-from isamples_metadata.metadata_constants import LABEL, IDENTIFIER
+from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_IDENTIFIER
+from isb_lib.vocabulary import vocab_adapter
+from isb_web.vocabulary import SAMPLEDFEATURE_URI, PHYSICALSPECIMEN_URI, MATERIAL_URI
 
 """
 Note that this module operates on a CSV-derived form of the vocabulary sourced at
@@ -21,40 +21,101 @@ class VocabularyTerm(dict):
 
     def metadata_dict(self) -> dict[str, str]:
         metadata_dict = {
-            LABEL: self.label
+            METADATA_LABEL: self.label
         }
         if self.uri is not None:
-            metadata_dict[IDENTIFIER] = self.uri
+            metadata_dict[METADATA_IDENTIFIER] = self.uri
         return metadata_dict
 
 
 class ControlledVocabulary:
-    def __init__(self, file_path: str, uri_prefix: str):
-        self.uri_prefix = uri_prefix
-        self.vocabulary_terms_by_key = {}
-        self.vocabulary_terms_by_label = {}
-        with open(file_path, newline="") as csvfile:
-            csvreader = csv.reader(csvfile, delimiter="\t", quoting=csv.QUOTE_NONE)
-            # skip header
-            next(csvreader)
-            for row in csvreader:
-                # The first column is the term key and has a prefix, which we ignore for the purpose of this API,
-                # e.g. mat:anthropogenicmetal -> anthropogenicmetal
-                key = row[0]
-                label = row[1]
-                uri = os.path.join(uri_prefix, key)
-                term = VocabularyTerm(key, label, uri)
-                self.vocabulary_terms_by_key[key] = term
-                self.vocabulary_terms_by_label[label] = term
+    def __init__(self, uijson_dict: dict[str, Any], key_prefix: str):
+        self.vocabulary_terms_by_key: dict[str, VocabularyTerm] = {}
+        self.vocabulary_terms_by_label: dict[str, VocabularyTerm] = {}
+        self._uijson_dict = uijson_dict
+        self._key_prefix = key_prefix
+        self._is_first = True
+        self._process_uijson_dict(uijson_dict)
+
+    def _term_key_for_label(self, label: str):
+        return f"{self._key_prefix}:{label}"
+
+    def _process_uijson_dict(self, uijson_dict: dict[str, Any]):
+        for dict_key, value in uijson_dict.items():
+            # structure looks like this:
+            """
+                "https://w3id.org/isample/vocabulary/material/1.0/material":
+                {
+                    "label":
+                    {
+                        "en": "Material"
+                    },
+                    "children":
+                    [
+            """
+            uri = dict_key
+            label = value.get("label").get("en")
+            last_piece_of_uri = dict_key.rsplit("/", 1)[-1]
+            term_key = self._term_key_for_label(last_piece_of_uri)
+            term = VocabularyTerm(term_key, label, uri)
+            # There's a mix of callers that use both namespaced and non-namespaced keys to look terms up.
+            # We should support both, e.g. "biogenicnonorganicmaterial" and "spec:biogenicnonorganicmaterial"
+            self.vocabulary_terms_by_key[term_key.lower()] = term
+            self.vocabulary_terms_by_key[last_piece_of_uri] = term
+            self.vocabulary_terms_by_label[label.lower()] = term
+            if self._is_first:
+                self._root_term = term
+                self._is_first = False
+            for child in value.get("children"):
+                self._process_uijson_dict(child)
+
+    def root_term(self) -> VocabularyTerm:
+        return self._root_term
 
     def term_for_key(self, key: str) -> VocabularyTerm:
-        return self.vocabulary_terms_by_key.get(key, VocabularyTerm(None, key, None))
+        term = self.vocabulary_terms_by_key.get(key.lower())
+        if term is None:
+            term = self.vocabulary_terms_by_label.get(self._term_key_for_label(key.lower()))
+        if term is None:
+            logging.warning(f"Unable to look up vocabulary term for key {key}, returning root term instead.")
+            term = self.root_term()
+        return term
 
     def term_for_label(self, label: str) -> VocabularyTerm:
-        return self.vocabulary_terms_by_label.get(label, VocabularyTerm(None, label, None))
+        term = self.vocabulary_terms_by_label.get(label.lower())
+        if term is None:
+            logging.warning(f"Unable to look up vocabulary term for label {label}, returning root term instead.")
+            term = self.root_term()
+        return term
 
 
-parent_dir = Path(__file__).parent
-MATERIAL_TYPE = ControlledVocabulary(os.path.join(parent_dir, "materialType.txt"), "https://w3id.org/isample/vocabulary/material/0.9/")
-SAMPLED_FEATURE = ControlledVocabulary(os.path.join(parent_dir, "sampledfeature.txt"), "https://w3id.org/isample/vocabulary/sampledfeature/0.9")
-SPECIMEN_TYPE = ControlledVocabulary(os.path.join(parent_dir, "specimenType.txt"), "https://w3id.org/isample/vocabulary/specimentype/0.9")
+SPECIMEN_TYPE = None
+MATERIAL_TYPE = None
+SAMPLED_FEATURE_TYPE = None
+
+
+def specimen_type() -> ControlledVocabulary:
+    global SPECIMEN_TYPE
+    if SPECIMEN_TYPE is None:
+        uijson = vocab_adapter.VOCAB_CACHE.get(PHYSICALSPECIMEN_URI)
+        assert uijson is not None
+        SPECIMEN_TYPE = ControlledVocabulary(uijson, "spec")
+    return SPECIMEN_TYPE
+
+
+def material_type() -> ControlledVocabulary:
+    global MATERIAL_TYPE
+    if MATERIAL_TYPE is None:
+        uijson = vocab_adapter.VOCAB_CACHE.get(MATERIAL_URI)
+        assert uijson is not None
+        MATERIAL_TYPE = ControlledVocabulary(uijson, "mat")
+    return MATERIAL_TYPE
+
+
+def sampled_feature_type() -> ControlledVocabulary:
+    global SAMPLED_FEATURE_TYPE
+    if SAMPLED_FEATURE_TYPE is None:
+        uijson = vocab_adapter.VOCAB_CACHE.get(SAMPLEDFEATURE_URI)
+        assert uijson is not None
+        SAMPLED_FEATURE_TYPE = ControlledVocabulary(uijson, "sf")
+    return SAMPLED_FEATURE_TYPE

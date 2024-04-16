@@ -1,5 +1,6 @@
 import typing
 import re
+from typing import Callable
 
 import isamples_metadata.Transformer
 from isamples_metadata.Transformer import (
@@ -10,6 +11,7 @@ from isamples_metadata.Transformer import (
 )
 from isamples_metadata.taxonomy.metadata_model_client import MODEL_SERVER_CLIENT
 from isamples_metadata.vocabularies import vocabulary_mapper
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 
 class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
@@ -25,7 +27,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "DNA, RNA, Proteins; Unknown DNA, RNA, or Protein"
         ],
         "organismpart",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
     _biome_aggregation_mapper = StringEqualityCategoryMapper(
@@ -34,7 +36,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Environmental Sample; Host-Associated; Small Intestine RNA",
         ],
         "biomeaggregation",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
     _whole_organism_mapper = StringEqualityCategoryMapper(
@@ -42,10 +44,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Tissue & Parts; Egg; Multiple eggs",
         ],
         "wholeorganism",
-        vocabulary_mapper.SPECIMEN_TYPE
+        vocabulary_mapper.specimen_type
     )
 
-    _default_organism_part_mapper = StringConstantCategoryMapper("Organism part", vocabulary_mapper.SPECIMEN_TYPE)
+    _default_organism_part_mapper = StringConstantCategoryMapper("Organism part", vocabulary_mapper.specimen_type)
 
     @classmethod
     def categories_mappers(cls) -> typing.List[AbstractCategoryMapper]:
@@ -54,6 +56,10 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             cls._whole_organism_mapper,
             cls._default_organism_part_mapper,
         ]
+
+    @classmethod
+    def controlled_vocabulary_callable(cls) -> Callable:
+        return vocabulary_mapper.specimen_type
 
 
 class SmithsonianTransformer(Transformer):
@@ -123,8 +129,8 @@ class SmithsonianTransformer(Transformer):
         )
         return Transformer.DESCRIPTION_SEPARATOR.join(description_pieces)
 
-    def has_context_categories(self) -> typing.List[dict[str, str]]:
-        categories = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request(
+    def has_context_categories(self) -> typing.List[VocabularyTerm]:
+        category = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request(
             [
                 self.source_record.get("collectionCode", ""),
                 self.source_record.get("habitat", ""),
@@ -133,18 +139,18 @@ class SmithsonianTransformer(Transformer):
                 self.source_record.get("higherClassification", ""),
             ]
         )
-        return [vocabulary_mapper.SAMPLED_FEATURE.term_for_label(category).metadata_dict() for category in categories]
+        return [vocabulary_mapper.sampled_feature_type().term_for_label(category)]
 
-    def has_material_categories(self) -> typing.List[dict[str, str]]:
+    def has_material_categories(self) -> typing.List[VocabularyTerm]:
         material_sample_type = self.source_record.get("materialSampleType")
         if material_sample_type == "Environmental sample":
-            return [vocabulary_mapper.MATERIAL_TYPE.term_for_key("mat:biogenicnonorganicmaterial").metadata_dict()]
+            return [vocabulary_mapper.material_type().term_for_key("mat:biogenicnonorganicmaterial")]
         else:
-            return [vocabulary_mapper.MATERIAL_TYPE.term_for_key("mat:organicmaterial").metadata_dict()]
+            return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial")]
 
-    def has_specimen_categories(self) -> typing.List[dict[str, str]]:
+    def has_specimen_categories(self) -> typing.List[VocabularyTerm]:
         preparation_type = self.source_record.get("preparationType", "")
-        return [term.metadata_dict() for term in SpecimenCategoryMetaMapper.categories(preparation_type)]
+        return SpecimenCategoryMetaMapper.categories(preparation_type)
 
     def informal_classification(self) -> typing.List[str]:
         return [self.source_record.get("scientificName", "")]
@@ -185,8 +191,8 @@ class SmithsonianTransformer(Transformer):
         return Transformer.NOT_PROVIDED
 
     def _add_to_responsibilities(self, source_label: str, dict_label: str, responsibilities: list[dict[str, str]]):
-        value = self.source_record[source_label]
-        if len(value) > 0:
+        value = self.source_record.get(source_label)
+        if value is not None and len(value) > 0:
             for current in self.RESPONSIBILITIES_SPLIT_RE.split(value):
                 responsibilities.append({"role": dict_label, "name": current.strip()})
 
@@ -196,8 +202,8 @@ class SmithsonianTransformer(Transformer):
         self._add_to_responsibilities("scientificNameAuthorship", "scientific name authorship", responsibilities)
 
         # unfortunately it looks like this field uses a ; separator for multiple people
-        identified_by = self.source_record["identifiedBy"]
-        if len(identified_by) > 0:
+        identified_by = self.source_record.get("identifiedBy")
+        if identified_by is not None and len(identified_by) > 0:
             for current in identified_by.split(";"):
                 responsibilities.append({"role": "identified by", "name": current.strip()})
         return responsibilities

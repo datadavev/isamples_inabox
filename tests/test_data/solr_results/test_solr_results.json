@@ -1,0 +1,35 @@
+{
+  "result-set":{
+    "docs":[{
+      "searchText":["14262","basisOfRecord: Event | establishmentMeans: Native | individualCount: 1 | occurrenceRemarks:  |  | organismRemarks: Captive","Arizona","USA","North America","Lithobates","chiricahuensis","3beb48d6cf5cd58450b2f15687f50907 release1","D | 1 | 1 | expeditionCode: release1 | projectId: 300","principalInvestigator: Pessier, Allan - Apessier[at]sandiegozoo.orgMendelson, Joseph R III","US zip code 85745, Tucson","US zip code 85745, Tucson","Arizona","USA","North America","GEOME"],
+      "id":"ark:/21547/DsC214262"
+    },{
+      "searchText":["14263","basisOfRecord: Event | establishmentMeans: Native | individualCount: 1 | occurrenceRemarks:  |  | organismRemarks: Captive","Arizona","USA","North America","Lithobates","sphenocephalus","4647ab4863aaae84889f7718c0eca24a release1","D | 1 | 1 | expeditionCode: release1 | projectId: 300","principalInvestigator: Pessier, Allan - Apessier[at]sandiegozoo.orgMendelson, Joseph R III","US zip code 85716, Tucson","US zip code 85716, Tucson","Arizona","USA","North America","GEOME"],
+      "id":"ark:/21547/DsC214263"
+    },{
+      "searchText":["14262.1","Arizona","USA","North America","Lithobates","chiricahuensis","genomic analysis","tissue subsample from 14262","US zip code 85745, Tucson","US zip code 85745, Tucson","Arizona","USA","North America","GEOME"],
+      "id":"ark:/21547/DsE214262.1"
+    },{
+      "searchText":["14263.1","Arizona","USA","North America","Lithobates","sphenocephalus","genomic analysis","tissue subsample from 14263","US zip code 85716, Tucson","US zip code 85716, Tucson","Arizona","USA","North America","GEOME"],
+      "id":"ark:/21547/DsE214263.1"
+    },{
+      "searchText":["NMNH M34181-00 (MIN)","Individual Sample","Not Provided","Adam Mansur","Adam Mansur,,Sample Owner","Mine","Total Wreck Mine","Arizona","Tucson","SESAR"],
+      "id":"IGSN:NHB0086MI"
+    },{
+      "searchText":["122295","Individual Sample","Not Provided","Carl Francis","Manual","Manual. Mineral Group: Stibiconite;     ","Carl Francis,,Sample Owner","Arizona","Tucson","Tucson","SESAR"],
+      "id":"IGSN:HRV0028L0"
+    },{
+      "searchText":["123852","Individual Sample","Not Provided","Carl Francis","Manual","Manual. Mineral Group: Stibiconite;     ","Carl Francis,,Sample Owner","Arizona","Tucson","Tucson","SESAR"],
+      "id":"IGSN:HRV002CL0"
+    },{
+      "searchText":["127074","Individual Sample","Not Provided","Carl Francis","Manual","Manual. Mineral Group: Apatite;   orange;   ","Paterson Museum,,Collector","Carl Francis,,Sample Owner","Arizona","Tucson","Tucson","SESAR"],
+      "id":"IGSN:HRV002GF2"
+    },{
+      "searchText":["127075","Individual Sample","Not Provided","Carl Francis","Manual","Manual. Mineral Group: Apatite;     ","Carl Francis,,Sample Owner","Arizona","Tucson","Tucson","SESAR"],
+      "id":"IGSN:HRV002GF3"
+    },{
+      "searchText":["NMNH 47561-00 (MIN)","Individual Sample","Not Provided","Adam Mansur","Adam Mansur,,Sample Owner","Mine","Matched to the GeoNames record for Tucson, Pima Co., Arizona, United States (http://geonames.org/5318313) based on feature name, district/county, state/province, and country using the situate.py script. Another place name mentioned in the EMu record (Mammoth-St. Anthony Mine) could not be matched and was ignored when determining the coordinates given here. Bounding box coordinates were rounded to 2 decimal places from the values given by GeoNames. An arbitrary error radius of 10 km was assigned to all featureCode=PPLA2 records matched using the script.","Mammoth-St. Anthony Mine","Arizona","Pima Co.","SESAR"],
+      "id":"IGSN:NHB0002K2"
+    }]
+  }
+}

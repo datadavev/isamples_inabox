@@ -40,7 +40,7 @@ def populate_points(session: Session):
             {"h3": h3_no_point, "latitude": geo[0], "longitude": geo[1]}
         )
     print("Will insert h3 mappings")
-    session.bulk_insert_mappings(mapper=Point, mappings=point_inserts)
+    session.bulk_insert_mappings(mapper=Point, mappings=point_inserts)  # type: ignore
     print("Will commit")
     session.commit()
 

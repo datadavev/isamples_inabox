@@ -2,6 +2,21 @@ import json
 import typing
 import requests
 import time
+from isamples_metadata.solr_field_constants import SOLR_SOURCE, SOLR_DESCRIPTION, \
+    SOLR_ISB_CORE_ID, SOLR_SEARCH_TEXT, SOLR_SOURCE_UPDATED_TIME, \
+    SOLR_INDEX_UPDATED_TIME, SOLR_LABEL, SOLR_HAS_CONTEXT_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY_CONFIDENCE, \
+    SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY_CONFIDENCE, SOLR_HAS_SPECIMEN_CATEGORY, \
+    SOLR_HAS_SPECIMEN_CATEGORY_CONFIDENCE, SOLR_KEYWORDS, SOLR_INFORMAL_CLASSIFICATION, SOLR_PRODUCED_BY_ISB_CORE_ID, \
+    SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_DESCRIPTION_TEXT, \
+    SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_RESULT_TIME, \
+    SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION_TEXT, \
+    SOLR_PRODUCED_BY_SAMPLING_SITE_LABEL, SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, \
+    SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_REGISTRANT, SOLR_SAMPLING_PURPOSE, SOLR_CURATION_LABEL, \
+    SOLR_CURATION_DESCRIPTION, SOLR_CURATION_DESCRIPTION_TEXT, SOLR_CURATION_ACCESS_CONSTRAINTS, SOLR_CURATION_LOCATION, \
+    SOLR_CURATION_RESPONSIBILITY, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LL, \
+    SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_BB, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_RPT, \
+    SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
+    SOLR_PRODUCED_BY_RESULT_TIME_RANGE, SOLR_COMPLIES_WITH, SOLR_AUTHORIZED_BY, SOLR_DESCRIPTION_TEXT
 
 # Sleep for 10 seconds to allow for the Solr Docker container to start up.
 time.sleep(10)
@@ -135,72 +150,72 @@ print("Going to create collection in create_isb_core_schema")
 createCollection()
 print("Going to create fields in create_isb_core_schema")
 # Internal iSamples bookkeeping columns
-createField("isb_core_id", "string", True, True, None)
+createField(SOLR_ISB_CORE_ID, "string", True, True, None)
 # Catch-all search field that all text should copy to
-createField("searchText", "text_en", True, True, None, True)
-createField("source", "string", True, True, None)
-createCopyField("source", "searchText")
+createField(SOLR_SEARCH_TEXT, "text_en", True, True, None, True)
+createField(SOLR_SOURCE, "string", True, True, None)
+createCopyField(SOLR_SOURCE, SOLR_SEARCH_TEXT)
 # The time the record was last updated in the source db
-createField("sourceUpdatedTime", "pdate", True, True, None)
+createField(SOLR_SOURCE_UPDATED_TIME, "pdate", True, True, None)
 # The time the record was last updated in the iSamples index
-createField("indexUpdatedTime", "pdate", True, True, None)
+createField(SOLR_INDEX_UPDATED_TIME, "pdate", True, True, None)
 #############
 
 
-createField("label", "string", True, True, None)
-createCopyField("label", "searchText")
-createField("description", "string", True, True, None)
-createField("description_text", "text_en", True, True, None)
-createCopyField("description", "description_text")
-createCopyField("description", "searchText")
-createField("hasContextCategory", "string", True, True, None, True)
-createField("hasContextCategoryConfidence", "pfloat", True, True, None, True)
-createField("hasMaterialCategory", "string", True, True, None, True)
-createField("hasMaterialCategoryConfidence", "pfloat", True, True, None, True)
-createField("hasSpecimenCategory", "string", True, True, None, True)
-createField("hasSpecimenCategoryConfidence", "pfloat", True, True, None, True)
-createField("keywords", "string", True, True, None, True)
-createCopyField("keywords", "searchText")
-createField("informalClassification", "string", True, True, None, True)
-createCopyField("informalClassification", "searchText")
-createField("producedBy_isb_core_id", "string", True, True, None)
-createField("producedBy_label", "string", True, True, None)
-createCopyField("producedBy_label", "searchText")
-createField("producedBy_description", "string", True, True, None)
-createField("producedBy_description_text", "text_en", True, True, None)
-createCopyField("producedBy_description", "producedBy_description_text")
-createCopyField("producedBy_description", "searchText")
-createField("producedBy_hasFeatureOfInterest", "string", True, True, None)
-createCopyField("producedBy_hasFeatureOfInterest", "searchText")
-createField("producedBy_responsibility", "string", True, True, None, True)
-createCopyField("producedBy_responsibility", "searchText")
-createField("producedBy_resultTime", "pdate", True, True, None)
-createField("producedBy_samplingSite_description", "string", True, True, None)
-createCopyField("producedBy_samplingSite_description", "searchText")
+createField(SOLR_LABEL, "string", True, True, None)
+createCopyField(SOLR_LABEL, SOLR_SEARCH_TEXT)
+createField(SOLR_DESCRIPTION, "string", True, True, None)
+createField(SOLR_DESCRIPTION_TEXT, "text_en", True, True, None)
+createCopyField(SOLR_DESCRIPTION, "description_text")
+createCopyField(SOLR_DESCRIPTION, SOLR_SEARCH_TEXT)
+createField(SOLR_HAS_CONTEXT_CATEGORY, "string", True, True, None, True)
+createField(SOLR_HAS_CONTEXT_CATEGORY_CONFIDENCE, "pfloat", True, True, None, True)
+createField(SOLR_HAS_MATERIAL_CATEGORY, "string", True, True, None, True)
+createField(SOLR_HAS_MATERIAL_CATEGORY_CONFIDENCE, "pfloat", True, True, None, True)
+createField(SOLR_HAS_SPECIMEN_CATEGORY, "string", True, True, None, True)
+createField(SOLR_HAS_SPECIMEN_CATEGORY_CONFIDENCE, "pfloat", True, True, None, True)
+createField(SOLR_KEYWORDS, "string", True, True, None, True)
+createCopyField(SOLR_KEYWORDS, SOLR_SEARCH_TEXT)
+createField(SOLR_INFORMAL_CLASSIFICATION, "string", True, True, None, True)
+createCopyField(SOLR_INFORMAL_CLASSIFICATION, SOLR_SEARCH_TEXT)
+createField(SOLR_PRODUCED_BY_ISB_CORE_ID, "string", True, True, None)
+createField(SOLR_PRODUCED_BY_LABEL, "string", True, True, None)
+createCopyField(SOLR_PRODUCED_BY_LABEL, SOLR_SEARCH_TEXT)
+createField(SOLR_PRODUCED_BY_DESCRIPTION, "string", True, True, None)
+createField(SOLR_PRODUCED_BY_DESCRIPTION_TEXT, "text_en", True, True, None)
+createCopyField(SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_DESCRIPTION_TEXT)
+createCopyField(SOLR_PRODUCED_BY_DESCRIPTION, SOLR_SEARCH_TEXT)
+createField(SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, "string", True, True, None)
+createCopyField(SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, SOLR_SEARCH_TEXT)
+createField(SOLR_PRODUCED_BY_RESPONSIBILITY, "string", True, True, None, True)
+createCopyField(SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_SEARCH_TEXT)
+createField(SOLR_PRODUCED_BY_RESULT_TIME, "pdate", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, "string", True, True, None)
+createCopyField(SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, SOLR_SEARCH_TEXT)
 createField(
-    "producedBy_samplingSite_description_text", "text_en", True, True, None
+    SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION_TEXT, "text_en", True, True, None
 )
-createCopyField("producedBy_samplingSite_description", "producedBy_samplingSite_description_text")
-createField("producedBy_samplingSite_label", "string", True, True, None)
-createCopyField("producedBy_samplingSite_label", "searchText")
-createField("producedBy_samplingSite_location_elevationInMeters", "pfloat", True, True, None)
-createField("producedBy_samplingSite_placeName", "string", True, True, None, True)
-createCopyField("producedBy_samplingSite_placeName", "searchText")
-createField("registrant", "string", True, True, None, True)
-createCopyField("registrant", "searchText")
-createField("samplingPurpose", "string", True, True, None, True)
-createCopyField("samplingPurpose", "searchText")
-createField("curation_label", "string", True, True, None)
-createCopyField("curation_label", "searchText")
-createField("curation_description", "string", True, True, None)
-createField("curation_description_text", "text_en", True, True, None)
-createCopyField("curation_description", "curation_description_text")
-createCopyField("curation_description", "searchText")
-createField("curation_accessContraints", "string", True, True, None)
-createField("curation_location", "string", True, True, None)
-createCopyField("curation_location", "searchText")
-createField("curation_responsibility", "string", True, True, None)
-createField("relatedResource_isb_core_id", "string", True, True, None, True)
+createCopyField(SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION_TEXT)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_LABEL, "string", True, True, None)
+createCopyField(SOLR_PRODUCED_BY_SAMPLING_SITE_LABEL, SOLR_SEARCH_TEXT)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, "pfloat", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, "string", True, True, None, True)
+createCopyField(SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_SEARCH_TEXT)
+createField(SOLR_REGISTRANT, "string", True, True, None, True)
+createCopyField(SOLR_REGISTRANT, SOLR_SEARCH_TEXT)
+createField(SOLR_SAMPLING_PURPOSE, "string", True, True, None, True)
+createCopyField(SOLR_SAMPLING_PURPOSE, SOLR_SEARCH_TEXT)
+createField(SOLR_CURATION_LABEL, "string", True, True, None)
+createCopyField(SOLR_CURATION_LABEL, SOLR_SEARCH_TEXT)
+createField(SOLR_CURATION_DESCRIPTION, "string", True, True, None)
+createField(SOLR_CURATION_DESCRIPTION_TEXT, "text_en", True, True, None)
+createCopyField(SOLR_CURATION_DESCRIPTION, SOLR_CURATION_DESCRIPTION_TEXT)
+createCopyField(SOLR_CURATION_DESCRIPTION, SOLR_SEARCH_TEXT)
+createField(SOLR_CURATION_ACCESS_CONSTRAINTS, "string", True, True, None)
+createField(SOLR_CURATION_LOCATION, "string", True, True, None)
+createCopyField(SOLR_CURATION_LOCATION, SOLR_SEARCH_TEXT)
+createField(SOLR_CURATION_RESPONSIBILITY, "string", True, True, None)
+createField(SOLR_RELATED_RESOURCE_ISB_CORE_ID, "string", True, True, None, True)
 
 replaceFieldType({
     "name": "location_rpt",
@@ -239,18 +254,18 @@ addDynamicField({
     "stored": True
 })
 
-createField("producedBy_samplingSite_location_ll", "location", True, True, None)
-createField("producedBy_samplingSite_location_bb", "bbox", True, True, None)
-createField("producedBy_samplingSite_location_rpt", "location_rpt", True, True, None)
-createField("producedBy_samplingSite_location_latitude", "pfloat", True, True, None)
-createField("producedBy_samplingSite_location_longitude", "pfloat", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LL, "location", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_BB, "bbox", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_RPT, "location_rpt", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, "pfloat", True, True, None)
+createField(SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, "pfloat", True, True, None)
 
 addFieldType({
     "name": "date_range",
     "class": "solr.DateRangeField",
     "omitNorms": True,
 })
-createField("producedBy_resultTimeRange", "date_range", True, True, None)
+createField(SOLR_PRODUCED_BY_RESULT_TIME_RANGE, "date_range", True, True, None)
 
 createField("producedBy_samplingSite_location_h3_0", "string", False, False, None, False, True)
 createField("producedBy_samplingSite_location_h3_1", "string", False, False, None, False, True)
@@ -282,7 +297,7 @@ createField("_nest_parent_", "string", True, True)
 createField("relation_target", "string", True, True)
 createField("relation_type", "string", True, True)
 # permit information fields
-createField("compliesWith", "string", True, True, None, True)
-createField("authorizedBy", "string", True, True, None, True)
+createField(SOLR_COMPLIES_WITH, "string", True, True, None, True)
+createField(SOLR_AUTHORIZED_BY, "string", True, True, None, True)
 
 pj(listFields())

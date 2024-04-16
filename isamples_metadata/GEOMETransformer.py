@@ -11,8 +11,9 @@ import isamples_metadata
 from isamples_metadata.Transformer import (
     Transformer, Keyword,
 )
-from isamples_metadata.metadata_constants import LABEL, AUTHORIZED_BY, COMPLIES_WITH, RELATIONSHIP, TARGET
+from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_AUTHORIZED_BY, METADATA_COMPLIES_WITH, METADATA_RELATIONSHIP, METADATA_TARGET
 from isamples_metadata.vocabularies import vocabulary_mapper
+from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 PERMIT_STRINGS_TO_IGNORE = ['nan', 'na', 'no data', 'unknown', 'none_required']
 
@@ -30,19 +31,24 @@ class GEOMETransformer(Transformer):
     """Concrete transformer class for going from a GEOME record to an iSamples record"""
 
     def __init__(
-        self, source_record: typing.Dict, last_updated_time: Optional[datetime.datetime] = None, session: Optional[Session] = None
+        self,
+        source_record: typing.Dict,
+        last_updated_time: Optional[datetime.datetime] = None,
+        session: Optional[Session] = None,
+        taxonomy_name_to_kingdom_map: dict[str, str] = {}
     ):
         super().__init__(source_record)
         self._child_transformers = []
         self._last_updated_time = last_updated_time
         self._session = session
+        self._taxonomy_name_to_kingdom_map = taxonomy_name_to_kingdom_map
         children = self._get_children()
         for child_record in children:
             entity = child_record.get("entity")
             if entity == TISSUE_ENTITY:
                 self._child_transformers.append(
                     GEOMEChildTransformer(
-                        source_record, child_record, last_updated_time, session
+                        source_record, child_record, last_updated_time, session, taxonomy_name_to_kingdom_map
                     )
                 )
 
@@ -143,18 +149,41 @@ class GEOMETransformer(Transformer):
 
         return Transformer.DESCRIPTION_SEPARATOR.join(description_pieces)
 
-    def has_context_categories(self) -> list:
+    def has_context_categories(self) -> list[VocabularyTerm]:
         # TODO: resolve https://github.com/isamplesorg/isamples_inabox/issues/312
         # This should probably return the biological kingdom once that is hooked into the vocabulary
-        return [vocabulary_mapper.SAMPLED_FEATURE.term_for_key("sf:marinewaterbody").metadata_dict()]
+        kingdom = None
+        ranks = ["kingdom", "phylum", "genus"]
+        ranks_to_check = []
+        for rank in ranks:
+            value = self._source_record_main_record().get(rank)
+            if value is not None and value != "unidentified":
+                ranks_to_check.append(value)
+        for rank in ranks_to_check:
+            kingdom = self._taxonomy_name_to_kingdom_map.get(rank)
+            if kingdom is not None:
+                break
+        if kingdom is None:
+            informal_classification = self.informal_classification()
+            if len(informal_classification) > 0:
+                kingdom = self._taxonomy_name_to_kingdom_map.get(informal_classification[0])
+        if kingdom is not None:
+            if kingdom == "Chromista":
+                # Make a fake Chromista until the real one shows up (https://github.com/isamplesorg/vocabularies/issues/17)
+                mapped_term = VocabularyTerm("chromista", "Chromista", "https://w3id.org/isample/biology/biosampledfeature/1.0/Chromista")
+            else:
+                mapped_term = vocabulary_mapper.sampled_feature_type().term_for_label(kingdom)
+            return [mapped_term]
+        else:
+            return [vocabulary_mapper.sampled_feature_type().root_term()]
 
-    def has_material_categories(self) -> list:
+    def has_material_categories(self) -> list[VocabularyTerm]:
         # TODO: implement
         # ["'Organic material' unless record/entity, record/basisOfRecord, or record/collectionCode indicate otherwise"]
-        return [vocabulary_mapper.MATERIAL_TYPE.term_for_key("mat:organicmaterial").metadata_dict()]
+        return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial")]
 
-    def has_specimen_categories(self) -> list:
-        return [vocabulary_mapper.SPECIMEN_TYPE.term_for_key("spec:wholeorganism").metadata_dict()]
+    def has_specimen_categories(self) -> list[VocabularyTerm]:
+        return [vocabulary_mapper.specimen_type().term_for_key("spec:wholeorganism")]
 
     def informal_classification(self) -> typing.List[str]:
         main_record = self._source_record_main_record()
@@ -435,9 +464,9 @@ class GEOMETransformer(Transformer):
             child_resource = {}
             entity = child["entity"]
             if entity == TISSUE_ENTITY:
-                child_resource[LABEL] = "Tissue"
-                child_resource[RELATIONSHIP] = "tissue extract"
-                child_resource[TARGET] = child["bcid"]
+                child_resource[METADATA_LABEL] = "Tissue"
+                child_resource[METADATA_RELATIONSHIP] = "tissue extract"
+                child_resource[METADATA_TARGET] = child["bcid"]
                 related_resources.append(child_resource)
         return related_resources
 
@@ -460,7 +489,7 @@ class GEOMETransformer(Transformer):
         permit_information = self._parent_permit_information()
         if permit_information is not None:
             parsed_permit_information = GEOMETransformer.parse_permit_freetext(permit_information)
-            return parsed_permit_information[AUTHORIZED_BY]
+            return parsed_permit_information[METADATA_AUTHORIZED_BY]
         return []
 
     def complies_with(self) -> typing.List[str]:
@@ -469,7 +498,7 @@ class GEOMETransformer(Transformer):
 
     @staticmethod
     def _format_result_object(authorized_by: list[str]) -> dict[str, list[str]]:
-        return {AUTHORIZED_BY: authorized_by, COMPLIES_WITH: []}
+        return {METADATA_AUTHORIZED_BY: authorized_by, METADATA_COMPLIES_WITH: []}
 
     @staticmethod
     def parse_permit_text(text: str) -> dict[str, list[str]]:
@@ -499,10 +528,10 @@ class GEOMETransformer(Transformer):
                 authorized_by_str = match.group(3)
         if authorized_by_str is not None:
             authorized_by_list = GEOMETransformer._split_delimited_text(authorized_by_str)
-            result[AUTHORIZED_BY] = authorized_by_list
+            result[METADATA_AUTHORIZED_BY] = authorized_by_list
         if complies_with_str is not None:
             complies_with_list = GEOMETransformer._split_delimited_text(complies_with_str)
-            result[COMPLIES_WITH] = complies_with_list
+            result[METADATA_COMPLIES_WITH] = complies_with_list
         return result
 
     @staticmethod
@@ -555,12 +584,14 @@ class GEOMEChildTransformer(GEOMETransformer):
         source_record: typing.Dict,
         child_record: typing.Dict,
         last_updated_time: Optional[datetime.datetime],
-        session: Optional[Session] = None
+        session: Optional[Session] = None,
+        taxonomy_name_to_kingdom_map: dict = {}
     ):
         self.source_record = source_record
         self.child_record = child_record
         self._last_updated_time = last_updated_time
         self._session = session
+        self._taxonomy_name_to_kingdom_map = taxonomy_name_to_kingdom_map
 
     def _id_minus_prefix(self) -> str:
         return self.child_record["bcid"].removeprefix(self.ARK_PREFIX)
@@ -576,7 +607,7 @@ class GEOMEChildTransformer(GEOMETransformer):
         return ""
 
     def has_specimen_categories(self) -> list:
-        return [vocabulary_mapper.SPECIMEN_TYPE.term_for_key("spec:organismpart").metadata_dict()]
+        return [vocabulary_mapper.specimen_type().term_for_key("spec:organismpart").metadata_dict()]
 
     def produced_by_label(self) -> str:
         return f"tissue subsample from {self._source_record_main_record()['materialSampleID']}"
@@ -617,9 +648,9 @@ class GEOMEChildTransformer(GEOMETransformer):
     def related_resources(self) -> typing.List[typing.Dict]:
         parent_dict = {}
         main_record = self._source_record_main_record()
-        parent_dict[LABEL] = f"parent sample {main_record.get('materialSampleID')}"
-        parent_dict[TARGET] = main_record.get("bcid", "")
-        parent_dict[RELATIONSHIP] = "derived_from"
+        parent_dict[METADATA_LABEL] = f"parent sample {main_record.get('materialSampleID')}"
+        parent_dict[METADATA_TARGET] = main_record.get("bcid", "")
+        parent_dict[METADATA_RELATIONSHIP] = "derived_from"
         return [parent_dict]
 
     def authorized_by(self) -> typing.List[str]:
@@ -634,12 +665,12 @@ class GEOMEChildTransformer(GEOMETransformer):
 # Function to iterate through the identifiers and instantiate the proper GEOME Transformer based on the identifier
 # used for lookup
 def geome_transformer_for_identifier(
-    identifier: str, source_record: typing.Dict, session: Session
+    identifier: str, source_record: typing.Dict, session: Session, taxon_map: dict
 ) -> Optional[GEOMETransformer]:
     # Two possibilities:
     # (1) It's the sample, so instantiate the main one
     # (2) It's one of the children, so grab the child transformer
-    transformer = GEOMETransformer(source_record, None, session)
+    transformer = GEOMETransformer(source_record, None, session, taxon_map)
     # Sample identifier string for GEOM is the ARK
     if identifier == transformer.sample_identifier_string():
         return transformer

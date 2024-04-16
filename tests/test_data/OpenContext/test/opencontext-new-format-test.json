@@ -7,7 +7,7 @@
     "has_context_category": [
         {
             "label": "Site of past human activities",
-            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/0.9/sf:pasthumanoccupationsite"
+            "identifier": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/pasthumanoccupationsite"
         }
     ],
     "has_context_category_confidence": [
@@ -16,7 +16,7 @@
     "has_material_category": [
         {
             "label": "Any anthropogenic material",
-            "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:anyanthropogenicmaterial"
+            "identifier": "https://w3id.org/isample/vocabulary/material/1.0/anyanthropogenicmaterial"
         }
     ],
     "has_material_category_confidence": [
@@ -24,7 +24,8 @@
     ],
     "has_specimen_category": [
         {
-            "label": "physicalspecimen"
+            "label": "Physical specimen",
+            "identifier": "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
         }
     ],
     "has_specimen_category_confidence": [
@@ -62,8 +63,8 @@
     ],
     "produced_by": {
         "@id": "",
-        "label": "",
-        "description": "",
+        "label": "Murlo",
+        "description": "http://opencontext.org/projects/df043419-f23b-41da-7e4d-ee52af22f92f",
         "has_feature_of_interest": "",
         "responsibility": [
             {
@@ -80,7 +81,14 @@
                 "latitude": 43.1527393592106,
                 "longitude": 11.402138021311842
             },
-            "place_name": []
+            "place_name": [
+                "Europe",
+                "Italy",
+                "Poggio Civitate",
+                "Tesoro",
+                "Tesoro 23",
+                "1981, ID:419"
+            ]
         }
     },
     "registrant": {

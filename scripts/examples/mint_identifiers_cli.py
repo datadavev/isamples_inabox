@@ -17,13 +17,14 @@ url_option = click.option(
     "-u",
     "--url",
     type=str,
-    default="https://mars.cyverse.org/isamples_central/manage/mint_draft_datacite_identifiers",
+    default="https://central.isample.xyz/isamples_central/manage/mint_draft_datacite_identifiers",
     help="The url to the mint identifiers endpoint",
 )
 identifiers_option = click.option(
     "-n",
     "--num_identifiers",
     type=str,
+    default="1",
     help="The number of identifiers to create",
 )
 session = requests.session()

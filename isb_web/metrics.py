@@ -63,12 +63,12 @@ def _root(session: Session):
 
 
 # Note that prometheus seemed unhappy with /metrics/ vs. /metrics.  Include both since they should both work.
-@router.get("")
+@router.get("", summary="Internal iSamples Metrics for Prometheus exporter", tags=["metrics"])
 def root(session: Session = Depends(get_session)):
     return _root(session)
 
 
 # Note that prometheus seemed unhappy with /metrics/ vs. /metrics.  Include both since they should both work.
-@router.get("/")
+@router.get("/", summary="Internal iSamples Metrics for Prometheus exporter", tags=["metrics"])
 def root_with_slash(session: Session = Depends(get_session)):
     return _root(session)

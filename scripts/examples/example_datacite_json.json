@@ -1,0 +1,25 @@
+{
+  "data": {
+    "type": "dois",
+    "attributes": {
+      "event": "publish",
+      "prefix": "10.82273",
+      "creators": [
+        {
+          "name": "OpenContext identifier test"
+        }
+      ],
+      "titles": [
+        {
+          "title": "This is a test OpenContext identifier title"
+        }
+      ],
+      "publisher": "iSamples",
+      "publicationYear": 2024,
+      "types": {
+        "resourceTypeGeneral": "Text"
+      },
+      "url": "https://opencontext.org"
+    }
+  }
+}

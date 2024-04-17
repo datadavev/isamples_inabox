@@ -17,13 +17,14 @@ url_option = click.option(
     "-u",
     "--url",
     type=str,
-    default="https://mars.cyverse.org/isamples_central/manage/mint_draft_datacite_identifiers",
+    default="https://central.isample.xyz/isamples_central/manage/mint_draft_datacite_identifiers",
     help="The url to the mint identifiers endpoint",
 )
 identifiers_option = click.option(
     "-n",
     "--num_identifiers",
     type=str,
+    default="1",
     help="The number of identifiers to create",
 )
 session = requests.session()
@@ -57,7 +58,7 @@ def _post_to_mint_method(post_data: dict, identity_token: str, url: str) -> Resp
     "-f",
     "--file",
     type=str,
-    help="The path to the metadata JSON file",
+    help="The path to the metadata JSON file, in the datacite format per https://support.datacite.org/docs/api-create-dois",
 )
 def mint_datacite_identifiers(identity_token: str, url: str, num_identifiers: int, file: str):
     with open(file) as json_file:

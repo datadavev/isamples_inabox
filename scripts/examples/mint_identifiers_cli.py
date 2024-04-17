@@ -58,7 +58,7 @@ def _post_to_mint_method(post_data: dict, identity_token: str, url: str) -> Resp
     "-f",
     "--file",
     type=str,
-    help="The path to the metadata JSON file",
+    help="The path to the metadata JSON file, in the datacite format per https://support.datacite.org/docs/api-create-dois",
 )
 def mint_datacite_identifiers(identity_token: str, url: str, num_identifiers: int, file: str):
     with open(file) as json_file:

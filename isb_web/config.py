@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # This shouldn't be checked in.  Set by doing export DATACITE_PASSWORD=foobar
     datacite_password: str = ""
 
-    orcid_hostname: str = "pub.sandbox.orcid.org"
+    orcid_hostname: str = "orcid.org"
 
     orcid_token_redirect_uri: str = "http://localhost:8000/orcid_token"
 
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     orcid_client_secret: str = ""
 
     # The base URL for the orcid issuing authority.  Makes it easy to change between sandbox and production orcid.
-    orcid_issuer: str = "https://sandbox.orcid.org"
+    orcid_issuer: str = "https://orcid.org"
 
     # This is a random UUID for encoding the session details in the Session cookie.
     session_middleware_key: str = "81987812-0cf8-459e-b27b-40dabcded856"

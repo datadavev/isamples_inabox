@@ -89,7 +89,7 @@ def _search_solr_and_export_results(export_job_id: str):
 
 
 @export_app.get("/create")
-async def create(request: fastapi.Request, export_format: TargetExportFormat = TargetExportFormat.CSV,
+async def create(request: fastapi.Request, export_format: TargetExportFormat = TargetExportFormat.JSONL,
                  session: Session = Depends(get_session)) -> JSONResponse:
     """Creates a new export job with the specified solr query"""
 

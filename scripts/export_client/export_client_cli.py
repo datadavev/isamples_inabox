@@ -1,4 +1,8 @@
 import click
+import requests
+import time
+
+from isamples_export_client.export_client import ExportClient
 
 
 @click.command()
@@ -30,8 +34,9 @@ import click
     type=click.Choice(["jsonl", "csv"], case_sensitive=False),
     default="jsonl"
 )
-def main():
-    print()
+def main(query: str, destination: str, jwt: str, export_url: str, format: str):
+    client = ExportClient(query, destination, jwt, export_url, format)
+    client.perform_full_download()
 
 
 if __name__ == "__main__":

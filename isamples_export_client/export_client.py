@@ -5,7 +5,7 @@ from enum import Enum
 import os
 
 import requests
-from requests import Session
+from requests import Session, Response
 
 
 class ExportJobStatus(Enum):
@@ -14,11 +14,16 @@ class ExportJobStatus(Enum):
     COMPLETED = "completed"
 
     @staticmethod
-    def string_to_enum(cls, raw_string: str) -> Enum:
+    def string_to_enum(raw_string: str) -> "ExportJobStatus":
         for enum_value in ExportJobStatus:
             if enum_value.value == raw_string:
                 return enum_value
         raise ValueError(f"No ExportJobStatus found for {raw_string}")
+
+
+def _is_expected_response_code(response: Response):
+    return 200 <= response.status_code < 300
+
 
 class ExportClient:
     def __init__(self, query: str,
@@ -42,11 +47,16 @@ class ExportClient:
         except OSError as e:
             raise ValueError(f"Unable to create export directory at {self._destination_directory}")
 
+    def _authentication_headers(self) -> dict:
+        return {
+            "authorization": f"Bearer {self._jwt}"
+        }
+
     def create(self) -> str:
         """Create a new export job, and return the uuid associated with the job"""
-        create_url = f"{self._export_server_url}create?q={self._query}&format={self._format}"
-        response = self._rsession.get(create_url)
-        if response.status_code == 200:
+        create_url = f"{self._export_server_url}create?q={self._query}&export_format={self._format}"
+        response = self._rsession.get(create_url, headers=self._authentication_headers())
+        if _is_expected_response_code(response):
             json = response.json()
             return json.get("uuid")
         raise ValueError(f"Invalid response to export creation: {response}")
@@ -54,8 +64,8 @@ class ExportClient:
     def status(self, uuid: str) -> ExportJobStatus:
         """Check the status of the specified export job"""
         status_url = f"{self._export_server_url}status?uuid={uuid}"
-        response = self._rsession.get(status_url)
-        if response.status_code == 200:
+        response = self._rsession.get(status_url, headers=self._authentication_headers())
+        if _is_expected_response_code(response):
             json = response.json()
             status = json.get("status")
             return ExportJobStatus.string_to_enum(status)
@@ -64,7 +74,7 @@ class ExportClient:
     def download(self, uuid: str) -> str:
         """Download the exported result set to the specified destination"""
         download_url = f"{self._export_server_url}download?uuid={uuid}"
-        with requests.get(download_url, stream=True) as r:
+        with requests.get(download_url, stream=True, headers=self._authentication_headers()) as r:
             r.raise_for_status()
             current_time = datetime.datetime.now()
             date_string = current_time.strftime("%Y_%m_%d_%H_%M_%S")
@@ -76,20 +86,21 @@ class ExportClient:
             return local_filename
 
     def perform_full_download(self):
-        logging.info("Contacting the export service to start the export process")
+        logging.warning("Contacting the export service to start the export process")
         uuid = self.create()
-        logging.info(f"Contacted the export service, created export job with uuid {uuid}")
+        logging.warning(f"Contacted the export service, created export job with uuid {uuid}")
         while True:
             try:
                 status = self.status(uuid)
                 if status != ExportJobStatus.COMPLETED:
                     time.sleep(self._sleep_time)
-                    logging.info(f"Export job still running, sleeping for {self._sleep_time} seconds")
+                    logging.warning(f"Export job still running, sleeping for {self._sleep_time} seconds")
                     continue
                 else:
-                    logging.info(f"Export job completed, going to download")
+                    logging.warning(f"Export job completed, going to download")
                     filename = self.download(uuid)
-                    logging.info(f"Successfully downloaded file to {filename}")
+                    logging.warning(f"Successfully downloaded file to {filename}")
+                    break
             except Exception as e:
                 logging.error("An error occurred:", e)
                 # Sleep for a short time before retrying after an error

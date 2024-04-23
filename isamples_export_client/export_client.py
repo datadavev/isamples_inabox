@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import time
 from enum import Enum
@@ -6,6 +7,8 @@ import os
 
 import requests
 from requests import Session, Response
+
+from isb_lib.core import datetimeToSolrStr
 
 
 class ExportJobStatus(Enum):
@@ -45,7 +48,7 @@ class ExportClient:
         try:
             os.makedirs(name=self._destination_directory, exist_ok=True)
         except OSError as e:
-            raise ValueError(f"Unable to create export directory at {self._destination_directory}")
+            raise ValueError(f"Unable to create export directory at {self._destination_directory}, error: {e}")
 
     def _authentication_headers(self) -> dict:
         return {
@@ -59,7 +62,7 @@ class ExportClient:
         if _is_expected_response_code(response):
             json = response.json()
             return json.get("uuid")
-        raise ValueError(f"Invalid response to export creation: {response}")
+        raise ValueError(f"Invalid response to export creation: {response.json()}")
 
     def status(self, uuid: str) -> ExportJobStatus:
         """Check the status of the specified export job"""
@@ -69,7 +72,7 @@ class ExportClient:
             json = response.json()
             status = json.get("status")
             return ExportJobStatus.string_to_enum(status)
-        raise ValueError(f"Invalid response to export status: {response}")
+        raise ValueError(f"Invalid response to export status: {response.json()}")
 
     def download(self, uuid: str) -> str:
         """Download the exported result set to the specified destination"""
@@ -85,8 +88,19 @@ class ExportClient:
                     f.write(chunk)
             return local_filename
 
+    def write_manifest(self, query: str, uuid: str, tstarted: datetime.datetime, num_results: int):
+        manifest_dict = {
+            "query": query,
+            "uuid": uuid,
+            "tstarted": datetimeToSolrStr(tstarted),
+            "num_results": num_results
+        }
+        with open(os.path.join(self._destination_directory, "manifest.json"), "w") as f:
+            f.write(json.dumps(manifest_dict, indent=4))
+
     def perform_full_download(self):
         logging.warning("Contacting the export service to start the export process")
+        tstarted = datetime.datetime.now()
         uuid = self.create()
         logging.warning(f"Contacted the export service, created export job with uuid {uuid}")
         while True:
@@ -97,9 +111,11 @@ class ExportClient:
                     logging.warning(f"Export job still running, sleeping for {self._sleep_time} seconds")
                     continue
                 else:
-                    logging.warning(f"Export job completed, going to download")
+                    logging.warning("Export job completed, going to download")
                     filename = self.download(uuid)
                     logging.warning(f"Successfully downloaded file to {filename}")
+                    num_results = sum(1 for _ in open(filename))
+                    self.write_manifest(self._query, uuid, tstarted, num_results)
                     break
             except Exception as e:
                 logging.error("An error occurred:", e)

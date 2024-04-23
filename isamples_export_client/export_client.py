@@ -4,11 +4,22 @@ import logging
 import time
 from enum import Enum
 import os
+from typing import Optional
 
 import requests
 from requests import Session, Response
 
-from isb_lib.core import datetimeToSolrStr
+from isamples_metadata.solr_field_constants import SOLR_INDEX_UPDATED_TIME
+from isb_lib.core import datetimeToSolrStr, parsed_datetime_from_isamples_format
+from isb_web.isb_solr_query import escape_solr_query_term
+
+START_TIME = "start_time"
+
+EXPORT_SERVER_URL = "export_server_url"
+
+FORMAT = "format"
+
+QUERY = "query"
 
 
 class ExportJobStatus(Enum):
@@ -34,6 +45,7 @@ class ExportClient:
                  jwt: str,
                  export_server_url: str,
                  format: str,
+                 refresh_date: Optional[str] = None,
                  session: Session = requests.session(),
                  sleep_time: float = 5):
         self._query = query
@@ -43,12 +55,32 @@ class ExportClient:
             export_server_url = f"{export_server_url}/"
         self._export_server_url = export_server_url
         self._format = format
+        self._refresh_date = refresh_date
         self._rsession = session
         self._sleep_time = sleep_time
         try:
             os.makedirs(name=self._destination_directory, exist_ok=True)
         except OSError as e:
             raise ValueError(f"Unable to create export directory at {self._destination_directory}, error: {e}")
+
+    @classmethod
+    def from_existing_download(cls, refresh_dir: str, jwt: str) -> "ExportClient":
+        manifest_file_path = ExportClient._manifest_file_path(refresh_dir)
+        if not os.path.exists(manifest_file_path):
+            raise ValueError(f"Refresh option was specified, but manifest file at {manifest_file_path} does not exist")
+        with open(manifest_file_path, "r") as existing_file:
+            manifest_list = json.load(existing_file)
+            last_manifest_dict = manifest_list[-1]
+            query = last_manifest_dict[QUERY]
+            export_server_url = last_manifest_dict[EXPORT_SERVER_URL]
+            format = last_manifest_dict[FORMAT]
+            refresh_date = last_manifest_dict[START_TIME]
+            return ExportClient(query, refresh_dir, jwt, export_server_url, format, refresh_date)
+
+
+    @classmethod
+    def _manifest_file_path(cls, dir_path: str):
+        return os.path.join(dir_path, "manifest.json")
 
     def _authentication_headers(self) -> dict:
         return {
@@ -57,7 +89,11 @@ class ExportClient:
 
     def create(self) -> str:
         """Create a new export job, and return the uuid associated with the job"""
-        create_url = f"{self._export_server_url}create?q={self._query}&export_format={self._format}"
+        query = self._query
+        if self._refresh_date is not None:
+            query = f"{self._query} AND {SOLR_INDEX_UPDATED_TIME} >= {escape_solr_query_term(self._refresh_date)}"
+
+        create_url = f"{self._export_server_url}create?q={query}&export_format={self._format}"
         response = self._rsession.get(create_url, headers=self._authentication_headers())
         if _is_expected_response_code(response):
             json = response.json()
@@ -90,12 +126,14 @@ class ExportClient:
 
     def write_manifest(self, query: str, uuid: str, tstarted: datetime.datetime, num_results: int) -> str:
         new_manifest_dict = {
-            "query": query,
+            QUERY: query,
             "uuid": uuid,
-            "tstarted": datetimeToSolrStr(tstarted),
-            "num_results": num_results
+            FORMAT: self._format,
+            START_TIME: datetimeToSolrStr(tstarted),
+            "num_results": num_results,
+            EXPORT_SERVER_URL: self._export_server_url
         }
-        manifest_path = os.path.join(self._destination_directory, "manifest.json")
+        manifest_path = ExportClient._manifest_file_path(self._destination_directory)
         if os.path.exists(manifest_path):
             with open(manifest_path, "r") as file:
                 manifests = json.load(file)

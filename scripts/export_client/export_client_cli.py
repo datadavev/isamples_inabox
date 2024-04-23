@@ -8,13 +8,18 @@ from isamples_export_client.export_client import ExportClient
 @click.command()
 @click.option(
     "-q",
-    "--query", prompt=True,
+    "--query",
     help="The solr query to execute.",
 )
 @click.option(
     "-d",
-    "--destination", prompt=True,
+    "--destination",
     help="The destination directory where the downloaded content should be written.",
+)
+@click.option(
+    "-r",
+    "--refresh-dir",
+    help="If specified, will read the manifest.json out of an existing directory and re-execute the query to update results."
 )
 @click.option(
     "-t",
@@ -34,8 +39,11 @@ from isamples_export_client.export_client import ExportClient
     type=click.Choice(["jsonl", "csv"], case_sensitive=False),
     default="jsonl"
 )
-def main(query: str, destination: str, jwt: str, url: str, format: str):
-    client = ExportClient(query, destination, jwt, url, format)
+def main(query: str, destination: str, refresh_dir: str, jwt: str, url: str, format: str):
+    if (refresh_dir is None):
+        client = ExportClient(query, destination, jwt, url, format)
+    else:
+        client = ExportClient.from_existing_download(refresh_dir, jwt)
     client.perform_full_download()
 
 

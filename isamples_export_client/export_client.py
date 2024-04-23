@@ -88,15 +88,23 @@ class ExportClient:
                     f.write(chunk)
             return local_filename
 
-    def write_manifest(self, query: str, uuid: str, tstarted: datetime.datetime, num_results: int):
-        manifest_dict = {
+    def write_manifest(self, query: str, uuid: str, tstarted: datetime.datetime, num_results: int) -> str:
+        new_manifest_dict = {
             "query": query,
             "uuid": uuid,
             "tstarted": datetimeToSolrStr(tstarted),
             "num_results": num_results
         }
-        with open(os.path.join(self._destination_directory, "manifest.json"), "w") as f:
-            f.write(json.dumps(manifest_dict, indent=4))
+        manifest_path = os.path.join(self._destination_directory, "manifest.json")
+        if os.path.exists(manifest_path):
+            with open(manifest_path, "r") as file:
+                manifests = json.load(file)
+            manifests.append(new_manifest_dict)
+        else:
+            manifests = [new_manifest_dict]
+        with open(manifest_path, "w") as f:
+            f.write(json.dumps(manifests, indent=4))
+        return manifest_path
 
     def perform_full_download(self):
         logging.warning("Contacting the export service to start the export process")
@@ -115,7 +123,8 @@ class ExportClient:
                     filename = self.download(uuid)
                     logging.warning(f"Successfully downloaded file to {filename}")
                     num_results = sum(1 for _ in open(filename))
-                    self.write_manifest(self._query, uuid, tstarted, num_results)
+                    manifest_path = self.write_manifest(self._query, uuid, tstarted, num_results)
+                    logging.warning(f"Successfully wrote manifest file to {manifest_path}")
                     break
             except Exception as e:
                 logging.error("An error occurred:", e)

@@ -1,6 +1,4 @@
 import click
-import requests
-import time
 
 from isamples_export_client.export_client import ExportClient
 

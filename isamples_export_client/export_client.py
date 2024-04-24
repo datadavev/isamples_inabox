@@ -10,8 +10,7 @@ import requests
 from requests import Session, Response
 
 from isamples_metadata.solr_field_constants import SOLR_INDEX_UPDATED_TIME
-from isb_lib.core import datetimeToSolrStr, parsed_datetime_from_isamples_format
-from isb_web.isb_solr_query import escape_solr_query_term
+from isb_lib.core import datetimeToSolrStr
 
 START_TIME = "start_time"
 
@@ -76,7 +75,6 @@ class ExportClient:
             format = last_manifest_dict[FORMAT]
             refresh_date = last_manifest_dict[START_TIME]
             return ExportClient(query, refresh_dir, jwt, export_server_url, format, refresh_date)
-
 
     @classmethod
     def _manifest_file_path(cls, dir_path: str):

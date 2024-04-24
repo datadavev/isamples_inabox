@@ -27,7 +27,7 @@ from isamples_export_client.export_client import ExportClient
 @click.option(
     "-u",
     "--url",
-    help="The URL to the iSamples server to export from.",
+    help="The URL to the iSamples export service.",
     default="https://central.isample.xyz/isamples_central/export"
 )
 @click.option(

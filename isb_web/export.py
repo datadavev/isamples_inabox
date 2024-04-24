@@ -1,9 +1,11 @@
+import datetime
 import logging
 import os.path
 import traceback
 import urllib
 from typing import Optional
 import concurrent
+from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import fastapi.responses
@@ -57,6 +59,12 @@ def search_solr_and_export_results(export_job_id: str):
         traceback.print_tb(e.__traceback__)
 
 
+def _handle_error(session: Session, export_job: ExportJob, error: str):
+    export_job.tcompleted = datetime.datetime.now()
+    export_job.error = error
+    sqlmodel_database.save_or_update_export_job(session, export_job)
+
+
 def _search_solr_and_export_results(export_job_id: str):
     """Task function that gets a queued export job from the db, executes the solr query, and writes results to disk"""
 
@@ -72,7 +80,14 @@ def _search_solr_and_export_results(export_job_id: str):
             encoded_params = urllib.parse.urlencode(solr_query_params)  # type: ignore
             export_handler = isb_solr_query.get_solr_url("export")
             full_url = f"{export_handler}?{encoded_params}"
-            src = urlopen(full_url)
+            try:
+                src = urlopen(full_url)
+            except HTTPError as e:
+                _handle_error(session, export_job, f"HTTP Error, code: {e.code} reason: {e.reason}")
+                return
+            except Exception as e:
+                _handle_error(session, export_job, f"Export Error {str(e)}")
+                return
             docs = ijson.items(src, "response.docs.item", use_float=True)
             generator_docs = (doc for doc in docs)
             transformed_response_path = f"/tmp/{export_job.uuid}"
@@ -131,7 +146,10 @@ def status(uuid: str = fastapi.Query(None), session: Session = Depends(get_sessi
         return _not_found_response()
     else:
         if export_job.tcompleted is not None:
-            content = {"status": "completed", "tcompleted": str(export_job.tcompleted)}
+            if export_job.error is None:
+                content = {"status": "completed", "tcompleted": str(export_job.tcompleted)}
+            else:
+                content = {"status": "error", "tcompleted": str(export_job.tcompleted), "reason": export_job.error}
             return fastapi.responses.JSONResponse(content=content, status_code=HTTP_200_OK)
         elif export_job.tstarted is not None:
             content = {"status": "started", "tstarted": str(export_job.tstarted)}

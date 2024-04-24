@@ -87,11 +87,17 @@ class ExportClient:
             "authorization": f"Bearer {self._jwt}"
         }
 
+    def _query_with_timestamp(self) -> str:
+        if self._refresh_date is not None:
+            return f"{self._query} AND {SOLR_INDEX_UPDATED_TIME}:[{self._refresh_date} TO *]"
+        else:
+            return self._query
+
     def create(self) -> str:
         """Create a new export job, and return the uuid associated with the job"""
         query = self._query
         if self._refresh_date is not None:
-            query = f"{self._query} AND {SOLR_INDEX_UPDATED_TIME} >= {escape_solr_query_term(self._refresh_date)}"
+            query = self._query_with_timestamp()
 
         create_url = f"{self._export_server_url}create?q={query}&export_format={self._format}"
         response = self._rsession.get(create_url, headers=self._authentication_headers())
@@ -133,6 +139,9 @@ class ExportClient:
             "num_results": num_results,
             EXPORT_SERVER_URL: self._export_server_url
         }
+        if self._refresh_date is not None:
+            # if we are refreshing, include the additional timestamp filter for verbosity's sake
+            new_manifest_dict["query_with_timestamp"] = self._query_with_timestamp()
         manifest_path = ExportClient._manifest_file_path(self._destination_directory)
         if os.path.exists(manifest_path):
             with open(manifest_path, "r") as file:

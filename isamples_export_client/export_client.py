@@ -4,7 +4,7 @@ import logging
 import time
 from enum import Enum
 import os
-from typing import Optional
+from typing import Optional, Any
 
 import requests
 from requests import Session, Response
@@ -25,6 +25,7 @@ class ExportJobStatus(Enum):
     CREATED = "created"
     STARTED = "started"
     COMPLETED = "completed"
+    ERROR = "error"
 
     @staticmethod
     def string_to_enum(raw_string: str) -> "ExportJobStatus":
@@ -104,14 +105,12 @@ class ExportClient:
             return json.get("uuid")
         raise ValueError(f"Invalid response to export creation: {response.json()}")
 
-    def status(self, uuid: str) -> ExportJobStatus:
+    def status(self, uuid: str) -> Any:
         """Check the status of the specified export job"""
         status_url = f"{self._export_server_url}status?uuid={uuid}"
         response = self._rsession.get(status_url, headers=self._authentication_headers())
         if _is_expected_response_code(response):
-            json = response.json()
-            status = json.get("status")
-            return ExportJobStatus.string_to_enum(status)
+            return response.json()
         raise ValueError(f"Invalid response to export status: {response.json()}")
 
     def download(self, uuid: str) -> str:
@@ -158,7 +157,11 @@ class ExportClient:
         logging.warning(f"Contacted the export service, created export job with uuid {uuid}")
         while True:
             try:
-                status = self.status(uuid)
+                json = self.status(uuid)
+                status = ExportJobStatus.string_to_enum(json.get("status"))
+                if status == ExportJobStatus.ERROR:
+                    logging.warning(f"Export job failed with error.  Check that your solr query is valid and try again.  Response: {json}")
+                    break
                 if status != ExportJobStatus.COMPLETED:
                     time.sleep(self._sleep_time)
                     logging.warning(f"Export job still running, sleeping for {self._sleep_time} seconds")

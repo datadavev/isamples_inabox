@@ -68,3 +68,9 @@ class ExportJob(SQLModel, table=True):
         description="The path to the exported file.",
         index=False
     )
+    error: Optional[str] = Field(
+        default=None,
+        nullable=True,
+        description="Details about an error with the export job.",
+        index=False
+    )

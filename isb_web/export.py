@@ -64,6 +64,7 @@ def _handle_error(session: Session, export_job: ExportJob, error: str):
     export_job.error = error
     sqlmodel_database.save_or_update_export_job(session, export_job)
 
+
 def _search_solr_and_export_results(export_job_id: str):
     """Task function that gets a queued export job from the db, executes the solr query, and writes results to disk"""
 

@@ -150,10 +150,12 @@ class GEOMETransformer(Transformer):
 
         return Transformer.DESCRIPTION_SEPARATOR.join(description_pieces)
 
-
     def _look_up_kingdom_for_taxonomy_name(self, taxonomy_name: str) -> Optional[str]:
         if self._taxonomy_name_to_kingdom_map is None or len(self._taxonomy_name_to_kingdom_map) == 0:
-            return kingdom_for_taxonomy_name(self._session, taxonomy_name)
+            if self._session is not None:
+                return kingdom_for_taxonomy_name(self._session, taxonomy_name)
+            else:
+                return None
         else:
             return self._taxonomy_name_to_kingdom_map.get(taxonomy_name)
 

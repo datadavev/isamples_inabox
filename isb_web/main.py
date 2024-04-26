@@ -157,7 +157,8 @@ def on_startup():
     vocabulary_mapper.specimen_type()
     # Force this into memory so it's cached when we need it later
     global TAXONOMY_NAME_TO_KINGDOM_MAP
-    TAXONOMY_NAME_TO_KINGDOM_MAP = taxonomy_name_to_kingdom_map(session)
+    if config.Settings().taxon_cache_enabled:
+        TAXONOMY_NAME_TO_KINGDOM_MAP = taxonomy_name_to_kingdom_map(session)
     session.close()
     # Superusers are allowed to mint identifiers as well, so make sure they're in the list.
     orcid_ids.extend(isb_web.config.Settings().orcid_superusers)

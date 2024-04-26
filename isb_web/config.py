@@ -98,6 +98,10 @@ class Settings(BaseSettings):
     modelserver_url = "http://localhost:9000/"
     modelserver_lru_cache_size = 10000
 
+    # Whether to prefetch all the taxonomic names at app startup.  Useful for batch processing and reindexing, but
+    # uses a lot of memory so shouldn't be enabled by default.
+    taxon_cache_enabled: bool = False
+
     class Config:
         env_file = "isb_web_config.env"
         case_sensitive = False

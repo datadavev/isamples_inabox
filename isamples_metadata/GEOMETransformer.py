@@ -14,6 +14,7 @@ from isamples_metadata.Transformer import (
 from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_AUTHORIZED_BY, METADATA_COMPLIES_WITH, METADATA_RELATIONSHIP, METADATA_TARGET
 from isamples_metadata.vocabularies import vocabulary_mapper
 from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
+from isb_web.sqlmodel_database import kingdom_for_taxonomy_name
 
 PERMIT_STRINGS_TO_IGNORE = ['nan', 'na', 'no data', 'unknown', 'none_required']
 
@@ -35,7 +36,7 @@ class GEOMETransformer(Transformer):
         source_record: typing.Dict,
         last_updated_time: Optional[datetime.datetime] = None,
         session: Optional[Session] = None,
-        taxonomy_name_to_kingdom_map: dict[str, str] = {}
+        taxonomy_name_to_kingdom_map: Optional[dict[str, str]] = None
     ):
         super().__init__(source_record)
         self._child_transformers = []
@@ -149,6 +150,13 @@ class GEOMETransformer(Transformer):
 
         return Transformer.DESCRIPTION_SEPARATOR.join(description_pieces)
 
+
+    def _look_up_kingdom_for_taxonomy_name(self, taxonomy_name: str) -> Optional[str]:
+        if self._taxonomy_name_to_kingdom_map is None or len(self._taxonomy_name_to_kingdom_map) == 0:
+            return kingdom_for_taxonomy_name(self._session, taxonomy_name)
+        else:
+            return self._taxonomy_name_to_kingdom_map.get(taxonomy_name)
+
     def has_context_categories(self) -> list[VocabularyTerm]:
         # TODO: resolve https://github.com/isamplesorg/isamples_inabox/issues/312
         # This should probably return the biological kingdom once that is hooked into the vocabulary
@@ -160,13 +168,13 @@ class GEOMETransformer(Transformer):
             if value is not None and value != "unidentified":
                 ranks_to_check.append(value)
         for rank in ranks_to_check:
-            kingdom = self._taxonomy_name_to_kingdom_map.get(rank)
+            kingdom = self._look_up_kingdom_for_taxonomy_name(rank)
             if kingdom is not None:
                 break
         if kingdom is None:
             informal_classification = self.informal_classification()
             if len(informal_classification) > 0:
-                kingdom = self._taxonomy_name_to_kingdom_map.get(informal_classification[0])
+                kingdom = self._look_up_kingdom_for_taxonomy_name(informal_classification[0])
         if kingdom is not None:
             if kingdom == "Chromista":
                 # Make a fake Chromista until the real one shows up (https://github.com/isamplesorg/vocabularies/issues/17)
@@ -585,7 +593,7 @@ class GEOMEChildTransformer(GEOMETransformer):
         child_record: typing.Dict,
         last_updated_time: Optional[datetime.datetime],
         session: Optional[Session] = None,
-        taxonomy_name_to_kingdom_map: dict = {}
+        taxonomy_name_to_kingdom_map: Optional[dict] = None
     ):
         self.source_record = source_record
         self.child_record = child_record

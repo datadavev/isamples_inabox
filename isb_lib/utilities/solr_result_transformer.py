@@ -114,9 +114,9 @@ class SolrResultTransformer:
         self._add_to_dict(sampling_site_dict, METADATA_PLACE_NAME, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME)
         sample_location_dict: dict = {}
         sampling_site_dict[METADATA_SAMPLE_LOCATION] = sample_location_dict
-        self._add_to_dict(sampling_site_dict, METADATA_ELEVATION, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS)
-        self._add_to_dict(sampling_site_dict, METADATA_LATITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE)
-        self._add_to_dict(sampling_site_dict, METADATA_LONGITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE)
+        self._add_to_dict(sample_location_dict, METADATA_ELEVATION, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS)
+        self._add_to_dict(sample_location_dict, METADATA_LATITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE)
+        self._add_to_dict(sample_location_dict, METADATA_LONGITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE)
         return produced_by_dict
 
     def _registrant_dict(self, rec: dict) -> dict:

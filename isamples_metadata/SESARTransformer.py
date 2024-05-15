@@ -467,7 +467,7 @@ class SESARTransformer(Transformer):
 
         return responsibilities
 
-    def produced_by_result_time(self) -> str:
+    def _produced_by_result_time_impl(self) -> str:
         result_time = Transformer.NOT_PROVIDED
         description = self._source_record_description()
         if "collectionStartDate" in description:

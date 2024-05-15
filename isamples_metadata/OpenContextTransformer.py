@@ -420,7 +420,7 @@ class OpenContextTransformer(Transformer):
                 responsibilities.append(Transformer._responsibility_dict("collector", OpenContextTransformer._get_oc_str_or_dict_item_label(contributor)))
         return responsibilities
 
-    def produced_by_result_time(self) -> str:
+    def _produced_by_result_time_impl(self) -> str:
         return self.source_record.get("published", Transformer.NOT_PROVIDED)
 
     def sampling_site_description(self) -> str:

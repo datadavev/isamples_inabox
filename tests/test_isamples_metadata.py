@@ -164,10 +164,8 @@ def test_geome_as_core_record(
             # second one should be a child record
             # and the child should have a relation pointing back to the parent
             child_doc = solr_docs[1]
-            relations = child_doc.get("relations")
+            relations = child_doc.get("relatedResource_isb_core_id")
             assert relations is not None and len(relations) == 1
-            assert relations[0].get("relation_target") is not None
-            assert relations[0].get("relation_type") == "subsample"
 
 
 GEOME_child_test_values = [

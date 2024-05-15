@@ -100,6 +100,17 @@ class Transformer(ABC):
         context_categories = self.has_context_categories()
         material_categories = self.has_material_categories()
         specimen_categories = self.has_specimen_categories()
+        sampling_site_elevation = self.sampling_site_elevation()
+        sampling_site_latitude = self.sampling_site_latitude()
+        sampling_site_longitude = self.sampling_site_longitude()
+        sample_location_dict = {}
+        if sampling_site_elevation is not None:
+            sample_location_dict[METADATA_ELEVATION] = sampling_site_elevation
+        if sampling_site_latitude is not None:
+            sample_location_dict[METADATA_LATITUDE] = sampling_site_latitude
+        if sampling_site_longitude is not None:
+            sample_location_dict[METADATA_LONGITUDE] = sampling_site_longitude
+
         transformed_record = {
             METADATA_SCHEMA: "iSamplesSchemaCore1.0.json",
             METADATA_AT_ID: self.id_string(),
@@ -124,11 +135,7 @@ class Transformer(ABC):
                 METADATA_SAMPLING_SITE: {
                     METADATA_DESCRIPTION: self.sampling_site_description(),
                     METADATA_LABEL: self.sampling_site_label(),
-                    METADATA_SAMPLE_LOCATION: {
-                        METADATA_ELEVATION: self.sampling_site_elevation(),
-                        METADATA_LATITUDE: self.sampling_site_latitude(),
-                        METADATA_LONGITUDE: self.sampling_site_longitude(),
-                    },
+                    METADATA_SAMPLE_LOCATION: sample_location_dict,
                     METADATA_PLACE_NAME: self.sampling_site_place_names(),
                 },
             },

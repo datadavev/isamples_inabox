@@ -46,8 +46,6 @@ def _run_transformer(
         _assert_transformed_dictionary(isamples_path, transformed_to_isamples_record)
 
 
-
-
 def _assert_transformed_dictionary(
     isamples_path: str, transformed_to_isamples_record: typing.Dict
 ):

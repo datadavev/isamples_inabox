@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 import typing
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 
 import h3
 
@@ -103,13 +103,13 @@ class Transformer(ABC):
         sampling_site_elevation = self.sampling_site_elevation()
         sampling_site_latitude = self.sampling_site_latitude()
         sampling_site_longitude = self.sampling_site_longitude()
-        sample_location_dict = {}
+        sample_location_dict: dict[str, Any] = {}
         if sampling_site_elevation is not None:
             sample_location_dict[METADATA_ELEVATION] = sampling_site_elevation
         if sampling_site_latitude is not None:
-            sample_location_dict[METADATA_LATITUDE] = str(sampling_site_latitude)
+            sample_location_dict[METADATA_LATITUDE] = sampling_site_latitude
         if sampling_site_longitude is not None:
-            sample_location_dict[METADATA_LONGITUDE] = str(sampling_site_longitude)
+            sample_location_dict[METADATA_LONGITUDE] = sampling_site_longitude
 
         transformed_record = {
             METADATA_SCHEMA: "iSamplesSchemaCore1.0.json",

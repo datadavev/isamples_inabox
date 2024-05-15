@@ -40,7 +40,7 @@
         }
     ],
     "produced_by": {
-        "@id": "",
+        "identifier": "",
         "label": "",
         "description": "",
         "has_feature_of_interest": "",
@@ -50,7 +50,7 @@
                 "name": "Joanna Smith"
             }
         ],
-        "result_time": "2017-01-30T22:57:28Z",
+        "result_time": "2017-01-30",
         "sampling_site": {
             "description": "",
             "label": "",
@@ -69,7 +69,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

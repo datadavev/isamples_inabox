@@ -62,7 +62,7 @@
         }
     ],
     "produced_by": {
-        "@id": "",
+        "identifier": "",
         "label": "Murlo",
         "description": "http://opencontext.org/projects/df043419-f23b-41da-7e4d-ee52af22f92f",
         "has_feature_of_interest": "",
@@ -72,7 +72,7 @@
                 "name": "Anthony Tuck"
             }
         ],
-        "result_time": "2012-12-28T00:00:00Z",
+        "result_time": "2012-12-28",
         "sampling_site": {
             "description": "https://opencontext.org/subjects/871b9ef8-bc68-4190-5f8a-00882c0040a4",
             "label": "Poggio Civitate",
@@ -98,7 +98,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

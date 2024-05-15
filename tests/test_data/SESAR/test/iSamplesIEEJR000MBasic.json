@@ -33,18 +33,26 @@
         ""
     ],
     "keywords": [
-        "Individual Sample"
+        {
+            "keyword": "Individual Sample"
+        }
     ],
     "produced_by": {
-        "@id": "",
+        "identifier": "",
         "label": "Manual>Hammer",
         "description": "Manual>Hammer",
         "has_feature_of_interest": "Metamorphic aureole",
         "responsibility": [
-            "Jade Star Lackey,,Collector",
-            "Evan Ramos,,Sample Owner"
+            {
+                "role": "Collector",
+                "name": "Jade Star Lackey"
+            },
+            {
+                "role": "Sample Owner",
+                "name": "Evan Ramos"
+            }
         ],
-        "result_time": "2021-01-19 04:32:44",
+        "result_time": "2021-01-19",
         "sampling_site": {
             "description": "",
             "label": "",
@@ -69,7 +77,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

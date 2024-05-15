@@ -33,18 +33,26 @@
         ""
     ],
     "keywords": [
-        "Core Sub-Piece"
+        {
+            "keyword": "Core Sub-Piece"
+        }
     ],
     "produced_by": {
-        "@id": "IGSN:IE22301LL",
+        "identifier": "IGSN:IE22301LL",
         "label": "Coring>PistonCorer",
         "description": "cruiseFieldPrgrm:NGHP01. Coring>PistonCorer. navigation type:GPS",
         "has_feature_of_interest": "",
         "responsibility": [
-            "Evan Solomon,,Collector",
-            "Justine Sauvage,,Sample Owner"
+            {
+                "role": "Collector",
+                "name": "Evan Solomon"
+            },
+            {
+                "role": "Sample Owner",
+                "name": "Justine Sauvage"
+            }
         ],
-        "result_time": "2015-11-30 11:27:59",
+        "result_time": "2015-11-30",
         "sampling_site": {
             "description": "",
             "label": "",
@@ -63,7 +71,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

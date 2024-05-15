@@ -1,16 +1,22 @@
 import logging
 from abc import ABC, abstractmethod
 import typing
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 
 import h3
 
-from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_SCHEMA, METADATA_AT_ID, METADATA_LABEL, METADATA_DESCRIPTION, \
-    METADATA_HAS_CONTEXT_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY_CONFIDENCE, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE, \
-    METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE, METADATA_KEYWORDS, METADATA_KEYWORD, METADATA_KEYWORD_URI, METADATA_SCHEME_NAME, METADATA_PRODUCED_BY, \
-    METADATA_RESPONSIBILITY, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_RESULT_TIME, METADATA_SAMPLING_SITE, METADATA_ELEVATION, METADATA_LATITUDE, METADATA_LONGITUDE, \
-    METADATA_REGISTRANT, METADATA_SAMPLING_PURPOSE, METADATA_CURATION, METADATA_ACCESS_CONSTRAINTS, METADATA_CURATION_LOCATION, METADATA_RELATED_RESOURCE, METADATA_AUTHORIZED_BY, \
-    METADATA_COMPLIES_WITH, METADATA_INFORMAL_CLASSIFICATION, METADATA_PLACE_NAME, METADATA_ROLE, METADATA_NAME, METADATA_SAMPLE_LOCATION
+from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_SCHEMA, METADATA_AT_ID, \
+    METADATA_LABEL, METADATA_DESCRIPTION, \
+    METADATA_HAS_CONTEXT_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY_CONFIDENCE, METADATA_HAS_MATERIAL_CATEGORY, \
+    METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE, \
+    METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE, METADATA_KEYWORDS, METADATA_KEYWORD, \
+    METADATA_KEYWORD_URI, METADATA_SCHEME_NAME, METADATA_PRODUCED_BY, \
+    METADATA_RESPONSIBILITY, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_RESULT_TIME, METADATA_SAMPLING_SITE, \
+    METADATA_ELEVATION, METADATA_LATITUDE, METADATA_LONGITUDE, \
+    METADATA_REGISTRANT, METADATA_SAMPLING_PURPOSE, METADATA_CURATION, METADATA_ACCESS_CONSTRAINTS, \
+    METADATA_CURATION_LOCATION, METADATA_RELATED_RESOURCE, METADATA_AUTHORIZED_BY, \
+    METADATA_COMPLIES_WITH, METADATA_INFORMAL_CLASSIFICATION, METADATA_PLACE_NAME, METADATA_ROLE, METADATA_NAME, \
+    METADATA_SAMPLE_LOCATION, METADATA_IDENTIFIER
 from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 NOT_PROVIDED = "Not Provided"
@@ -94,6 +100,17 @@ class Transformer(ABC):
         context_categories = self.has_context_categories()
         material_categories = self.has_material_categories()
         specimen_categories = self.has_specimen_categories()
+        sampling_site_elevation = self.sampling_site_elevation()
+        sampling_site_latitude = self.sampling_site_latitude()
+        sampling_site_longitude = self.sampling_site_longitude()
+        sample_location_dict: dict[str, Any] = {}
+        if sampling_site_elevation is not None:
+            sample_location_dict[METADATA_ELEVATION] = sampling_site_elevation
+        if sampling_site_latitude is not None:
+            sample_location_dict[METADATA_LATITUDE] = sampling_site_latitude
+        if sampling_site_longitude is not None:
+            sample_location_dict[METADATA_LONGITUDE] = sampling_site_longitude
+
         transformed_record = {
             METADATA_SCHEMA: "iSamplesSchemaCore1.0.json",
             METADATA_AT_ID: self.id_string(),
@@ -109,7 +126,7 @@ class Transformer(ABC):
             METADATA_INFORMAL_CLASSIFICATION: self.informal_classification(),
             METADATA_KEYWORDS: self.keywords(),
             METADATA_PRODUCED_BY: {
-                METADATA_AT_ID: self.produced_by_id_string(),
+                METADATA_IDENTIFIER: self.produced_by_id_string(),
                 METADATA_LABEL: self.produced_by_label(),
                 METADATA_DESCRIPTION: self.produced_by_description(),
                 METADATA_HAS_FEATURE_OF_INTEREST: self.produced_by_feature_of_interest(),
@@ -118,11 +135,7 @@ class Transformer(ABC):
                 METADATA_SAMPLING_SITE: {
                     METADATA_DESCRIPTION: self.sampling_site_description(),
                     METADATA_LABEL: self.sampling_site_label(),
-                    METADATA_SAMPLE_LOCATION: {
-                        METADATA_ELEVATION: self.sampling_site_elevation(),
-                        METADATA_LATITUDE: self.sampling_site_latitude(),
-                        METADATA_LONGITUDE: self.sampling_site_longitude(),
-                    },
+                    METADATA_SAMPLE_LOCATION: sample_location_dict,
                     METADATA_PLACE_NAME: self.sampling_site_place_names(),
                 },
             },
@@ -247,9 +260,17 @@ class Transformer(ABC):
         """The responsibility list for the producedBy dictionary"""
         pass
 
-    @abstractmethod
     def produced_by_result_time(self) -> str:
         """The result time for the producedBy dictionary"""
+        result_time = self._produced_by_result_time_impl()
+        if result_time is not None:
+            # JSON schema expects this to be YYYY-MM-dd, so chop off any timestamps
+            if len(result_time) > 10:
+                result_time = result_time[:10]
+        return result_time
+
+    @abstractmethod
+    def _produced_by_result_time_impl(self) -> str:
         pass
 
     @abstractmethod
@@ -291,8 +312,8 @@ class Transformer(ABC):
     def curation_description(self) -> str:
         return Transformer.NOT_PROVIDED
 
-    def curation_access_constraints(self) -> str:
-        return Transformer.NOT_PROVIDED
+    def curation_access_constraints(self) -> list[str]:
+        return []
 
     def curation_location(self) -> str:
         return Transformer.NOT_PROVIDED

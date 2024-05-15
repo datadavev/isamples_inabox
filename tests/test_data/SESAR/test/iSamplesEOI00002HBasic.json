@@ -33,18 +33,26 @@
         ""
     ],
     "keywords": [
-        "Individual Sample"
+        {
+            "keyword": "Individual Sample"
+        }
     ],
     "produced_by": {
-        "@id": "",
+        "identifier": "",
         "label": "Sampler:Fluid:GTHFS",
         "description": "cruiseFieldPrgrm:TN300. launchPlatformName:Jason II. Sampler:Fluid:GTHFS. HFS gastight. Red-center-9. T=250C. launch type:ROV, navigation type:USBL",
         "has_feature_of_interest": "volcano",
         "responsibility": [
-            "Evans_Leigh,,Collector",
-            "Andra Bobbitt,,Sample Owner"
+            {
+                "role": "Collector",
+                "name": "Evans_Leigh"
+            },
+            {
+                "role": "Sample Owner",
+                "name": "Andra Bobbitt"
+            }
         ],
-        "result_time": "2013-09-14 01:30:00",
+        "result_time": "2013-09-14",
         "sampling_site": {
             "description": "Trevi:Jason Tmax=257.9 C. In the direct flow at this small anhydrite mound (anhydrite knocked over).",
             "label": "",
@@ -65,7 +73,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

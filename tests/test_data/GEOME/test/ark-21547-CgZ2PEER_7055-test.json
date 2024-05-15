@@ -63,7 +63,7 @@
         }
     ],
     "produced_by": {
-        "@id": "ark:/21547/CgZ2PEER_7055",
+        "identifier": "ark:/21547/CgZ2PEER_7055",
         "label": "event INDO_224",
         "description": "samplingProtocol: Dead Coral Head | expeditionCode: PEER_2016 | taxonomy team: MINV | projectId: 78",
         "has_feature_of_interest": "",
@@ -108,7 +108,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "Indonesian Biodiversity Research Center",
         "responsibility": [
             {

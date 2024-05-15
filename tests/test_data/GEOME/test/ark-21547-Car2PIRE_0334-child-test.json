@@ -57,7 +57,7 @@
         }
     ],
     "produced_by": {
-        "@id": "ark:/21547/Car2PIRE_0334",
+        "identifier": "ark:/21547/Car2PIRE_0334",
         "label": "tissue subsample from PIRE_0334",
         "description": "tissueCatalogNumber: http://n2t.net/ark:/21547/Q2INDO106431.1",
         "has_feature_of_interest": "",
@@ -87,7 +87,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "tissueWell: C06, tissuePlate: 03_ACEH_080916",
         "responsibility": [
             {

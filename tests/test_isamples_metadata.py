@@ -4,10 +4,11 @@ import csv
 from typing import Optional
 from unittest.mock import patch
 
-
 import pytest
 import typing
 import re
+
+from jsonschema.validators import validate
 
 import isamples_metadata.GEOMETransformer
 from isamples_metadata import Transformer
@@ -33,7 +34,7 @@ def _run_transformer(
     source_path,
     transformer_class,
     transformer=None,
-    last_updated_time_str=None,
+    last_updated_time_str=None
 ):
     with open(source_path) as source_file:
         source_record = json.load(source_file)
@@ -50,6 +51,7 @@ def _assert_transformed_dictionary(
 ):
     with open(isamples_path) as isamples_file:
         assert transformed_to_isamples_record.get("@id") is not None
+        validate(instance=transformed_to_isamples_record, schema=isamples_schema_json())
         if ASSERT_ON_OUTPUT:
             isamples_record = json.load(isamples_file)
             assert transformed_to_isamples_record == isamples_record
@@ -160,10 +162,8 @@ def test_geome_as_core_record(
             # second one should be a child record
             # and the child should have a relation pointing back to the parent
             child_doc = solr_docs[1]
-            relations = child_doc.get("relations")
+            relations = child_doc.get("relatedResource_isb_core_id")
             assert relations is not None and len(relations) == 1
-            assert relations[0].get("relation_target") is not None
-            assert relations[0].get("relation_type") == "subsample"
 
 
 GEOME_child_test_values = [
@@ -344,3 +344,8 @@ def test_open_context_place_names():
         transformer = OpenContextTransformer(source_record)
         place_names = transformer.sampling_site_place_names()
         assert ["Asia", "Turkey", "Avkat Survey Area", "SU Group 10", "S1001"] == place_names
+
+
+def isamples_schema_json() -> typing.Dict:
+    with open("./test_data/json_schema/iSamplesSchemaCore1.0.json") as schema:
+        return json.load(schema)

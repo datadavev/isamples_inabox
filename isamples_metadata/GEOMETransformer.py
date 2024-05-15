@@ -351,7 +351,7 @@ class GEOMETransformer(Transformer):
             return responsibilities
         return []
 
-    def produced_by_result_time(self) -> str:
+    def _produced_by_result_time_impl(self) -> str:
         parent_record = self._source_record_parent_record()
         if parent_record is not None:
             return self._formatted_date(
@@ -444,9 +444,6 @@ class GEOMETransformer(Transformer):
             )
         if len(curation_description_pieces) > 0:
             return "; ".join(curation_description_pieces)
-        return Transformer.NOT_PROVIDED
-
-    def curation_access_constraints(self) -> str:
         return Transformer.NOT_PROVIDED
 
     def curation_location(self) -> str:
@@ -636,7 +633,7 @@ class GEOMEChildTransformer(GEOMETransformer):
         # TODO: who did the tissue extract, if available -- where does this live, if anywhere?
         return []
 
-    def produced_by_result_time(self) -> str:
+    def _produced_by_result_time_impl(self) -> str:
         # TODO: time the tissue extract was done, if available -- where does this live?
         return ""
 

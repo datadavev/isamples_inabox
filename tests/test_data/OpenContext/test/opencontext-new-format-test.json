@@ -62,7 +62,7 @@
         }
     ],
     "produced_by": {
-        "@id": "",
+        "identifier": "",
         "label": "Murlo",
         "description": "http://opencontext.org/projects/df043419-f23b-41da-7e4d-ee52af22f92f",
         "has_feature_of_interest": "",
@@ -98,7 +98,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

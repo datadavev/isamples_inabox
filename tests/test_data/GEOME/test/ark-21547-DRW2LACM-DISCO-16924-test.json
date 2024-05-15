@@ -68,7 +68,7 @@
         }
     ],
     "produced_by": {
-        "@id": "ark:/21547/DRW2LACM:DISCO:16924",
+        "identifier": "ark:/21547/DRW2LACM:DISCO:16924",
         "label": "event DISCO_CollectionID:21213",
         "description": "L.A. Urban Ocean Expedition 2019. 66\u00b0F bottom 70\u00b0F surface, horizontal visibility 10-15 ft. | samplingProtocol: SCUBA, hand, hand dredge, rock hammer | permitInformation: CA SCP S\u2010191440006\u201019209\u2010001 | expeditionCode: LAUOE | projectId: 44",
         "has_feature_of_interest": "",
@@ -131,7 +131,7 @@
     "curation": {
         "label": "",
         "description": "fixative: 95% ethanol; preservative: 95% ethanol; record modifiedBy: Mike O'Mahoney; modifiedReason: updated tissueID from 9013 to corrected value 9597 (19Aug20); sample identified: 2019-09-02",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "Natural History Museum of Los Angeles County",
         "responsibility": [
             {

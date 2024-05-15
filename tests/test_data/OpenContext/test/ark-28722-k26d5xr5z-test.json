@@ -34,7 +34,7 @@
     "informal_classification": [],
     "keywords": [],
     "produced_by": {
-        "@id": "",
+        "identifier": "",
         "label": "",
         "description": "",
         "has_feature_of_interest": "",
@@ -71,7 +71,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "",
         "responsibility": []
     },

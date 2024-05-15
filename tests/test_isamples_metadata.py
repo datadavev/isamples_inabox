@@ -34,7 +34,7 @@ def _run_transformer(
     source_path,
     transformer_class,
     transformer=None,
-    last_updated_time_str=None,
+    last_updated_time_str=None
 ):
     with open(source_path) as source_file:
         source_record = json.load(source_file)
@@ -46,11 +46,14 @@ def _run_transformer(
         _assert_transformed_dictionary(isamples_path, transformed_to_isamples_record)
 
 
+
+
 def _assert_transformed_dictionary(
     isamples_path: str, transformed_to_isamples_record: typing.Dict
 ):
     with open(isamples_path) as isamples_file:
         assert transformed_to_isamples_record.get("@id") is not None
+        validate(instance=transformed_to_isamples_record, schema=isamples_schema_json())
         if ASSERT_ON_OUTPUT:
             isamples_record = json.load(isamples_file)
             assert transformed_to_isamples_record == isamples_record
@@ -347,16 +350,6 @@ def test_open_context_place_names():
         assert ["Asia", "Turkey", "Avkat Survey Area", "SU Group 10", "S1001"] == place_names
 
 
-@pytest.fixture
 def isamples_schema_json() -> typing.Dict:
     with open("./test_data/json_schema/iSamplesSchemaCore1.0.json") as schema:
         return json.load(schema)
-
-
-def test_exported_json_validates_against_schema(isamples_schema_json):
-    raw = "./test_data/SESAR/raw/EOI00002Hjson-ld.json"
-    with open(raw) as source_file:
-        source_record = json.load(source_file)
-        transformer = SESARTransformer(source_record)
-        transformed = transformer.transform()
-        validate(instance=transformed, schema=isamples_schema_json)

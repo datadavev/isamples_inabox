@@ -57,7 +57,7 @@
         }
     ],
     "produced_by": {
-        "@id": "ark:/21547/Car2PIRE_0334",
+        "identifier": "ark:/21547/Car2PIRE_0334",
         "label": "event INDO_2016_SEU_1B",
         "description": "samplingProtocol: ARMS | expeditionCode: INDO_PIRE | taxonomy team: MINV | projectId: 80",
         "has_feature_of_interest": "",
@@ -104,7 +104,7 @@
     "curation": {
         "label": "",
         "description": "",
-        "access_constraints": "",
+        "access_constraints": [],
         "curation_location": "No Voucher",
         "responsibility": [
             {

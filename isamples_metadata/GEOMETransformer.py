@@ -446,9 +446,6 @@ class GEOMETransformer(Transformer):
             return "; ".join(curation_description_pieces)
         return Transformer.NOT_PROVIDED
 
-    def curation_access_constraints(self) -> str:
-        return Transformer.NOT_PROVIDED
-
     def curation_location(self) -> str:
         return self._source_record_main_record().get(
             "institutionCode", Transformer.NOT_PROVIDED

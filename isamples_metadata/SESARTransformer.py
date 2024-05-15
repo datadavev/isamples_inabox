@@ -11,7 +11,7 @@ from isamples_metadata.Transformer import (
     StringOrderedCategoryMapper,
     StringEqualityCategoryMapper,
     StringEndsWithCategoryMapper,
-    AbstractCategoryMetaMapper,
+    AbstractCategoryMetaMapper, Keyword,
 )
 
 from isamples_metadata.taxonomy.metadata_model_client import MODEL_SERVER_CLIENT, PredictionResult
@@ -367,8 +367,11 @@ class SESARTransformer(Transformer):
         return SpecimenCategoryMetaMapper.categories(sample_type)
 
     def keywords(self) -> typing.List:
-        # TODO: implement
-        return [self._source_record_description()["sampleType"]]
+        sample_type = self._source_record_description()["sampleType"]
+        if len(sample_type) > 0:
+            return [Keyword(sample_type)]
+        else:
+            return []
 
     def produced_by_id_string(self) -> str:
         parent_id = self._source_record_description().get("parentIdentifier")
@@ -451,16 +454,16 @@ class SESARTransformer(Transformer):
         return Transformer.NOT_PROVIDED
 
     def produced_by_responsibilities(self) -> list:
-        responsibilities = list()
+        responsibilities = []
         description_dict = self._source_record_description()
         if "collector" in description_dict:
             collector = description_dict["collector"]
             if collector is not None:
-                responsibilities.append("{},,Collector".format(collector))
+                responsibilities.append(Transformer._responsibility_dict("Collector", collector))
 
         owner = self._contributor_name_with_role("Sample Owner")
         if len(owner) > 0:
-            responsibilities.append("{},,Sample Owner".format(owner))
+            responsibilities.append(Transformer._responsibility_dict("Sample Owner", owner))
 
         return responsibilities
 

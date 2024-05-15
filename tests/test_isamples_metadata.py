@@ -4,10 +4,11 @@ import csv
 from typing import Optional
 from unittest.mock import patch
 
-
 import pytest
 import typing
 import re
+
+from jsonschema.validators import validate
 
 import isamples_metadata.GEOMETransformer
 from isamples_metadata import Transformer
@@ -344,3 +345,18 @@ def test_open_context_place_names():
         transformer = OpenContextTransformer(source_record)
         place_names = transformer.sampling_site_place_names()
         assert ["Asia", "Turkey", "Avkat Survey Area", "SU Group 10", "S1001"] == place_names
+
+
+@pytest.fixture
+def isamples_schema_json() -> typing.Dict:
+    with open("./test_data/json_schema/iSamplesSchemaCore1.0.json") as schema:
+        return json.load(schema)
+
+
+def test_exported_json_validates_against_schema(isamples_schema_json):
+    raw = "./test_data/SESAR/raw/EOI00002Hjson-ld.json"
+    with open(raw) as source_file:
+        source_record = json.load(source_file)
+        transformer = SESARTransformer(source_record)
+        transformed = transformer.transform()
+        validate(instance=transformed, schema=isamples_schema_json)

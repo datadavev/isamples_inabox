@@ -259,6 +259,7 @@ class Transformer(ABC):
     def produced_by_responsibilities(self) -> typing.List[dict[str, str]]:
         """The responsibility list for the producedBy dictionary"""
         pass
+
     @abstractmethod
     def produced_by_result_time(self) -> str:
         pass

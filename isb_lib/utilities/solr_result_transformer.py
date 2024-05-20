@@ -12,7 +12,7 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_REGISTRANT, METADATA_SAMPLE_LOCATION, METADATA_ELEVATION, METADATA_SAMPLING_SITE, \
     METADATA_RESULT_TIME, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_DESCRIPTION, METADATA_INFORMAL_CLASSIFICATION, \
     METADATA_KEYWORDS, METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
-    METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_AT_ID, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
+    METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
     METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
@@ -103,13 +103,12 @@ class SolrResultTransformer:
         if source_value is not None:
             target_dict[target_key] = source_value
 
-
     def _add_responsibilities_to_container(self,
                                            rec: dict,
                                            responsibility_key_solr: str,
                                            responsibility_key: str,
                                            container: dict):
-        responsibilities = rec.get(responsibility_key_solr)
+        responsibilities = rec.get(responsibility_key_solr, [])
         responsibility_dicts = []
         for responsibility in responsibilities:
             pieces = responsibility.split(":")
@@ -151,8 +150,8 @@ class SolrResultTransformer:
         self._add_responsibilities_to_container(rec, SOLR_PRODUCED_BY_RESPONSIBILITY, METADATA_RESPONSIBILITY, produced_by_dict)
         return produced_by_dict
 
-    def _formatted_controlled_vocabulary(self, rec: dict, key: str) -> dict:
-        values = rec.get(key)
+    def _formatted_controlled_vocabulary(self, rec: dict, key: str) -> list[dict]:
+        values = rec.get(key, [])
         return [{METADATA_LABEL: value} for value in values]
 
     def _has_specimen_categories(self, rec: dict) -> list:
@@ -165,7 +164,7 @@ class SolrResultTransformer:
         return self._formatted_controlled_vocabulary(rec, SOLR_HAS_CONTEXT_CATEGORY)
 
     def _keywords(self, rec: dict) -> list:
-        return [{METADATA_KEYWORD: keyword} for keyword in rec.get(SOLR_KEYWORDS)]
+        return [{METADATA_KEYWORD: keyword} for keyword in rec.get(SOLR_KEYWORDS, [])]
 
     def _registrant_dict(self, rec: dict) -> dict:
         return {METADATA_NAME: rec[SOLR_REGISTRANT][0]}

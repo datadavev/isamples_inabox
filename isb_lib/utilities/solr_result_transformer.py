@@ -13,7 +13,7 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_RESULT_TIME, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_DESCRIPTION, METADATA_INFORMAL_CLASSIFICATION, \
     METADATA_KEYWORDS, METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_AT_ID, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
-    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER
+    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_CURATION_RESPONSIBILITY, \
@@ -103,20 +103,35 @@ class SolrResultTransformer:
         if source_value is not None:
             target_dict[target_key] = source_value
 
+
+    def _add_responsibilities_to_container(self,
+                                           rec: dict,
+                                           responsibility_key_solr: str,
+                                           responsibility_key: str,
+                                           container: dict):
+        responsibilities = rec.get(responsibility_key_solr)
+        responsibility_dicts = []
+        for responsibility in responsibilities:
+            pieces = responsibility.split(":")
+            responsibility_dicts.append({METADATA_ROLE: pieces[0], METADATA_NAME: pieces[1]})
+        if len(responsibility_dicts) > 0:
+            container[responsibility_key] = responsibility_dicts
+
     def _curation_dict(self, rec: dict) -> dict:
         curation_dict: dict = {}
         self._add_to_dict(curation_dict, METADATA_LABEL, rec, SOLR_CURATION_LABEL)
         self._add_to_dict(curation_dict, METADATA_DESCRIPTION, rec, SOLR_CURATION_DESCRIPTION)
-        self._add_to_dict(curation_dict, METADATA_ACCESS_CONSTRAINTS, rec, SOLR_CURATION_ACCESS_CONSTRAINTS)
         self._add_to_dict(curation_dict, METADATA_CURATION_LOCATION, rec, SOLR_CURATION_LOCATION)
-        self._add_to_dict(curation_dict, METADATA_RESPONSIBILITY, rec, SOLR_CURATION_RESPONSIBILITY)
+        self._add_responsibilities_to_container(rec, SOLR_CURATION_RESPONSIBILITY, METADATA_RESPONSIBILITY, curation_dict)
+        access_constraints = rec.get(SOLR_CURATION_ACCESS_CONSTRAINTS, "").split("|")
+        if len(access_constraints) > 0:
+            curation_dict[METADATA_ACCESS_CONSTRAINTS] = access_constraints
         return curation_dict
 
     def _produced_by_dict(self, rec: dict) -> dict:
         produced_by_dict: dict = {}
         self._add_to_dict(produced_by_dict, METADATA_IDENTIFIER, rec, SOLR_PRODUCED_BY_ISB_CORE_ID)
         self._add_to_dict(produced_by_dict, METADATA_LABEL, rec, SOLR_PRODUCED_BY_LABEL)
-        self._add_to_dict(produced_by_dict, METADATA_RESPONSIBILITY, rec, SOLR_PRODUCED_BY_RESPONSIBILITY)
         self._add_to_dict(produced_by_dict, METADATA_DESCRIPTION, rec, SOLR_PRODUCED_BY_DESCRIPTION)
         result_time = rec.get(SOLR_PRODUCED_BY_RESULT_TIME)
         if result_time is not None:
@@ -133,6 +148,7 @@ class SolrResultTransformer:
         self._add_to_dict(sample_location_dict, METADATA_ELEVATION, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS)
         self._add_to_dict(sample_location_dict, METADATA_LATITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE)
         self._add_to_dict(sample_location_dict, METADATA_LONGITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE)
+        self._add_responsibilities_to_container(rec, SOLR_PRODUCED_BY_RESPONSIBILITY, METADATA_RESPONSIBILITY, produced_by_dict)
         return produced_by_dict
 
     def _formatted_controlled_vocabulary(self, rec: dict, key: str) -> dict:

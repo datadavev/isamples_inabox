@@ -208,7 +208,7 @@ class SmithsonianTransformer(Transformer):
                 responsibilities.append({"role": "identified by", "name": current.strip()})
         return responsibilities
 
-    def _produced_by_result_time_impl(self) -> str:
+    def produced_by_result_time(self) -> str:
         return self._formatted_date(
             self.source_record.get("year", ""),
             self.source_record.get("month", ""),

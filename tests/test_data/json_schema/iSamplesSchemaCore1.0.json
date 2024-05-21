@@ -235,7 +235,15 @@
                 },
                 "result_time": {
                     "description": "Date on which the sample was collected.",
-                    "format": "date",
+                    "anyOf": [
+                        {
+                            "format": "date"
+                        },
+                        {
+                            "format": "date-time"
+                        }
+                    ],
+
                     "type": "string"
                 },
                 "sampling_site": {

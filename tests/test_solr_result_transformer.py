@@ -4,6 +4,7 @@ import uuid
 
 import petl
 import pytest
+from jsonschema.validators import validate
 from petl import Table
 
 from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER
@@ -46,8 +47,14 @@ def test_solr_result_transformer_csv(solr_file_path: str):
     assert appended_size > initial_size
 
 
+@pytest.fixture
+def isamples_schema_json() -> dict:
+    with open("./test_data/json_schema/iSamplesSchemaCore1.0.json") as schema:
+        return json.load(schema)
+
+
 @pytest.mark.parametrize("solr_file_path", SOLR_items)
-def test_solr_result_transformer_jsonl(solr_file_path: str):
+def test_solr_result_transformer_jsonl(solr_file_path: str, isamples_schema_json: dict):
     table = _solr_result_table(solr_file_path)
     dest_path_no_extension = _test_path()
     solr_result_transformer = SolrResultTransformer(table, TargetExportFormat.JSONL, dest_path_no_extension, False)
@@ -59,3 +66,4 @@ def test_solr_result_transformer_jsonl(solr_file_path: str):
             json_dict = json.loads(json_line)
             assert json_dict is not None
             assert json_dict.get(METADATA_SAMPLE_IDENTIFIER) is not None
+            validate(instance=json_dict, schema=isamples_schema_json)

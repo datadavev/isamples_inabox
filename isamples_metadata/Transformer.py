@@ -260,17 +260,8 @@ class Transformer(ABC):
         """The responsibility list for the producedBy dictionary"""
         pass
 
-    def produced_by_result_time(self) -> str:
-        """The result time for the producedBy dictionary"""
-        result_time = self._produced_by_result_time_impl()
-        if result_time is not None:
-            # JSON schema expects this to be YYYY-MM-dd, so chop off any timestamps
-            if len(result_time) > 10:
-                result_time = result_time[:10]
-        return result_time
-
     @abstractmethod
-    def _produced_by_result_time_impl(self) -> str:
+    def produced_by_result_time(self) -> str:
         pass
 
     @abstractmethod

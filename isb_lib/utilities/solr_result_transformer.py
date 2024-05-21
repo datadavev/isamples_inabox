@@ -12,8 +12,8 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_REGISTRANT, METADATA_SAMPLE_LOCATION, METADATA_ELEVATION, METADATA_SAMPLING_SITE, \
     METADATA_RESULT_TIME, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_DESCRIPTION, METADATA_INFORMAL_CLASSIFICATION, \
     METADATA_KEYWORDS, METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
-    METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_AT_ID, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
-    METADATA_NAME
+    METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
+    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_CURATION_RESPONSIBILITY, \
@@ -65,6 +65,19 @@ class CSVExportTransformer(AbstractExportTransformer):
 
 
 class JSONExportTransformer(AbstractExportTransformer):
+
+    @staticmethod
+    def filter_null_values(obj):
+        """
+        Recursively filter out null values from a dictionary.
+        """
+        if isinstance(obj, dict):
+            return {k: JSONExportTransformer.filter_null_values(v) for k, v in obj.items() if v is not None}
+        elif isinstance(obj, list):
+            return [JSONExportTransformer.filter_null_values(elem) for elem in obj if elem is not None]
+        else:
+            return obj
+
     @staticmethod
     def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
         if append:
@@ -73,7 +86,7 @@ class JSONExportTransformer(AbstractExportTransformer):
         dest_path = f"{dest_path_no_extension}.{extension}"
         with open(dest_path, "w") as file:
             for row in petl.util.base.dicts(table):
-                json.dump(row, file)
+                json.dump(JSONExportTransformer.filter_null_values(row), file)
                 file.write("\n")
         return dest_path
 
@@ -90,22 +103,39 @@ class SolrResultTransformer:
         if source_value is not None:
             target_dict[target_key] = source_value
 
+    def _add_responsibilities_to_container(self,
+                                           rec: dict,
+                                           responsibility_key_solr: str,
+                                           responsibility_key: str,
+                                           container: dict):
+        responsibilities = rec.get(responsibility_key_solr, [])
+        responsibility_dicts = []
+        for responsibility in responsibilities:
+            pieces = responsibility.split(":")
+            responsibility_dicts.append({METADATA_ROLE: pieces[0], METADATA_NAME: pieces[1]})
+        if len(responsibility_dicts) > 0:
+            container[responsibility_key] = responsibility_dicts
+
     def _curation_dict(self, rec: dict) -> dict:
         curation_dict: dict = {}
         self._add_to_dict(curation_dict, METADATA_LABEL, rec, SOLR_CURATION_LABEL)
         self._add_to_dict(curation_dict, METADATA_DESCRIPTION, rec, SOLR_CURATION_DESCRIPTION)
-        self._add_to_dict(curation_dict, METADATA_ACCESS_CONSTRAINTS, rec, SOLR_CURATION_ACCESS_CONSTRAINTS)
         self._add_to_dict(curation_dict, METADATA_CURATION_LOCATION, rec, SOLR_CURATION_LOCATION)
-        self._add_to_dict(curation_dict, METADATA_RESPONSIBILITY, rec, SOLR_CURATION_RESPONSIBILITY)
+        self._add_responsibilities_to_container(rec, SOLR_CURATION_RESPONSIBILITY, METADATA_RESPONSIBILITY, curation_dict)
+        access_constraints = rec.get(SOLR_CURATION_ACCESS_CONSTRAINTS, "").split("|")
+        if len(access_constraints) > 0:
+            curation_dict[METADATA_ACCESS_CONSTRAINTS] = access_constraints
         return curation_dict
 
     def _produced_by_dict(self, rec: dict) -> dict:
         produced_by_dict: dict = {}
-        self._add_to_dict(produced_by_dict, METADATA_AT_ID, rec, SOLR_PRODUCED_BY_ISB_CORE_ID)
+        self._add_to_dict(produced_by_dict, METADATA_IDENTIFIER, rec, SOLR_PRODUCED_BY_ISB_CORE_ID)
         self._add_to_dict(produced_by_dict, METADATA_LABEL, rec, SOLR_PRODUCED_BY_LABEL)
-        self._add_to_dict(produced_by_dict, METADATA_RESPONSIBILITY, rec, SOLR_PRODUCED_BY_RESPONSIBILITY)
         self._add_to_dict(produced_by_dict, METADATA_DESCRIPTION, rec, SOLR_PRODUCED_BY_DESCRIPTION)
-        self._add_to_dict(produced_by_dict, METADATA_RESULT_TIME, rec, SOLR_PRODUCED_BY_RESULT_TIME)
+        result_time = rec.get(SOLR_PRODUCED_BY_RESULT_TIME)
+        if result_time is not None:
+            result_time = result_time[:10]
+            produced_by_dict[METADATA_RESULT_TIME] = result_time
         self._add_to_dict(produced_by_dict, METADATA_HAS_FEATURE_OF_INTEREST, rec, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST)
         sampling_site_dict: dict = {}
         produced_by_dict[METADATA_SAMPLING_SITE] = sampling_site_dict
@@ -117,10 +147,27 @@ class SolrResultTransformer:
         self._add_to_dict(sample_location_dict, METADATA_ELEVATION, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS)
         self._add_to_dict(sample_location_dict, METADATA_LATITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE)
         self._add_to_dict(sample_location_dict, METADATA_LONGITUDE, rec, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE)
+        self._add_responsibilities_to_container(rec, SOLR_PRODUCED_BY_RESPONSIBILITY, METADATA_RESPONSIBILITY, produced_by_dict)
         return produced_by_dict
 
+    def _formatted_controlled_vocabulary(self, rec: dict, key: str) -> list[dict]:
+        values = rec.get(key, [])
+        return [{METADATA_LABEL: value} for value in values]
+
+    def _has_specimen_categories(self, rec: dict) -> list:
+        return self._formatted_controlled_vocabulary(rec, SOLR_HAS_SPECIMEN_CATEGORY)
+
+    def _has_material_categories(self, rec: dict) -> list:
+        return self._formatted_controlled_vocabulary(rec, SOLR_HAS_MATERIAL_CATEGORY)
+
+    def _has_context_categories(self, rec: dict) -> list:
+        return self._formatted_controlled_vocabulary(rec, SOLR_HAS_CONTEXT_CATEGORY)
+
+    def _keywords(self, rec: dict) -> list:
+        return [{METADATA_KEYWORD: keyword} for keyword in rec.get(SOLR_KEYWORDS, [])]
+
     def _registrant_dict(self, rec: dict) -> dict:
-        return {METADATA_NAME: rec[SOLR_REGISTRANT]}
+        return {METADATA_NAME: rec[SOLR_REGISTRANT][0]}
 
     def _rename_table_columns_csv(self):
         """Renames the solr columns to the public names in the public metadata schema, while maintaining CSV tabular format"""
@@ -168,11 +215,11 @@ class SolrResultTransformer:
         mappings[METADATA_LABEL] = SOLR_LABEL
         mappings[METADATA_DESCRIPTION] = SOLR_DESCRIPTION
         mappings["source_collection"] = SOLR_SOURCE  # this isn't present in the exported metadata
-        mappings[METADATA_HAS_SPECIMEN_CATEGORY] = SOLR_HAS_SPECIMEN_CATEGORY
-        mappings[METADATA_HAS_MATERIAL_CATEGORY] = SOLR_HAS_MATERIAL_CATEGORY
-        mappings[METADATA_HAS_CONTEXT_CATEGORY] = SOLR_HAS_CONTEXT_CATEGORY
+        mappings[METADATA_HAS_SPECIMEN_CATEGORY] = self._has_specimen_categories
+        mappings[METADATA_HAS_MATERIAL_CATEGORY] = self._has_material_categories
+        mappings[METADATA_HAS_CONTEXT_CATEGORY] = self._has_context_categories
         mappings[METADATA_INFORMAL_CLASSIFICATION] = SOLR_INFORMAL_CLASSIFICATION
-        mappings[METADATA_KEYWORDS] = SOLR_KEYWORDS
+        mappings[METADATA_KEYWORDS] = self._keywords
         mappings[METADATA_PRODUCED_BY] = self._produced_by_dict
         mappings[METADATA_REGISTRANT] = self._registrant_dict
         mappings[METADATA_SAMPLING_PURPOSE] = SOLR_SAMPLING_PURPOSE

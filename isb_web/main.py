@@ -611,17 +611,17 @@ async def resolve_thing(
 async def thing_resolved_content(identifier: str, item: Thing, session: Session) -> dict:
     authority_id = item.authority_id
     if authority_id == "SESAR":
-        content = SESARTransformer(item.resolved_content).transform()
+        content = SESARTransformer(item.resolved_content).transform(False)
     elif authority_id == "GEOME":
         content = (
             isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
                 identifier, item.resolved_content, session, TAXONOMY_NAME_TO_KINGDOM_MAP
-            ).transform()
+            ).transform(False)
         )
     elif authority_id == "OPENCONTEXT":
-        content = OpenContextTransformer(item.resolved_content).transform()
+        content = OpenContextTransformer(item.resolved_content).transform(False)
     elif authority_id == "SMITHSONIAN":
-        content = SmithsonianTransformer(item.resolved_content).transform()
+        content = SmithsonianTransformer(item.resolved_content).transform(False)
     else:
         raise fastapi.HTTPException(
             status_code=400,

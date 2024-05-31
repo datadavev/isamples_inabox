@@ -89,7 +89,7 @@ class Transformer(ABC):
     def __init__(self, source_record: typing.Dict):
         self.source_record = source_record
 
-    def transform(self) -> typing.Dict:
+    def transform(self, include_h3: bool = True) -> typing.Dict:
         """Do the actual work of transforming a provider record into an iSamples record.
 
         Arguments:
@@ -154,10 +154,11 @@ class Transformer(ABC):
             METADATA_AUTHORIZED_BY: self.authorized_by(),
             METADATA_COMPLIES_WITH: self.complies_with(),
         }
-        for index in range(0, 15):
-            h3_at_resolution = self.h3_function()(self.source_record, index)
-            field_name = f"producedBy_samplingSite_location_h3_{index}"
-            transformed_record[field_name] = h3_at_resolution
+        if include_h3:
+            for index in range(0, 15):
+                h3_at_resolution = self.h3_function()(self.source_record, index)
+                field_name = f"producedBy_samplingSite_location_h3_{index}"
+                transformed_record[field_name] = h3_at_resolution
         return transformed_record
 
     @abstractmethod

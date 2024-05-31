@@ -40,10 +40,14 @@ def _run_transformer(
         source_record = json.load(source_file)
         if transformer is None:
             transformer = transformer_class(source_record)
-        transformed_to_isamples_record = transformer.transform()
+        transformed_to_isamples_record = transformer.transform(True)
         if last_updated_time_str is not None:
             assert transformer.last_updated_time() == last_updated_time_str
         _assert_transformed_dictionary(isamples_path, transformed_to_isamples_record)
+        h3_key = "producedBy_samplingSite_location_h3_0"
+        assert h3_key in transformed_to_isamples_record
+        transformed_to_isamples_record_no_h3 = transformer.transform(False)
+        assert h3_key not in transformed_to_isamples_record_no_h3
 
 
 def _assert_transformed_dictionary(

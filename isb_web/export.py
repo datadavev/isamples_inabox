@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os.path
 import traceback
@@ -149,7 +150,7 @@ def status(uuid: str = fastapi.Query(None), session: Session = Depends(get_sessi
     else:
         if export_job.tcompleted is not None:
             if export_job.error is None:
-                content = {"status": "completed", "tcompleted": str(export_job.tcompleted), "query": str(export_job.solr_query_params)}
+                content = {"status": "completed", "tcompleted": str(export_job.tcompleted), "query": json.dumps(export_job.solr_query_params)}
             else:
                 content = {"status": "error", "tcompleted": str(export_job.tcompleted), "reason": export_job.error}
             return fastapi.responses.JSONResponse(content=content, status_code=HTTP_200_OK)

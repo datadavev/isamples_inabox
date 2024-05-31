@@ -155,7 +155,7 @@ class SmithsonianTransformer(Transformer):
     def informal_classification(self) -> typing.List[str]:
         return [self.source_record.get("scientificName", "")]
 
-    def keywords(self) -> typing.List[dict[str, str]]:
+    def keywords_impl(self) -> typing.List[dict[str, str]]:
         keywords: list[Keyword] = [Keyword(self.source_record.get("collectionCode", ""))]
         water_body = self.source_record.get("waterBody", "")
         if len(water_body) > 0:

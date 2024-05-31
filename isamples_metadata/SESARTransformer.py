@@ -366,7 +366,7 @@ class SESARTransformer(Transformer):
         sample_type = self._source_record_description()["sampleType"]
         return SpecimenCategoryMetaMapper.categories(sample_type)
 
-    def keywords(self) -> typing.List:
+    def keywords_impl(self) -> typing.List:
         sample_type = self._source_record_description()["sampleType"]
         if len(sample_type) > 0:
             return [Keyword(sample_type)]

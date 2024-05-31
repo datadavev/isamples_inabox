@@ -380,7 +380,7 @@ class OpenContextTransformer(Transformer):
         else:
             return []
 
-    def keywords(self) -> typing.List[dict[str, str]]:
+    def keywords_impl(self) -> typing.List[dict[str, str]]:
         getty_keywords = self._extract_getty_keywords()
         keyword_dicts = [keyword.metadata_dict() for keyword in getty_keywords]
         keyword_dicts.extend(self._convert_subject_to_keywords("Subject"))

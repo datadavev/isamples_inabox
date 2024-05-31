@@ -65,6 +65,10 @@
         {
             "keyword": "Ascidiacea",
             "scheme_name": "Taxon: class"
+        },
+        {
+            "keyword": "Clavelina huntsmani",
+            "scheme_name": "Informal classification"
         }
     ],
     "produced_by": {

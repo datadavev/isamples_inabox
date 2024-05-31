@@ -60,6 +60,10 @@
         {
             "keyword": "Polychaeta",
             "scheme_name": "Taxon: class"
+        },
+        {
+            "keyword": "Polychaeta",
+            "scheme_name": "Informal classification"
         }
     ],
     "produced_by": {

@@ -15,7 +15,7 @@ from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, MET
     METADATA_ELEVATION, METADATA_LATITUDE, METADATA_LONGITUDE, \
     METADATA_REGISTRANT, METADATA_SAMPLING_PURPOSE, METADATA_CURATION, METADATA_ACCESS_CONSTRAINTS, \
     METADATA_CURATION_LOCATION, METADATA_RELATED_RESOURCE, METADATA_AUTHORIZED_BY, \
-    METADATA_COMPLIES_WITH, METADATA_INFORMAL_CLASSIFICATION, METADATA_PLACE_NAME, METADATA_ROLE, METADATA_NAME, \
+    METADATA_COMPLIES_WITH, METADATA_PLACE_NAME, METADATA_ROLE, METADATA_NAME, \
     METADATA_SAMPLE_LOCATION, METADATA_IDENTIFIER
 from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
@@ -123,7 +123,6 @@ class Transformer(ABC):
             METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE: self.has_material_category_confidences(material_categories),
             METADATA_HAS_SPECIMEN_CATEGORY: specimen_categories,
             METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE: self.has_specimen_category_confidences(specimen_categories),
-            METADATA_INFORMAL_CLASSIFICATION: self.informal_classification(),
             METADATA_KEYWORDS: self.keywords(),
             METADATA_PRODUCED_BY: {
                 METADATA_IDENTIFIER: self.produced_by_id_string(),

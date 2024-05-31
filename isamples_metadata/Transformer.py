@@ -123,7 +123,6 @@ class Transformer(ABC):
             METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE: self.has_material_category_confidences(material_categories),
             METADATA_HAS_SPECIMEN_CATEGORY: specimen_categories,
             METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE: self.has_specimen_category_confidences(specimen_categories),
-            METADATA_INFORMAL_CLASSIFICATION: self.informal_classification(),
             METADATA_KEYWORDS: self.keywords(),
             METADATA_PRODUCED_BY: {
                 METADATA_IDENTIFIER: self.produced_by_id_string(),
@@ -231,17 +230,8 @@ class Transformer(ABC):
         """An informal scientificName"""
         pass
 
-    def keywords(self) -> typing.List[dict[str, str]]:
-        """The keywords for the sample in source record, merged with any informal classification"""
-        keywords = self.keywords_impl()
-        clsfctns = self.informal_classification()
-        if clsfctns is not None and len(clsfctns) > 0:
-            clsfctn_list = [Keyword(clsfctn, None, "Informal classification") for clsfctn in clsfctns]
-            keywords.extend(clsfctn_list)
-        return keywords
-
     @abstractmethod
-    def keywords_impl(self) -> typing.List[dict[str, str]]:
+    def keywords(self) -> typing.List[dict[str, str]]:
         """The keywords for the sample in source record"""
         pass
 

@@ -29,16 +29,9 @@
     "has_specimen_category_confidence": [
         1.0
     ],
-    "informal_classification": [
-        ""
-    ],
     "keywords": [
         {
             "keyword": "Individual Sample"
-        },
-        {
-            "keyword": "",
-            "scheme_name": "Informal classification"
         }
     ],
     "produced_by": {

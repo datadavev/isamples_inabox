@@ -239,7 +239,7 @@ class GEOMETransformer(Transformer):
             keyword = Keyword(keyword_value, None, scheme_name)
             keywords.append(keyword)
 
-    def keywords_impl(self) -> list:
+    def keywords(self) -> list:
         # "JSON array of values from record/ -order, -phylum, -family, -class, and parent/ -country, -county,
         # -stateProvince, -continentOcean... (place names more general that the locality or most specific
         # rank place name) "

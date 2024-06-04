@@ -11,6 +11,8 @@ import asyncio
 import concurrent.futures
 import click
 import click_config_file
+
+from isb_lib.geome_adapter import GEOMEIdentifierIterator
 from isb_lib.models.thing import Thing
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import SQLModelDAO, get_thing_with_id, save_thing
@@ -335,6 +337,27 @@ def populateIsbCoreSolr(ctx, ignore_last_modified: bool):
     )
     allkeys = solr_importer.run_solr_import(isb_lib.geome_adapter.reparseAsCoreRecord)
     logger.info(f"Total keys= {len(allkeys)}")
+
+
+@main.command("harvest_local_contexts")
+@click.pass_context
+def harvest_local_contexts(cts):
+    identifier_iterator = GEOMEIdentifierIterator()
+    for project_dict in identifier_iterator.listProjects():
+        local_contexts_id = project_dict.get("localcontextsId")
+        if local_contexts_id is not None:
+            # If the project has a localcontextsId, we need to propagate down to all records in the project
+            print(f"Found localcontextsId for project {project_dict}")
+            project_id = project_dict.get("projectId")
+            count = 0
+            for record in identifier_iterator.recordsInProject(project_id, identifier_iterator._record_type, local_contexts_id):
+                count += 1
+                record[0]["localcontextsId"] = local_contexts_id
+                print()
+            project_title = project_dict.get("projectTitle")
+            print(f"{count} records in project {project_title}")
+        else:
+            pass
 
 
 if __name__ == "__main__":

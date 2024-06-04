@@ -92,7 +92,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
             L.debug("project id: %s", project.get("projectId", None))
             yield project
 
-    def recordsInProject(self, project_id, record_type):
+    def recordsInProject(self, project_id, record_type, local_context_id: Optional[str]):
         L = getLogger()
         L.debug("recordsInProject project %s", project_id)
         params = {"includePublic": "true", "admin": "false"}
@@ -147,6 +147,9 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
                         expeditions_json = response.json()
 
                         for record in expeditions_json.get("content", {}).get(record_type, []):
+                            # if the local_context_id isn't None stuff it into the original JSON
+                            if local_context_id is not None:
+                                record["localContextId"] = local_context_id
                             L.debug("recordsInProject Record id: %s", record.get("bcid", None))
                             # When we yield here, yield both the record and the expedition modify date, since
                             # we'll compare the modify date of the expedition when we go to fetch again.
@@ -163,19 +166,21 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
             self._project_ids = []
             for p in self.listProjects():
                 pid = p.get("projectId", None)
+                local_context_id = p.get("localcontextsId", None)
                 if pid is not None:
-                    self._project_ids.append(
-                        {
-                            "project_id": pid,
-                            "identifiers": [],
-                            "loaded": False,
-                        }
-                    )
+                    project_dict = {
+                        "project_id": pid,
+                        "identifiers": [],
+                        "loaded": False,
+                    }
+                    if local_context_id is not None:
+                        project_dict["localcontextsId"] = local_context_id
+                    self._project_ids.append(project_dict)
         self._cpage = []
         for p in self._project_ids:
             # return the next set of identifiers within a project
             if not p["loaded"]:
-                for (record, modified_date) in self.recordsInProject(p["project_id"], self._record_type):
+                for (record, modified_date) in self.recordsInProject(p["project_id"], self._record_type, p.get("localcontextsId")):
                     # record identifier
                     rid = record.get("bcid", None)
                     if rid is not None:

@@ -69,6 +69,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         )
         self._record_type = record_type
         self._project_ids = None
+        self._project_ids_to_local_context_ids = {}
 
     def listProjects(self):
         L = getLogger()
@@ -147,13 +148,10 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
                         expeditions_json = response.json()
 
                         for record in expeditions_json.get("content", {}).get(record_type, []):
-                            # if the local_context_id isn't None stuff it into the original JSON
-                            if local_context_id is not None:
-                                record["localContextId"] = local_context_id
                             L.debug("recordsInProject Record id: %s", record.get("bcid", None))
                             # When we yield here, yield both the record and the expedition modify date, since
                             # we'll compare the modify date of the expedition when we go to fetch again.
-                            yield record, expedition_modified_datetime
+                            yield record, expedition_modified_datetime, local_context_id
                         if len(expeditions_json.get("content", {}).get(record_type, [])) < _page_size:
                             more_work = False
                         params["page"] = params["page"] + 1
@@ -175,6 +173,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
                     }
                     if local_context_id is not None:
                         project_dict["localcontextsId"] = local_context_id
+                        self._project_ids_to_local_context_ids[pid] = local_context_id
                     self._project_ids.append(project_dict)
         self._cpage = []
         for p in self._project_ids:

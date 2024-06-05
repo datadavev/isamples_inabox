@@ -12,10 +12,14 @@ import concurrent.futures
 import click
 import click_config_file
 
+from isamples_metadata.GEOMETransformer import GEOMETransformer
+from isb_lib import geome_adapter
+from isb_lib.core import MEDIA_JSON
 from isb_lib.geome_adapter import GEOMEIdentifierIterator
 from isb_lib.models.thing import Thing
 from isb_web import sqlmodel_database
-from isb_web.sqlmodel_database import SQLModelDAO, get_thing_with_id, save_thing
+from isb_web.sqlmodel_database import SQLModelDAO, get_thing_with_id, save_thing, all_thing_primary_keys, \
+    DatabaseBulkUpdater
 from typing import Optional
 
 CONCURRENT_DOWNLOADS = 10
@@ -340,8 +344,14 @@ def populateIsbCoreSolr(ctx, ignore_last_modified: bool):
 
 
 @main.command("harvest_local_contexts")
+@click.option(
+    "-b", "--batch_size", type=int, default=10000, help="Batch size for database commits"
+)
 @click.pass_context
-def harvest_local_contexts(cts):
+def harvest_local_contexts(cts, batch_size: int):
+    session = SQLModelDAO(cts.obj["db_url"]).get_session()
+    primary_keys_by_id = all_thing_primary_keys(session, geome_adapter.GEOMEItem.AUTHORITY_ID)
+    bulk_updater = DatabaseBulkUpdater(session, geome_adapter.GEOMEItem.AUTHORITY_ID, batch_size, MEDIA_JSON, primary_keys_by_id)
     identifier_iterator = GEOMEIdentifierIterator()
     for project_dict in identifier_iterator.listProjects():
         local_contexts_id = project_dict.get("localcontextsId")
@@ -353,9 +363,12 @@ def harvest_local_contexts(cts):
             for record in identifier_iterator.recordsInProject(project_id, identifier_iterator._record_type, local_contexts_id):
                 count += 1
                 record[0]["localcontextsId"] = local_contexts_id
-                print()
+                last_mod_date = record[1]
+                identifier = record[0].get("bcid", None)
+                bulk_updater.add_thing(record[0], identifier, identifier_iterator.expedition_records_url, 200, GEOMETransformer.geo_to_h3(record[0]), last_mod_date)
             project_title = project_dict.get("projectTitle")
             print(f"{count} records in project {project_title}")
+            bulk_updater.finish()
         else:
             pass
 

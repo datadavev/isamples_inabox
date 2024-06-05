@@ -130,9 +130,9 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
                         "q": f"_expeditions_:{expedition_dict['expeditionCode']}",
                     }
                     while more_work:
-                        expedition_records_url = f"{GEOME_API}records/Sample/json"
+                        self.expedition_records_url = f"{GEOME_API}records/Sample/json"
                         response = requests.get(
-                            expedition_records_url, params=params, headers=headers, timeout=HTTP_TIMEOUT
+                            self.expedition_records_url, params=params, headers=headers, timeout=HTTP_TIMEOUT
                         )
                         if response.status_code != 200:
                             L.error(

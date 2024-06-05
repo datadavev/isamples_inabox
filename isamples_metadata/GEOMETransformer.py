@@ -500,8 +500,15 @@ class GEOMETransformer(Transformer):
         return []
 
     def complies_with(self) -> typing.List[str]:
-        # Don't have this information
-        return []
+        local_contexts_id = self.local_contexts_id()
+        if local_contexts_id is not None:
+            return [f"localcontexts:https://localcontextshub.org/projects/{local_contexts_id}"]
+        else:
+            # Don't have this information
+            return []
+
+    def local_contexts_id(self) -> Optional[str]:
+        return self.source_record.get("localContextsId")
 
     @staticmethod
     def _format_result_object(authorized_by: list[str]) -> dict[str, list[str]]:
@@ -661,10 +668,6 @@ class GEOMEChildTransformer(GEOMETransformer):
         return [parent_dict]
 
     def authorized_by(self) -> typing.List[str]:
-        # If present, this information is stored on the parent record
-        return []
-
-    def complies_with(self) -> typing.List[str]:
         # If present, this information is stored on the parent record
         return []
 

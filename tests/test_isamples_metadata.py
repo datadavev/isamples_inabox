@@ -16,6 +16,7 @@ from isamples_metadata.SESARTransformer import SESARTransformer
 from isamples_metadata.GEOMETransformer import GEOMETransformer, GEOMEChildTransformer
 from isamples_metadata.OpenContextTransformer import OpenContextTransformer
 from isamples_metadata.SmithsonianTransformer import SmithsonianTransformer
+from isamples_metadata.metadata_constants import METADATA_COMPLIES_WITH
 from isamples_metadata.taxonomy.metadata_model_client import ModelServerClient, PredictionResult
 from isb_lib import geome_adapter, sesar_adapter
 from isb_lib.geome_adapter import GEOMEItem
@@ -193,6 +194,8 @@ def test_geome_child_dicts_equal(
         transformed_to_isamples_record = child_transformer.transform()
         _assert_transformed_dictionary(isamples_path, transformed_to_isamples_record)
         assert last_mod_str == child_transformer.last_updated_time()
+        # Also make sure the child picks up the localContextsId from the parent
+        assert transformed_to_isamples_record.get(METADATA_COMPLIES_WITH)[0] == "localcontexts:https://localcontextshub.org/projects/123456"
 
 
 # test the special logic in GEOME to grab the proper transformer

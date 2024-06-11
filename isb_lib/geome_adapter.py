@@ -104,7 +104,6 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
     def local_contexts_id_for_project_id(self, project_id: str) -> Optional[str]:
         return self._project_ids_to_local_context_ids.get(project_id)
 
-
     def recordsInProject(self, project_id, record_type):
         L = getLogger()
         L.debug("recordsInProject project %s", project_id)
@@ -376,7 +375,6 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
 def set_localcontexts_id_in_resolved_content(local_contexts_id: Optional[str], resolved_content: dict):
     if local_contexts_id is not None:
         resolved_content["localContextsId"] = local_contexts_id
-
 
 
 def reloadThing(thing):

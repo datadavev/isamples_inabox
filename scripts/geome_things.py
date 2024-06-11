@@ -12,7 +12,6 @@ import concurrent.futures
 import click
 import click_config_file
 
-from isamples_metadata.GEOMETransformer import GEOMETransformer
 from isb_lib import geome_adapter
 from isb_lib.core import MEDIA_JSON
 from isb_lib.geome_adapter import GEOMEIdentifierIterator, set_localcontexts_id_in_resolved_content
@@ -21,7 +20,6 @@ from isb_lib.models.thing import Thing
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import SQLModelDAO, get_thing_with_id, save_thing, all_thing_primary_keys, \
     DatabaseBulkUpdater, get_things_with_ids
-from typing import Optional
 
 CONCURRENT_DOWNLOADS = 10
 BACKLOG_SIZE = 40
@@ -233,10 +231,10 @@ def reparseRecords(ctx):
         i = 0
         qry = session.query(Thing)
         pk = Thing.id
-        for thing in _yieldRecordsByPage(qry, pk):
-            itype = thing.item_type
-            isb_lib.geome_adapter.reparseThing(thing, and_relations=False)
-            L.info("%s: reparse %s, %s -> %s", i, thing.id, itype, thing.item_type)
+        for current_thing in _yieldRecordsByPage(qry, pk):
+            itype = current_thing.item_type
+            isb_lib.geome_adapter.reparseThing(current_thing, and_relations=False)
+            L.info("%s: reparse %s, %s -> %s", i, current_thing.id, itype, current_thing.item_type)
             i += 1
             if i % batch_size == 0:
                 session.commit()
@@ -279,8 +277,8 @@ def reparseRelations(ctx):
         )
         pk = Thing.id
         relations = []
-        for thing in _yieldRecordsByPage(qry, pk):
-            batch = isb_lib.geome_adapter.reparseRelations(thing)
+        for current_thing in _yieldRecordsByPage(qry, pk):
+            batch = isb_lib.geome_adapter.reparseRelations(current_thing)
             relations = relations + batch
             for relation in relations:
                 allkeys.add(relation["id"])
@@ -288,7 +286,7 @@ def reparseRelations(ctx):
             n += len(batch)
             if i % 25 == 0:
                 L.info(
-                    "%s: relations id:%s num_rel:%s, total:%s", i, thing.id, _rel_len, n
+                    "%s: relations id:%s num_rel:%s, total:%s", i, current_thing.id, _rel_len, n
                 )
             if _rel_len > batch_size:
                 isb_lib.core.solrAddRecords(rsession, relations, "http://localhost:8983/solr/isb_rel/")
@@ -378,16 +376,15 @@ def harvest_local_contexts(cts, batch_size: int):
                 thing_identifiers_for_project.append(identifier)
             # Now refetch all the things with specified identifier and stuff in the localcontextsId into resolved_content
             things_for_project = get_things_with_ids(session, thing_identifiers_for_project)
-            for thing in things_for_project:
-                set_localcontexts_id_in_resolved_content(local_contexts_id, thing.resolved_content)
-                bulk_updater.add_thing(thing.resolved_content, thing.id, thing.resolved_url, thing.resolved_status,
-                                       thing.h3, thing.tcreated)
+            for current_thing in things_for_project:
+                set_localcontexts_id_in_resolved_content(local_contexts_id, current_thing.resolved_content)
+                bulk_updater.add_thing(current_thing.resolved_content, current_thing.id, current_thing.resolved_url, current_thing.resolved_status,
+                                       current_thing.h3, current_thing.tcreated)
             project_title = project_dict.get("projectTitle")
             print(f"{count} records in project {project_title}")
             bulk_updater.finish()
         else:
             pass
-
 
 
 if __name__ == "__main__":

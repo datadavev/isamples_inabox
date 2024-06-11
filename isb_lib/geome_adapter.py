@@ -60,6 +60,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         date_start: Optional[datetime.datetime] = None,
         date_end: Optional[datetime.datetime] = None,
         record_type: str = "Sample",
+        project_id: int = 0
     ):
         super().__init__(
             offset=offset,
@@ -69,6 +70,8 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         )
         self._record_type = record_type
         self._project_ids = None
+        self._project_ids_to_local_context_ids: dict[str, str] = {}
+        self._project_id = project_id
 
     def listProjects(self):
         L = getLogger()
@@ -89,8 +92,17 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
             )
         projects = response.json()
         for project in projects:
+            project_id = project.get("projectId")
+            if self._project_id > 0 and self._project_id != project_id:
+                continue
+            local_context_id = project.get("localcontextsId")
+            if local_context_id is not None:
+                self._project_ids_to_local_context_ids[project_id] = local_context_id
             L.debug("project id: %s", project.get("projectId", None))
             yield project
+
+    def local_contexts_id_for_project_id(self, project_id: str) -> Optional[str]:
+        return self._project_ids_to_local_context_ids.get(project_id)
 
     def recordsInProject(self, project_id, record_type):
         L = getLogger()
@@ -130,9 +142,9 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
                         "q": f"_expeditions_:{expedition_dict['expeditionCode']}",
                     }
                     while more_work:
-                        expedition_records_url = f"{GEOME_API}records/Sample/json"
+                        self.expedition_records_url = f"{GEOME_API}records/Sample/json"
                         response = requests.get(
-                            expedition_records_url, params=params, headers=headers, timeout=HTTP_TIMEOUT
+                            self.expedition_records_url, params=params, headers=headers, timeout=HTTP_TIMEOUT
                         )
                         if response.status_code != 200:
                             L.error(
@@ -163,14 +175,17 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
             self._project_ids = []
             for p in self.listProjects():
                 pid = p.get("projectId", None)
+                local_context_id = p.get("localcontextsId", None)
                 if pid is not None:
-                    self._project_ids.append(
-                        {
-                            "project_id": pid,
-                            "identifiers": [],
-                            "loaded": False,
-                        }
-                    )
+                    project_dict = {
+                        "project_id": pid,
+                        "identifiers": [],
+                        "loaded": False,
+                    }
+                    if local_context_id is not None:
+                        project_dict["localcontextsId"] = local_context_id
+                        self._project_ids_to_local_context_ids[pid] = local_context_id
+                    self._project_ids.append(project_dict)
         self._cpage = []
         for p in self._project_ids:
             # return the next set of identifiers within a project
@@ -323,7 +338,7 @@ def reparseThing(thing):
     return thing
 
 
-def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Optional[Thing]) -> Thing:
+def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Optional[Thing], ids: GEOMEIdentifierIterator) -> Thing:
     L = getLogger()
     L.info("loadThing: %s", identifier)
     response = getGEOMEItem_json(identifier, verify=True)
@@ -339,6 +354,10 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
         obj = response.json()
     except Exception as e:
         L.warning(e)
+    if obj is not None:
+        project_id = obj.get("projectId")
+        local_contexts_id = ids.local_contexts_id_for_project_id(project_id)
+        set_localcontexts_id_in_resolved_content(local_contexts_id, obj)
     if existing_thing is None:
         item = GEOMEItem(identifier, obj)
         thing = item.asThing(identifier, t_created, r_status, r_url, t_resolved, elapsed, media_type)
@@ -352,6 +371,11 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
         thing.resolve_elapsed = elapsed
         thing.tcreated = t_created
     return thing
+
+
+def set_localcontexts_id_in_resolved_content(local_contexts_id: Optional[str], resolved_content: Optional[dict]):
+    if local_contexts_id is not None and resolved_content is not None:
+        resolved_content["localContextsId"] = local_contexts_id
 
 
 def reloadThing(thing):

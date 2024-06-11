@@ -51,5 +51,6 @@
             "tissueCatalogNumber": "http://n2t.net/ark:/21547/Q2INDO106431.1"
         }
     ],
-    "projectId": 80
+    "projectId": 80,
+    "localContextsId": 123456
 }

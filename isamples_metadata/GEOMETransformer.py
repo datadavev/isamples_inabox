@@ -510,7 +510,6 @@ class GEOMETransformer(Transformer):
     def local_contexts_id(self) -> Optional[str]:
         return self.source_record.get("localContextsId")
 
-
     @staticmethod
     def complies_with_list_for_local_contexts_id(local_contexts_id: str) -> list[str]:
         return [f"localcontexts:https://localcontextshub.org/projects/{local_contexts_id}"]

@@ -102,7 +102,7 @@
     ],
     "authorized_by": [],
     "complies_with": [
-        "localcontexts:https://localcontextshub.org/projects/123456"
+        "localcontexts:projects/123456"
     ],
     "producedBy_samplingSite_location_h3_0": "8065fffffffffff",
     "producedBy_samplingSite_location_h3_1": "81643ffffffffff",

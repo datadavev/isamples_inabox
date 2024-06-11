@@ -512,7 +512,7 @@ class GEOMETransformer(Transformer):
 
     @staticmethod
     def complies_with_list_for_local_contexts_id(local_contexts_id: str) -> list[str]:
-        return [f"localcontexts:https://localcontextshub.org/projects/{local_contexts_id}"]
+        return [f"localcontexts:projects/{local_contexts_id}"]
 
     @staticmethod
     def _format_result_object(authorized_by: list[str]) -> dict[str, list[str]]:

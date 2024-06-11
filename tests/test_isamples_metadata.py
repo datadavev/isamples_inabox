@@ -197,7 +197,7 @@ def test_geome_child_dicts_equal(
         # Also make sure the child picks up the localContextsId from the parent
         complies_with = transformed_to_isamples_record.get(METADATA_COMPLIES_WITH)
         assert complies_with is not None
-        assert complies_with[0] == "localcontexts:https://localcontextshub.org/projects/123456"
+        assert complies_with[0] == "localcontexts:projects/123456"
 
 
 # test the special logic in GEOME to grab the proper transformer

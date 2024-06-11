@@ -70,7 +70,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         )
         self._record_type = record_type
         self._project_ids = None
-        self._project_ids_to_local_context_ids = {}
+        self._project_ids_to_local_context_ids: dict[str, str] = {}
         self._project_id = project_id
 
     def listProjects(self):
@@ -354,9 +354,10 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
         obj = response.json()
     except Exception as e:
         L.warning(e)
-    project_id = obj.get("projectId")
-    local_contexts_id = ids.local_contexts_id_for_project_id(project_id)
-    set_localcontexts_id_in_resolved_content(local_contexts_id, obj)
+    if obj is not None:
+        project_id = obj.get("projectId")
+        local_contexts_id = ids.local_contexts_id_for_project_id(project_id)
+        set_localcontexts_id_in_resolved_content(local_contexts_id, obj)
     if existing_thing is None:
         item = GEOMEItem(identifier, obj)
         thing = item.asThing(identifier, t_created, r_status, r_url, t_resolved, elapsed, media_type)
@@ -372,8 +373,8 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
     return thing
 
 
-def set_localcontexts_id_in_resolved_content(local_contexts_id: Optional[str], resolved_content: dict):
-    if local_contexts_id is not None:
+def set_localcontexts_id_in_resolved_content(local_contexts_id: Optional[str], resolved_content: Optional[dict]):
+    if local_contexts_id is not None and resolved_content is not None:
         resolved_content["localContextsId"] = local_contexts_id
 
 

@@ -195,7 +195,9 @@ def test_geome_child_dicts_equal(
         _assert_transformed_dictionary(isamples_path, transformed_to_isamples_record)
         assert last_mod_str == child_transformer.last_updated_time()
         # Also make sure the child picks up the localContextsId from the parent
-        assert transformed_to_isamples_record.get(METADATA_COMPLIES_WITH)[0] == "localcontexts:https://localcontextshub.org/projects/123456"
+        complies_with = transformed_to_isamples_record.get(METADATA_COMPLIES_WITH)
+        assert complies_with is not None
+        assert complies_with[0] == "localcontexts:https://localcontextshub.org/projects/123456"
 
 
 # test the special logic in GEOME to grab the proper transformer

@@ -1,6 +1,9 @@
 import datetime
 import logging
 import time
+from concurrent.futures import Future
+from typing import Optional
+
 import requests
 import sqlalchemy
 import sqlalchemy.orm
@@ -15,7 +18,6 @@ import click_config_file
 from isb_lib import geome_adapter
 from isb_lib.core import MEDIA_JSON
 from isb_lib.geome_adapter import GEOMEIdentifierIterator, set_localcontexts_id_in_resolved_content
-from isb_lib.models import thing
 from isb_lib.models.thing import Thing
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import SQLModelDAO, get_thing_with_id, save_thing, all_thing_primary_keys, \
@@ -29,7 +31,7 @@ def getLogger():
     return logging.getLogger("main")
 
 
-def wrapLoadThing(ark: str, tc: datetime.datetime, existing_thing: thing, ids: GEOMEIdentifierIterator):
+def wrapLoadThing(ark: str, tc: datetime.datetime, existing_thing: Optional[Thing], ids: GEOMEIdentifierIterator):
     """Return request information to assist future management"""
     try:
         return ark, tc, isb_lib.geome_adapter.loadThing(ark, tc, existing_thing, ids)
@@ -46,7 +48,7 @@ def countThings(session):
 
 async def _loadGEOMEEntries(session, max_count, start_from=None, project_id: int = 0):  # noqa: C901 -- need to examine computational complexity
     L = getLogger()
-    futures = []
+    futures: list[Future] = []
     working = {}
     ids = isb_lib.geome_adapter.GEOMEIdentifierIterator(
         max_entries=countThings(session) + max_count, date_start=start_from, project_id=project_id
@@ -378,8 +380,8 @@ def harvest_local_contexts(cts, batch_size: int):
             things_for_project = get_things_with_ids(session, thing_identifiers_for_project)
             for current_thing in things_for_project:
                 set_localcontexts_id_in_resolved_content(local_contexts_id, current_thing.resolved_content)
-                bulk_updater.add_thing(current_thing.resolved_content, current_thing.id, current_thing.resolved_url, current_thing.resolved_status,
-                                       current_thing.h3, current_thing.tcreated)
+                bulk_updater.add_thing(current_thing.resolved_content, current_thing.id, current_thing.resolved_url, current_thing.resolved_status,  # type: ignore
+                                       current_thing.h3, current_thing.tcreated)  # type: ignore
             project_title = project_dict.get("projectTitle")
             print(f"{count} records in project {project_title}")
             bulk_updater.finish()

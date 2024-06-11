@@ -15,7 +15,8 @@ import click_config_file
 from isamples_metadata.GEOMETransformer import GEOMETransformer
 from isb_lib import geome_adapter
 from isb_lib.core import MEDIA_JSON
-from isb_lib.geome_adapter import GEOMEIdentifierIterator
+from isb_lib.geome_adapter import GEOMEIdentifierIterator, set_localcontexts_id_in_resolved_content
+from isb_lib.models import thing
 from isb_lib.models.thing import Thing
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import SQLModelDAO, get_thing_with_id, save_thing, all_thing_primary_keys, \
@@ -30,10 +31,10 @@ def getLogger():
     return logging.getLogger("main")
 
 
-def wrapLoadThing(ark: str, tc: datetime.datetime, existing_thing: Optional[Thing] = None):
+def wrapLoadThing(ark: str, tc: datetime.datetime, existing_thing: thing, ids: GEOMEIdentifierIterator):
     """Return request information to assist future management"""
     try:
-        return ark, tc, isb_lib.geome_adapter.loadThing(ark, tc, existing_thing)
+        return ark, tc, isb_lib.geome_adapter.loadThing(ark, tc, existing_thing, ids)
     except Exception:
         pass
     return ark, tc, None
@@ -45,12 +46,12 @@ def countThings(session):
     return cnt
 
 
-async def _loadGEOMEEntries(session, max_count, start_from=None):  # noqa: C901 -- need to examine computational complexity
+async def _loadGEOMEEntries(session, max_count, start_from=None, project_id: int = 0):  # noqa: C901 -- need to examine computational complexity
     L = getLogger()
     futures = []
     working = {}
     ids = isb_lib.geome_adapter.GEOMEIdentifierIterator(
-        max_entries=countThings(session) + max_count, date_start=start_from
+        max_entries=countThings(session) + max_count, date_start=start_from, project_id=project_id
     )
     # i = 0
     # for id in ids:
@@ -82,9 +83,9 @@ async def _loadGEOMEEntries(session, max_count, start_from=None):  # noqa: C901 
                     existing_thing = get_thing_with_id(session, identifier)
                     if existing_thing is not None:
                         logging.debug("Already have %s at %s", identifier, _id[1])
-                        future = executor.submit(wrapLoadThing, identifier, _id[1], existing_thing)
+                        future = executor.submit(wrapLoadThing, identifier, _id[1], existing_thing, ids)
                     else:
-                        future = executor.submit(wrapLoadThing, identifier, _id[1])
+                        future = executor.submit(wrapLoadThing, identifier, _id[1], None, ids)
                     futures.append(future)
                     working[identifier] = 0
                     total_requested += 1
@@ -123,7 +124,7 @@ async def _loadGEOMEEntries(session, max_count, start_from=None):  # noqa: C901 
                                 identifier,
                                 working[identifier],
                             )
-                            future = executor.submit(wrapLoadThing, identifier, tc)
+                            future = executor.submit(wrapLoadThing, identifier, tc, None, ids)
                             futures.append(future)
                         else:
                             L.error("Too many retries on %s", identifier)
@@ -143,10 +144,10 @@ async def _loadGEOMEEntries(session, max_count, start_from=None):  # noqa: C901 
             )
 
 
-def loadGEOMEEntries(session, max_count, start_from=None):
+def loadGEOMEEntries(session, max_count, start_from=None, project_id: int = 0):
     loop = asyncio.get_event_loop()
     future = asyncio.ensure_future(
-        _loadGEOMEEntries(session, max_count, start_from=start_from)
+        _loadGEOMEEntries(session, max_count, start_from=start_from, project_id=project_id)
     )
     loop.run_until_complete(future)
 
@@ -175,8 +176,15 @@ def main(ctx, db_url, solr_url, verbosity):
     default=1000,
     help="Maximum records to load, -1 for all",
 )
+@click.option(
+    "-p",
+    "--project_id",
+    type=int,
+    default=0,
+    help="The project id to fetch records for",
+)
 @click.pass_context
-def loadRecords(ctx, max_records):
+def loadRecords(ctx, max_records, project_id: int):
     L = getLogger()
     L.info("loadRecords, max = %s", max_records)
     if max_records == -1:
@@ -184,12 +192,15 @@ def loadRecords(ctx, max_records):
 
     session = SQLModelDAO((ctx.obj["db_url"])).get_session()
     try:
-        max_created = sqlmodel_database.last_time_thing_created(
-            session, isb_lib.geome_adapter.GEOMEItem.AUTHORITY_ID
-        )
-        logging.info("Oldest = %s", max_created)
+        if project_id == 0:
+            max_created = sqlmodel_database.last_time_thing_created(
+                session, isb_lib.geome_adapter.GEOMEItem.AUTHORITY_ID
+            )
+            logging.info("Oldest = %s", max_created)
+        else:
+            max_created = None
         time.sleep(1)
-        loadGEOMEEntries(session, max_records, start_from=max_created)
+        loadGEOMEEntries(session, max_records, start_from=max_created, project_id=project_id)
     finally:
         session.close()
 
@@ -355,24 +366,22 @@ def harvest_local_contexts(cts, batch_size: int):
     identifier_iterator = GEOMEIdentifierIterator()
     for project_dict in identifier_iterator.listProjects():
         thing_identifiers_for_project = []
-        local_contexts_id = project_dict.get("localcontextsId")
+        project_id = project_dict.get("projectId")
+        local_contexts_id = identifier_iterator.local_contexts_id_for_project_id(project_id)
         if local_contexts_id is not None:
             # If the project has a localcontextsId, we need to propagate down to all records in the project
             print(f"Found localcontextsId for project {project_dict}")
-            project_id = project_dict.get("projectId")
             count = 0
-            for record in identifier_iterator.recordsInProject(project_id, identifier_iterator._record_type, local_contexts_id):
+            for record in identifier_iterator.recordsInProject(project_id, identifier_iterator._record_type):
                 count += 1
                 identifier = record[0].get("bcid", None)
                 thing_identifiers_for_project.append(identifier)
             # Now refetch all the things with specified identifier and stuff in the localcontextsId into resolved_content
             things_for_project = get_things_with_ids(session, thing_identifiers_for_project)
             for thing in things_for_project:
-                thing.resolved_content["localContextsId"] = local_contexts_id
+                set_localcontexts_id_in_resolved_content(local_contexts_id, thing.resolved_content)
                 bulk_updater.add_thing(thing.resolved_content, thing.id, thing.resolved_url, thing.resolved_status,
                                        thing.h3, thing.tcreated)
-
-            #
             project_title = project_dict.get("projectTitle")
             print(f"{count} records in project {project_title}")
             bulk_updater.finish()

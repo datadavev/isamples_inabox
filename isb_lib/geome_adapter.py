@@ -60,6 +60,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         date_start: Optional[datetime.datetime] = None,
         date_end: Optional[datetime.datetime] = None,
         record_type: str = "Sample",
+        project_id: int = 0
     ):
         super().__init__(
             offset=offset,
@@ -70,6 +71,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         self._record_type = record_type
         self._project_ids = None
         self._project_ids_to_local_context_ids = {}
+        self._project_id = project_id
 
     def listProjects(self):
         L = getLogger()
@@ -90,10 +92,20 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
             )
         projects = response.json()
         for project in projects:
+            project_id = project.get("projectId")
+            if self._project_id > 0 and self._project_id != project_id:
+                continue
+            local_context_id = project.get("localcontextsId")
+            if local_context_id is not None:
+                self._project_ids_to_local_context_ids[project_id] = local_context_id
             L.debug("project id: %s", project.get("projectId", None))
             yield project
 
-    def recordsInProject(self, project_id, record_type, local_context_id: Optional[str]):
+    def local_contexts_id_for_project_id(self, project_id: str) -> Optional[str]:
+        return self._project_ids_to_local_context_ids.get(project_id)
+
+
+    def recordsInProject(self, project_id, record_type):
         L = getLogger()
         L.debug("recordsInProject project %s", project_id)
         params = {"includePublic": "true", "admin": "false"}
@@ -151,7 +163,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
                             L.debug("recordsInProject Record id: %s", record.get("bcid", None))
                             # When we yield here, yield both the record and the expedition modify date, since
                             # we'll compare the modify date of the expedition when we go to fetch again.
-                            yield record, expedition_modified_datetime, local_context_id
+                            yield record, expedition_modified_datetime
                         if len(expeditions_json.get("content", {}).get(record_type, [])) < _page_size:
                             more_work = False
                         params["page"] = params["page"] + 1
@@ -179,7 +191,7 @@ class GEOMEIdentifierIterator(isb_lib.core.IdentifierIterator):
         for p in self._project_ids:
             # return the next set of identifiers within a project
             if not p["loaded"]:
-                for (record, modified_date) in self.recordsInProject(p["project_id"], self._record_type, p.get("localcontextsId")):
+                for (record, modified_date) in self.recordsInProject(p["project_id"], self._record_type):
                     # record identifier
                     rid = record.get("bcid", None)
                     if rid is not None:
@@ -327,7 +339,7 @@ def reparseThing(thing):
     return thing
 
 
-def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Optional[Thing]) -> Thing:
+def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Optional[Thing], ids: GEOMEIdentifierIterator) -> Thing:
     L = getLogger()
     L.info("loadThing: %s", identifier)
     response = getGEOMEItem_json(identifier, verify=True)
@@ -343,6 +355,9 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
         obj = response.json()
     except Exception as e:
         L.warning(e)
+    project_id = obj.get("projectId")
+    local_contexts_id = ids.local_contexts_id_for_project_id(project_id)
+    set_localcontexts_id_in_resolved_content(local_contexts_id, obj)
     if existing_thing is None:
         item = GEOMEItem(identifier, obj)
         thing = item.asThing(identifier, t_created, r_status, r_url, t_resolved, elapsed, media_type)
@@ -356,6 +371,12 @@ def loadThing(identifier: str, t_created: datetime.datetime, existing_thing: Opt
         thing.resolve_elapsed = elapsed
         thing.tcreated = t_created
     return thing
+
+
+def set_localcontexts_id_in_resolved_content(local_contexts_id: Optional[str], resolved_content: dict):
+    if local_contexts_id is not None:
+        resolved_content["localContextsId"] = local_contexts_id
+
 
 
 def reloadThing(thing):

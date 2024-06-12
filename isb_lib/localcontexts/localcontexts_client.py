@@ -5,6 +5,8 @@ from typing import Optional
 
 import requests
 
+from isamples_metadata.metadata_constants import METADATA_COMPLIES_WITH
+
 
 class LocalContextsInfo:
     def __init__(self, project_json: dict):
@@ -33,7 +35,6 @@ class LocalContextsClient:
         else:
             return None
 
-    @functools.lru_cache(maxsize=100)
     def project_info(self, project_id: str, rsession: requests.Session = requests.Session()) -> LocalContextsInfo:
         # include the slash on the end to avoid the redirect
         project_detail_url = f"{LocalContextsClient.LOCAL_CONTEXTS_API_PREFIX}{project_id}/"
@@ -44,3 +45,24 @@ class LocalContextsClient:
         else:
             logging.warning(f"Received unexpected response from localcontexts: {response}")
             return []
+
+
+LOCAL_CONTEXTS_INFO_CACHE: dict[str, LocalContextsInfo] = {}
+
+
+def local_contexts_info_for_resolved_content(resolved_content: dict, rsession: requests.Session = requests.Session()) -> Optional[LocalContextsInfo]:
+    complies_with: list[str] = resolved_content.get(METADATA_COMPLIES_WITH)
+    client = LocalContextsClient()
+    if complies_with is not None:
+        for complies in complies_with:
+            project_id = client.localcontexts_project_id_for_complies_with_id(complies)
+            if project_id is not None:
+                project_info = LOCAL_CONTEXTS_INFO_CACHE.get(project_id)
+                if project_info is None:
+                    project_info = client.project_info(project_id, rsession)
+                    if project_info is not None:
+                        LOCAL_CONTEXTS_INFO_CACHE[project_id] = project_info
+                return project_info
+        return None
+    else:
+        return None

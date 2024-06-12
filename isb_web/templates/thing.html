@@ -109,6 +109,24 @@ window.addEventListener('load', fetchGrantToken('{{ authority|safe }}', '{{ isam
       </div>
     </div>
   </div>
+  {% if localcontexts_info %}
+  <div id="localContextsLabels" style="max-height:300px; overflow:scroll">
+    <div id="localContextsHeader">
+      <b><i>{{ localcontexts_info.title }}</i></b>
+    </div>
+    {% for notice in localcontexts_info.notices %}
+    <div style="padding: 5px;">
+      <img src="{{ notice.img_url }}" height="70" style="padding: 2px; max-height: 70px; float: left; "/>
+      <div style="display:block;height:70px;overflow:scroll;">
+        <a href="{{ localcontexts_info.project_page }}" target="_blank">{{ notice.name }}</a>
+        <p>
+          {{ notice.text }}
+        </p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
   <footer>
     <div class="d-flex flex-wrap justify-content-between align-items-center p-4 border-top fixed-bottom">
       <div class="text-center text-muted">© Copyright 2020, iSamples Project.This material is based upon work

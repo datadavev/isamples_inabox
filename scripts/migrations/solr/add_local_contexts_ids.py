@@ -43,7 +43,7 @@ def add_local_contexts_ids(solr_url: str, geome_things: dict[str, Thing]):
         mutated_record = mutate_record(record, geome_thing)  # type: ignore
         if mutated_record is not None:
             current_mutated_batch.append(mutated_record)
-        if len(current_mutated_batch) == 1:
+        if len(current_mutated_batch) == batch_size:
             save_mutated_batch(current_mutated_batch, rsession, solr_url)
             current_mutated_batch = []
         total_records += 1

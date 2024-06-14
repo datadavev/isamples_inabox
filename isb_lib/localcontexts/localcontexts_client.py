@@ -10,7 +10,11 @@ from isamples_metadata.metadata_constants import METADATA_COMPLIES_WITH
 class LocalContextsInfo:
     def __init__(self, project_json: dict):
         self.title = project_json.get("title")
-        self.notices = [LocalContextsNotice(current_notice.get("img_url"), current_notice.get("default_text"), current_notice.get("name")) for current_notice in project_json.get("notice")]
+        project_notice = project_json.get("notice")
+        if project_notice is not None:
+            self.notices = [LocalContextsNotice(current_notice.get("img_url"), current_notice.get("default_text"), current_notice.get("name")) for current_notice in project_notice]
+        else:
+            self.notices = []
         self.project_page = project_json.get("project_page")
 
 
@@ -34,7 +38,7 @@ class LocalContextsClient:
         else:
             return None
 
-    def project_info(self, project_id: str, rsession: requests.Session = requests.Session()) -> LocalContextsInfo:
+    def project_info(self, project_id: str, rsession: requests.Session = requests.Session()) -> Optional[LocalContextsInfo]:
         # include the slash on the end to avoid the redirect
         project_detail_url = f"{LocalContextsClient.LOCAL_CONTEXTS_API_PREFIX}{project_id}/"
         response = rsession.get(project_detail_url)
@@ -43,14 +47,14 @@ class LocalContextsClient:
             return LocalContextsInfo(project_dict)
         else:
             logging.warning(f"Received unexpected response from localcontexts: {response}")
-            return []
+            return None
 
 
 LOCAL_CONTEXTS_INFO_CACHE: dict[str, LocalContextsInfo] = {}
 
 
 def local_contexts_info_for_resolved_content(resolved_content: dict, rsession: requests.Session = requests.Session()) -> Optional[LocalContextsInfo]:
-    complies_with: list[str] = resolved_content.get(METADATA_COMPLIES_WITH)
+    complies_with = resolved_content.get(METADATA_COMPLIES_WITH)
     client = LocalContextsClient()
     if complies_with is not None:
         for complies in complies_with:

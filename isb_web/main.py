@@ -23,6 +23,7 @@ import isb_web
 import isamples_metadata.GEOMETransformer
 from isamples_metadata.vocabularies import vocabulary_mapper
 from isb_lib.core import MEDIA_GEO_JSON, MEDIA_JSON, MEDIA_NQUADS, SOLR_TIME_FORMAT
+from isb_lib.localcontexts.localcontexts_client import local_contexts_info_for_resolved_content
 from isb_lib.models.thing import Thing
 from isb_lib.utilities import h3_utilities
 from isb_lib.utilities.url_utilities import full_url_from_suffix
@@ -239,6 +240,7 @@ async def get_thing_page(request: fastapi.Request, identifier: str, session: Ses
             "hypothesis_api_url": config.Settings().hypothesis_server_url,
             "login_url": login_url,
             "logout_url": logout_url,
+            "localcontexts_info": local_contexts_info_for_resolved_content(content)
         }
     )
 

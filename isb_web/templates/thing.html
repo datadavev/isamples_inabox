@@ -101,6 +101,10 @@ window.addEventListener('load', fetchGrantToken('{{ authority|safe }}', '{{ isam
             <div class="card-header">Citation</div>
             <div id="citation" class="card-body"></div>
           </div>
+          <div class="card">
+            <div class="card-header">Original Record</div>
+            <div class="card-body">{{ original_authority }}: <a href="{{ original_link }}" target="_blank" rel="noopener noreferrer">{{ thing_identifier }}</div>
+          </div>
           <div>
             <h5>Map Data</h5>
             <div id="map"></div>

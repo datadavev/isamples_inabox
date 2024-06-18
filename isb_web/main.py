@@ -221,6 +221,7 @@ async def get_thing_page(request: fastapi.Request, identifier: str, session: Ses
         item_ispartof = "https://n2t.net"
     elif item.id.startswith("IGSN"):
         item_ispartof = "https://igsn.org"
+    original_link = f"{item_ispartof}/{item.id}"
     content = await thing_resolved_content(identifier, item, session)
     content_str = json.dumps(content)
     base_url = str(request.url)
@@ -240,7 +241,9 @@ async def get_thing_page(request: fastapi.Request, identifier: str, session: Ses
             "hypothesis_api_url": config.Settings().hypothesis_server_url,
             "login_url": login_url,
             "logout_url": logout_url,
-            "localcontexts_info": local_contexts_info_for_resolved_content(content)
+            "localcontexts_info": local_contexts_info_for_resolved_content(content),
+            "original_link": original_link,
+            "original_authority": item.authority_id
         }
     )
 

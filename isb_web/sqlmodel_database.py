@@ -11,7 +11,7 @@ from typing import Optional, List
 from isb_lib.identifiers.noidy.n2tminter import N2TMinter
 from isb_lib.models.export_job import ExportJob
 from isb_lib.models.namespace import Namespace
-from sqlalchemy import Index, update, or_, func
+from sqlalchemy import Index, update, func
 from sqlalchemy.exc import ProgrammingError
 from sqlmodel import SQLModel, create_engine, Session, select
 from sqlmodel.sql.expression import SelectOfScalar
@@ -610,7 +610,7 @@ def taxonomy_name_to_kingdom_map(session: Session) -> dict:
 
 
 def kingdom_for_taxonomy_name(session: Session, name: str) -> Optional[str]:
-    kingdom_select = select(TaxonomyName.kingdom).where(or_(TaxonomyName.name == name, TaxonomyName.kingdom == name))
+    kingdom_select = select(TaxonomyName.kingdom).where(TaxonomyName.name == name)
     return session.exec(kingdom_select).first()
 
 

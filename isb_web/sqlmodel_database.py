@@ -610,7 +610,7 @@ def taxonomy_name_to_kingdom_map(session: Session) -> dict:
 
 
 def kingdom_for_taxonomy_name(session: Session, name: str) -> Optional[str]:
-    kingdom_select = select(TaxonomyName.kingdom).where(or_(TaxonomyName.name == name, TaxonomyName.kingdom == name))
+    kingdom_select = select(TaxonomyName.kingdom).where(TaxonomyName.name == name)
     return session.exec(kingdom_select).first()
 
 

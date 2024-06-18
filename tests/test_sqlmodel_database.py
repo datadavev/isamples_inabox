@@ -545,9 +545,6 @@ def test_kingdom_for_taxonomy_name(session: Session):
     _insert_test_taxonomy_names(session)
     kingdom = kingdom_for_taxonomy_name(session, "name1")
     assert "kingdom1" == kingdom
-    # should work for itself, too
-    kingdom = kingdom_for_taxonomy_name(session, "kingdom1")
-    assert "kingdom1" == kingdom
     kingdom = kingdom_for_taxonomy_name(session, "name2")
     assert "kingdom2" == kingdom
 

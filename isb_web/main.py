@@ -243,7 +243,7 @@ async def get_thing_page(request: fastapi.Request, identifier: str, session: Ses
             "logout_url": logout_url,
             "localcontexts_info": local_contexts_info_for_resolved_content(content),
             "original_link": original_link,
-            "authority": item.authority_id
+            "original_authority": item.authority_id
         }
     )
 

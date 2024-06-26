@@ -103,6 +103,7 @@ class AuthenticateMiddleware(starlette_oauth2_api.AuthenticateMiddleware):
                         receive,
                         send,
                     )
+                scope["oauth2-claims"] = orcid_id
             else:
                 return await self._prepare_error_response(
                     "Invalid access token", 401, scope, receive, send

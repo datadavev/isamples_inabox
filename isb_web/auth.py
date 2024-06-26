@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+import requests
 
 import authlib.integrations.starlette_client
 import starlette
@@ -83,9 +84,29 @@ class AuthenticateMiddleware(starlette_oauth2_api.AuthenticateMiddleware):
             scope["oauth2-provider"] = provider
             scope["oauth2-jwt"] = token
         except starlette_oauth2_api.InvalidToken as e:
-            return await self._prepare_error_response(
-                e.errors, 401, scope, receive, send
-            )
+            # If it's an access token, make a userinfo request and allow it through if it succeeds
+            token_headers = {
+                "Accept": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
+            # Send the POST request to the token endpoint
+            response = requests.get(f"{config.Settings().orcid_issuer}/oauth/userinfo", headers=token_headers)
+
+            # Check if the request was successful
+            if response.status_code == 200:
+                orcid_id = response.json().get("sub")
+                if orcid_id not in allowed_orcid_ids:
+                    return await self._prepare_error_response(
+                        "orcid id is not authorized",
+                        401,
+                        scope,
+                        receive,
+                        send,
+                    )
+            else:
+                return await self._prepare_error_response(
+                    "Invalid access token", 401, scope, receive, send
+                )
 
         return await self._app(scope, receive, send)
 

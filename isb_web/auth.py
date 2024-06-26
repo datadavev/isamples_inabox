@@ -83,7 +83,7 @@ class AuthenticateMiddleware(starlette_oauth2_api.AuthenticateMiddleware):
             scope["oauth2-claims"] = claims
             scope["oauth2-provider"] = provider
             scope["oauth2-jwt"] = token
-        except starlette_oauth2_api.InvalidToken as e:
+        except starlette_oauth2_api.InvalidToken:
             # If it's an access token, make a userinfo request and allow it through if it succeeds
             token_headers = {
                 "Accept": "application/json",

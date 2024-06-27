@@ -79,24 +79,38 @@ class JSONExportTransformer(AbstractExportTransformer):
             return obj
 
     @staticmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
+    def transform(table: Table, dest_path_no_extension: str, append: bool, lines_per_file: int = -1) -> list[str]:
         if append:
             raise ValueError("JSON Export doesn't support appending")
         extension = "jsonl"
-        dest_path = f"{dest_path_no_extension}.{extension}"
-        with open(dest_path, "w") as file:
-            for row in petl.util.base.dicts(table):
-                json.dump(JSONExportTransformer.filter_null_values(row), file)
-                file.write("\n")
-        return dest_path
+        if lines_per_file == -1:
+            full_file_paths = [f"{dest_path_no_extension}.{extension}"]
+        else:
+            num_files = int((table.len() - 1) / lines_per_file)
+            full_file_paths = [f"{dest_path_no_extension}-{current_file_number}.{extension}" for current_file_number in range(0, num_files)]
+        dicts_view = petl.util.base.dicts(table)
+        rows_generator = (row for row in dicts_view)
+        for full_file_path in full_file_paths:
+            rows_in_file = 0
+            with open(full_file_path, "w") as file:
+                while lines_per_file == -1 or (rows_in_file) < lines_per_file:
+                    rows_in_file += 1
+                    try:
+                        row = next(rows_generator)
+                    except StopIteration:
+                        break
+                    json.dump(JSONExportTransformer.filter_null_values(row), file)
+                    file.write("\n")
+        return full_file_paths
 
 
 class SolrResultTransformer:
-    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool):
+    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool, lines_per_file: int = -1):
         self._table = table
         self._format = format
         self._result_uuid = result_uuid
         self._append = append
+        self._lines_per_file = lines_per_file
 
     def _add_to_dict(self, target_dict: dict, target_key: str, source_dict: dict, source_key: str, default_value: str = ""):
         source_value = source_dict.get(source_key, default_value)
@@ -236,6 +250,6 @@ class SolrResultTransformer:
             return CSVExportTransformer.transform(self._table, self._result_uuid, self._append)
         elif self._format == TargetExportFormat.JSONL:
             self._rename_table_columns_jsonl()
-            return JSONExportTransformer.transform(self._table, self._result_uuid, self._append)
+            return JSONExportTransformer.transform(self._table, self._result_uuid, self._append, self._lines_per_file)
         else:
             raise ExportTransformException(f"Unsupported export format: {self._format}")

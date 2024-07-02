@@ -104,4 +104,4 @@ def test_thing_sitemap_index_iterator():
         shutil.rmtree(dest_directory_path)
     os.mkdir(dest_directory_path)
     sitemap_index_iterator = ThingSitemapIndexIterator(directory_path)
-    build_sitemap(dest_directory_path, "https://central.isample.xyz", sitemap_index_iterator)
+    build_sitemap(dest_directory_path, "https://central.isample.xyz/sitemaps/123456/", sitemap_index_iterator)

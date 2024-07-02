@@ -48,3 +48,5 @@ SOLR_SOURCE = "source"
 SOLR_SEARCH_TEXT = "searchText"
 SOLR_ISB_CORE_ID = "isb_core_id"
 SOLR_ID = "id"
+
+SOLR_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"

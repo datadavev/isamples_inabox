@@ -1,7 +1,10 @@
+import datetime
 import json
+import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
+from typing import Optional
 
 import petl
 from petl import Table
@@ -23,7 +26,7 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_RESULT_TIME, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, \
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
-    SOLR_LABEL, SOLR_SOURCE
+    SOLR_LABEL, SOLR_SOURCE, SOLR_INDEX_UPDATED_TIME, SOLR_TIME_FORMAT
 
 
 class ExportTransformException(Exception):
@@ -79,7 +82,7 @@ class JSONExportTransformer(AbstractExportTransformer):
             return obj
 
     @staticmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool, lines_per_file: int = -1) -> list[str]:
+    def transform(table: Table, dest_path_no_extension: str, append: bool, last_mod_date: Optional[str], lines_per_file: int = -1) -> list[str]:
         if append:
             raise ValueError("JSON Export doesn't support appending")
         extension = "jsonl"
@@ -101,16 +104,25 @@ class JSONExportTransformer(AbstractExportTransformer):
                         break
                     json.dump(JSONExportTransformer.filter_null_values(row), file)
                     file.write("\n")
+            if lines_per_file > 0 and last_mod_date is not None:
+                # For sitemap generation we set the mod date of the file to be the solr index updated time of the
+                # last record in the file.  This lets the sitemap index properly emit a last mod date on the file.
+                date_object = datetime.datetime.strptime(last_mod_date, SOLR_TIME_FORMAT)
+                # Convert the datetime to seconds since the epoch
+                new_modification_time = date_object.timestamp()
+                os.utime(full_file_path, (new_modification_time, new_modification_time))
         return full_file_paths
 
 
 class SolrResultTransformer:
-    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool, lines_per_file: int = -1):
+    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool, last_mod_date: str,
+                 lines_per_file: int = -1):
         self._table = table
         self._format = format
         self._result_uuid = result_uuid
         self._append = append
         self._lines_per_file = lines_per_file
+        self._last_mod_date = last_mod_date
 
     def _add_to_dict(self, target_dict: dict, target_key: str, source_dict: dict, source_key: str, default_value: str = ""):
         source_value = source_dict.get(source_key, default_value)
@@ -250,6 +262,6 @@ class SolrResultTransformer:
             return CSVExportTransformer.transform(self._table, self._result_uuid, self._append)
         elif self._format == TargetExportFormat.JSONL:
             self._rename_table_columns_jsonl()
-            return JSONExportTransformer.transform(self._table, self._result_uuid, self._append, self._lines_per_file)
+            return JSONExportTransformer.transform(self._table, self._result_uuid, self._append, self._last_mod_date, self._lines_per_file)
         else:
             raise ExportTransformException(f"Unsupported export format: {self._format}")

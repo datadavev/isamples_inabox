@@ -29,7 +29,7 @@ from isamples_metadata.solr_field_constants import SOLR_ID, SOLR_LABEL, SOLR_HAS
     SOLR_SAMPLING_PURPOSE, SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, SOLR_PRODUCED_BY_SAMPLING_SITE_LABEL, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, SOLR_PRODUCED_BY_LABEL, \
-    SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_DESCRIPTION, SOLR_SOURCE
+    SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_DESCRIPTION, SOLR_SOURCE, SOLR_INDEX_UPDATED_TIME
 from isb_lib.models.export_job import ExportJob
 from isb_lib.utilities.solr_result_transformer import SolrResultTransformer, TargetExportFormat
 from isb_web import isb_solr_query, analytics, sqlmodel_database, auth
@@ -92,6 +92,7 @@ def _search_solr_and_export_results(export_job_id: str):
                 _handle_error(session, export_job, f"Export Error {str(e)}")
                 return
             docs = ijson.items(src, "response.docs.item", use_float=True)
+            last_mod_date = docs[-1].get(SOLR_INDEX_UPDATED_TIME)
             generator_docs = (doc for doc in docs)
             transformed_response_path = f"/tmp/{export_job.uuid}"
             table = petl.fromdicts(generator_docs)

@@ -77,7 +77,7 @@ def test_solr_result_transformer_jsonl(solr_file_path: str, isamples_schema_json
 @pytest.mark.parametrize("solr_file_path", SOLR_items)
 def test_solr_result_transformer_jsonl_multiple_files(solr_file_path: str, isamples_schema_json: dict):
     table = _solr_result_table(solr_file_path)
-    dest_path_no_extension = "sitemap"
-    solr_result_transformer = SolrResultTransformer(table, TargetExportFormat.JSONL, dest_path_no_extension, False, 2)
+    dest_path_no_extension = os.path.join(os.getcwd(), "sitemap")
+    solr_result_transformer = SolrResultTransformer(table, TargetExportFormat.JSONL, dest_path_no_extension, False, "2023-02-03T20:06:26.031Z", 2)
     dest_paths = solr_result_transformer.transform()
     _validate_dest_paths(dest_paths, isamples_schema_json)

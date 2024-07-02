@@ -27,6 +27,7 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
     SOLR_LABEL, SOLR_SOURCE, SOLR_INDEX_UPDATED_TIME, SOLR_TIME_FORMAT
+from isb_web.isb_solr_query import solr_last_mod_date_for_ids
 
 
 class ExportTransformException(Exception):
@@ -93,8 +94,11 @@ class JSONExportTransformer(AbstractExportTransformer):
             full_file_paths = [f"{dest_path_no_extension}-{current_file_number}.{extension}" for current_file_number in range(0, num_files)]
         dicts_view = petl.util.base.dicts(table)
         rows_generator = (row for row in dicts_view)
+        file_path_to_last_id_in_file_paths: dict[str, str] = {}
+        last_id_in_file_to_file_paths: dict[str, str] = {}
         for full_file_path in full_file_paths:
             rows_in_file = 0
+            last_id_in_file = None
             with open(full_file_path, "w") as file:
                 while lines_per_file == -1 or (rows_in_file) < lines_per_file:
                     rows_in_file += 1
@@ -103,20 +107,26 @@ class JSONExportTransformer(AbstractExportTransformer):
                     except StopIteration:
                         break
                     json.dump(JSONExportTransformer.filter_null_values(row), file)
+                    last_id_in_file = row.get(METADATA_SAMPLE_IDENTIFIER)
                     file.write("\n")
-            if lines_per_file > 0 and last_mod_date is not None:
+            file_path_to_last_id_in_file_paths[full_file_path] = last_id_in_file
+            last_id_in_file_to_file_paths[last_id_in_file] = full_file_path
+        if lines_per_file > 0:
+            last_mod_date_for_ids = solr_last_mod_date_for_ids(file_path_to_last_id_in_file_paths.values())
+            for id, last_mod_date in last_mod_date_for_ids.items():
                 # For sitemap generation we set the mod date of the file to be the solr index updated time of the
                 # last record in the file.  This lets the sitemap index properly emit a last mod date on the file.
                 date_object = datetime.datetime.strptime(last_mod_date, SOLR_TIME_FORMAT)
                 # Convert the datetime to seconds since the epoch
                 new_modification_time = date_object.timestamp()
+                full_file_path = last_id_in_file_to_file_paths.get(id)
                 os.utime(full_file_path, (new_modification_time, new_modification_time))
         return full_file_paths
 
 
 class SolrResultTransformer:
-    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool, last_mod_date: str,
-                 lines_per_file: int = -1):
+    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool,
+                 last_mod_date: Optional[str], lines_per_file: int = -1):
         self._table = table
         self._format = format
         self._result_uuid = result_uuid

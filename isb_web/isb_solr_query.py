@@ -716,6 +716,23 @@ def solr_records_forh3_counts(
     logging.info("Returning response")
     return response.json()
 
+def solr_last_mod_date_for_ids(ids: list[str], rsession=requests.session()) -> dict[str, str]:
+    """Returns a dictionary of id to index last mod date for the passed in ids"""
+    url = get_solr_url("select")
+    headers = {"Content-Type": MEDIA_JSON}
+    quoted_ids = [f'"{id}"' for id in ids]
+    joined_ids = ",".join(quoted_ids)
+    params = {
+        "q": f"id:({joined_ids})",
+        "fl": "id,indexUpdatedTime"
+    }
+    res = rsession.get(url, headers=headers, params=params)
+    json = res.json()
+    docs = json["response"]["docs"]
+    id_to_last_mod_date = {}
+    for doc in docs:
+        id_to_last_mod_date[doc["id"]] = doc["indexUpdatedTime"]
+    return id_to_last_mod_date
 
 def solr_counts_by_authority(rsession=requests.session()) -> dict[str, int]:
     url = get_solr_url("select")

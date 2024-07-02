@@ -6,6 +6,8 @@ import typing
 import os
 import json
 
+from isb_web.isb_solr_query import solr_last_mod_date_for_ids
+
 
 @pytest.fixture
 def rsession():
@@ -195,3 +197,8 @@ def test_solr_integration_test(rsession: requests.Session, solr_url: str, id: st
             else:
                 assert test_doc.get(key) == value
             index += 1
+
+@pytest.mark.skipif(os.environ.get("CI") is not None, reason="Only run this test manually, not in CI.")
+def test_solr_last_mod_date_for_ids(rsession: requests.Session, solr_url: str):
+    last_mod = solr_last_mod_date_for_ids(["ark:/21547/CYR2envbio09_975", "ark:/21547/CYR2envbio09_976"])
+    print(f"last mod is {last_mod}")

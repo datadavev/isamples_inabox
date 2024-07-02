@@ -92,11 +92,10 @@ def _search_solr_and_export_results(export_job_id: str):
                 _handle_error(session, export_job, f"Export Error {str(e)}")
                 return
             docs = ijson.items(src, "response.docs.item", use_float=True)
-            last_mod_date = docs[-1].get(SOLR_INDEX_UPDATED_TIME)
             generator_docs = (doc for doc in docs)
             transformed_response_path = f"/tmp/{export_job.uuid}"
             table = petl.fromdicts(generator_docs)
-            solr_result_transformer = SolrResultTransformer(table, TargetExportFormat[export_job.export_format], transformed_response_path, False)  # type: ignore
+            solr_result_transformer = SolrResultTransformer(table, TargetExportFormat[export_job.export_format], transformed_response_path, False, last_mod_date)  # type: ignore
             transformed_response_path = solr_result_transformer.transform()
             export_job.file_path = transformed_response_path
             print("Finished writing query response!")

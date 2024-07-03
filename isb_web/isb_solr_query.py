@@ -10,12 +10,12 @@ import urllib.parse
 from requests import Response
 
 import isb_web.config
-from isb_lib.core import MEDIA_JSON
 
-BASE_URL = isb_web.config.Settings().solr_url
+BASE_URL = "http://localhost:8985/solr/isb_core_records/"
 _RPT_FIELD = "producedBy_samplingSite_location_rpt"
 LONGITUDE_FIELD = "producedBy_samplingSite_location_longitude"
 LATITUDE_FIELD = "producedBy_samplingSite_location_latitude"
+MEDIA_JSON = "application/json"
 
 DEFAULT_COLLECTION_NAME = "isb_core_records"
 

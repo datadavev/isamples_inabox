@@ -58,7 +58,8 @@ class ThingSitemapIndexIterator:
 
     def _initialize_directory_state(self):
         self._file_info = []
-        for file in self._directory_path.iterdir():
+        sorted_files = sorted(self._directory_path.iterdir(), key=lambda f: f.stat().st_mtime)
+        for file in sorted_files:
             if file.is_file():
                 modification_time = datetime.datetime.fromtimestamp(file.stat().st_mtime)
                 self._file_info.append((file.name, modification_time))

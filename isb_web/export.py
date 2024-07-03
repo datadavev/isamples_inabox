@@ -95,7 +95,7 @@ def _search_solr_and_export_results(export_job_id: str):
             generator_docs = (doc for doc in docs)
             transformed_response_path = f"/tmp/{export_job.uuid}"
             table = petl.fromdicts(generator_docs)
-            solr_result_transformer = SolrResultTransformer(table, TargetExportFormat[export_job.export_format], transformed_response_path, False, last_mod_date)  # type: ignore
+            solr_result_transformer = SolrResultTransformer(table, TargetExportFormat[export_job.export_format], transformed_response_path, False, None)  # type: ignore
             transformed_response_path = solr_result_transformer.transform()
             export_job.file_path = transformed_response_path
             print("Finished writing query response!")
@@ -119,14 +119,24 @@ async def create(request: fastapi.Request, export_format: TargetExportFormat = T
     # supported parameters are: q, fq, start, rows, format (right now format should be either CSV or JSON)
 
     # These will be inserted into the solr request if not present on the API call
+    solr_api_defparams = _default_export_params("id asc")
+    params, properties = isb_solr_query.get_solr_params_from_request_as_dict(request, solr_api_defparams, ["q", "fq", "start", "rows", "fl"])
+    analytics.attach_analytics_state_to_request(AnalyticsEvent.THINGS_DOWNLOAD, request, properties)
+    return await _create_export_job(export_format, params, request, session)
+
+
+def _default_export_params(sort: str) -> dict[str, str]:
     solr_api_defparams = {
         "wt": "json",
         "q": "*:*",
         "fl": ",".join(DEFAULT_SOLR_FIELDS_FOR_EXPORT),
-        "sort": "id asc"
+        "sort": sort
     }
-    params, properties = isb_solr_query.get_solr_params_from_request_as_dict(request, solr_api_defparams, ["q", "fq", "start", "rows", "fl"])
-    analytics.attach_analytics_state_to_request(AnalyticsEvent.THINGS_DOWNLOAD, request, properties)
+    return solr_api_defparams
+
+
+async def _create_export_job(export_format: TargetExportFormat, params: dict[str, str], request: fastapi.Request,
+                             session: Session):
     export_job = ExportJob()
     export_job.creator_id = auth.orcid_id_from_session_or_scope(request)
     export_job.solr_query_params = params  # type: ignore
@@ -135,6 +145,14 @@ async def create(request: fastapi.Request, export_format: TargetExportFormat = T
     executor.submit(search_solr_and_export_results, export_job.uuid)  # type: ignore
     status_dict = {"status": "created", "uuid": export_job.uuid}
     return fastapi.responses.JSONResponse(content=status_dict, status_code=HTTP_201_CREATED)
+
+
+@export_app.get("/create_sitemap")
+async def create_sitemap(request: fastapi.Request, session: Session = Depends(get_session)) -> JSONResponse:
+    solr_api_defparams = _default_export_params("indexUpdatedTime asc")
+    # remove this
+    solr_api_defparams["q"] = "searchText:Tucson"
+    return _create_export_job(TargetExportFormat.JSONL, solr_api_defparams, request, session)
 
 
 def _not_found_response() -> JSONResponse:

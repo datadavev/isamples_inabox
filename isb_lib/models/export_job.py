@@ -74,3 +74,9 @@ class ExportJob(SQLModel, table=True):
         description="Details about an error with the export job.",
         index=False
     )
+    is_sitemap: bool = Field(
+        default=False,
+        nullable=False,
+        description="Whether or not this export job represents a sitemap generation",
+        index=False
+    )

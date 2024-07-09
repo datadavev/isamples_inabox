@@ -1,5 +1,6 @@
 import json
 import os.path
+import shutil
 import uuid
 from unittest.mock import patch, MagicMock
 
@@ -87,6 +88,9 @@ def test_solr_result_transformer_jsonl_multiple_files(mock_solr_mod_dates: Magic
     }
     table = _solr_result_table(solr_file_path)
     dest_path_no_extension = os.path.join(os.getcwd(), "sitemap")
+    if os.path.exists(dest_path_no_extension):
+        shutil.rmtree(dest_path_no_extension)
+    os.mkdir((dest_path_no_extension))
     solr_result_transformer = SolrResultTransformer(table, TargetExportFormat.JSONL, dest_path_no_extension, False, True, 2)
     dest_paths = solr_result_transformer.transform()
     _validate_dest_paths(dest_paths, isamples_schema_json)

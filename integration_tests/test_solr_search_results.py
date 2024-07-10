@@ -198,6 +198,7 @@ def test_solr_integration_test(rsession: requests.Session, solr_url: str, id: st
                 assert test_doc.get(key) == value
             index += 1
 
+
 @pytest.mark.skipif(os.environ.get("CI") is not None, reason="Only run this test manually, not in CI.")
 def test_solr_last_mod_date_for_ids(rsession: requests.Session, solr_url: str):
     last_mod = solr_last_mod_date_for_ids(["ark:/21547/CYR2envbio09_975", "ark:/21547/CYR2envbio09_976"])

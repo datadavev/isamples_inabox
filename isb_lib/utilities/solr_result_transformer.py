@@ -27,7 +27,6 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
     SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT
-from isb_web import isb_solr_query
 
 
 class ExportTransformException(Exception):
@@ -52,20 +51,20 @@ class TargetExportFormat(Enum):
 class AbstractExportTransformer(ABC):
     @staticmethod
     @abstractmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
+    def transform(table: Table, dest_path_no_extension: str, append: bool) -> list[str]:
         """Transform solr results into a target export format"""
         pass
 
 
 class CSVExportTransformer(AbstractExportTransformer):
     @staticmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
+    def transform(table: Table, dest_path_no_extension: str, append: bool) -> list[str]:
         dest_path = f"{dest_path_no_extension}.csv"
         if append:
             petl.io.csv.appendcsv(table, dest_path)
         else:
             petl.io.csv.tocsv(table, dest_path)
-        return dest_path
+        return [dest_path]
 
 
 class JSONExportTransformer(AbstractExportTransformer):
@@ -109,8 +108,9 @@ class JSONExportTransformer(AbstractExportTransformer):
                     json.dump(JSONExportTransformer.filter_null_values(row), file)
                     last_id_in_file = row.get(METADATA_SAMPLE_IDENTIFIER)
                     file.write("\n")
-            file_path_to_last_id_in_file_paths[full_file_path] = last_id_in_file
-            last_id_in_file_to_file_paths[last_id_in_file] = full_file_path
+            if last_id_in_file is not None:
+                file_path_to_last_id_in_file_paths[full_file_path] = last_id_in_file
+                last_id_in_file_to_file_paths[last_id_in_file] = full_file_path
         if is_sitemap:
             JSONExportTransformer._update_mod_dates_for_sitemap(file_path_to_last_id_in_file_paths,
                                                                 last_id_in_file_to_file_paths)
@@ -270,7 +270,7 @@ class SolrResultTransformer:
         mappings[METADATA_COMPLIES_WITH] = SOLR_COMPLIES_WITH
         self._table = petl.fieldmap(self._table, mappings)
 
-    def transform(self) -> str:
+    def transform(self) -> list[str]:
         """Transforms the table to the destination format.  Return value is the path the output file was written to."""
         if self._format == TargetExportFormat.CSV:
             self._rename_table_columns_csv()

@@ -38,12 +38,12 @@ def test_solr_result_transformer_csv(solr_file_path: str):
     table = _solr_result_table(solr_file_path)
     dest_path_no_extension = _test_path()
     solr_result_transformer = SolrResultTransformer(table, TargetExportFormat.CSV, dest_path_no_extension, False)
-    dest_path = solr_result_transformer.transform()
+    dest_path = solr_result_transformer.transform()[0]
     assert os.path.exists(dest_path)
     initial_size = os.path.getsize(dest_path)
     # write in append mode
     appending_transformer = SolrResultTransformer(table, TargetExportFormat.CSV, dest_path_no_extension, True)
-    dest_path_2 = appending_transformer.transform()
+    dest_path_2 = appending_transformer.transform()[0]
     assert dest_path == dest_path_2
     appended_size = os.path.getsize(dest_path_2)
     assert appended_size > initial_size
@@ -66,6 +66,7 @@ def _validate_dest_paths(dest_paths: list[str], isamples_schema_json: dict):
             assert json_dict is not None
             assert json_dict.get(METADATA_SAMPLE_IDENTIFIER) is not None
             validate(instance=json_dict, schema=isamples_schema_json)
+
 
 @pytest.mark.parametrize("solr_file_path", SOLR_items)
 def test_solr_result_transformer_jsonl(solr_file_path: str, isamples_schema_json: dict):

@@ -9,8 +9,6 @@ import urllib.parse
 
 from requests import Response
 
-import isb_web.config
-
 BASE_URL = "http://localhost:8985/solr/isb_core_records/"
 _RPT_FIELD = "producedBy_samplingSite_location_rpt"
 LONGITUDE_FIELD = "producedBy_samplingSite_location_longitude"
@@ -716,6 +714,7 @@ def solr_records_forh3_counts(
     logging.info("Returning response")
     return response.json()
 
+
 def solr_last_mod_date_for_ids(ids: list[str], rsession=requests.session()) -> dict[str, str]:
     """Returns a dictionary of id to index last mod date for the passed in ids"""
     url = get_solr_url("select")
@@ -733,6 +732,7 @@ def solr_last_mod_date_for_ids(ids: list[str], rsession=requests.session()) -> d
     for doc in docs:
         id_to_last_mod_date[doc["id"]] = doc["indexUpdatedTime"]
     return id_to_last_mod_date
+
 
 def solr_counts_by_authority(rsession=requests.session()) -> dict[str, int]:
     url = get_solr_url("select")

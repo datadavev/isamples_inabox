@@ -116,4 +116,4 @@ def test_thing_sitemap_index_iterator():
         if "url" in child.tag:
             for url_child in child:
                 if "loc" in url_child.tag:
-                    assert f"sitemap-" in url_child.text
+                    assert "sitemap-" in url_child.text

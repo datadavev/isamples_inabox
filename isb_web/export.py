@@ -31,9 +31,9 @@ from isamples_metadata.solr_field_constants import SOLR_ID, SOLR_LABEL, SOLR_HAS
     SOLR_SAMPLING_PURPOSE, SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, SOLR_PRODUCED_BY_SAMPLING_SITE_LABEL, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, SOLR_PRODUCED_BY_LABEL, \
-    SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_DESCRIPTION, SOLR_SOURCE, SOLR_INDEX_UPDATED_TIME
+    SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_DESCRIPTION, SOLR_SOURCE
 from isb_lib.models.export_job import ExportJob
-from isb_lib.sitemaps import build_sitemap, _build_sitemap
+from isb_lib.sitemaps import _build_sitemap
 from isb_lib.sitemaps.thing_sitemap import MAX_URLS_IN_SITEMAP, ThingSitemapIndexIterator
 from isb_lib.utilities.solr_result_transformer import SolrResultTransformer, TargetExportFormat
 from isb_web import isb_solr_query, analytics, sqlmodel_database, auth
@@ -118,8 +118,7 @@ def _search_solr_and_export_results(export_job_id: str):
                 sitemap_index_iterator = ThingSitemapIndexIterator(transformed_response_path)
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                loop.run_until_complete(_build_sitemap(transformed_response_path, isb_web.config.Settings().sitemap_url_prefix,
-                              sitemap_index_iterator))
+                loop.run_until_complete(_build_sitemap(transformed_response_path, isb_web.config.Settings().sitemap_url_prefix, sitemap_index_iterator))
             export_job.tcompleted = igsn_lib.time.dtnow()
             sqlmodel_database.save_or_update_export_job(session, export_job)
 

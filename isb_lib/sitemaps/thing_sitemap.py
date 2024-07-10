@@ -4,11 +4,8 @@ import typing
 from pathlib import Path
 from typing import Optional
 
-from sqlmodel import Session
-
 from isb_lib.core import datetimeToSolrStr
 from isb_lib.sitemaps import SitemapIndexEntry, UrlSetEntry, ThingUrlSetEntry, ThingSitemapIndexEntry
-from isb_web.sqlmodel_database import things_for_sitemap
 
 MAX_URLS_IN_SITEMAP = 50000
 
@@ -75,6 +72,8 @@ class ThingSitemapIndexIterator:
         self._last_timestamp_str: Optional[str] = None
         self._last_primary_key: Optional[str] = "0"
         self._directory_path = Path(directory_path)
+        if not os.path.exists(directory_path):
+            os.mkdir(directory_path)
         assert os.path.exists(self._directory_path)
         self._initialize_directory_state()
         self._authority = authority

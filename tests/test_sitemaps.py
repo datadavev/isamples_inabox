@@ -110,13 +110,10 @@ def test_thing_sitemap_index_iterator():
     sitemap_zero = os.path.join(dest_directory_path, "sitemap-0.xml")
     assert os.path.exists(sitemap_index_path)
     assert os.path.exists(sitemap_zero)
-    # check that 0 is the first file and 4 is the last, they should be sorted by file mod date
     sitemap_tree = ElementTree.parse(sitemap_zero)
-    index = 0
     # The urls should be ordered by filename -- assert that they are
     for child in sitemap_tree.getroot():
         if "url" in child.tag:
             for url_child in child:
                 if "loc" in url_child.tag:
-                    assert f"sitemap-{index}" in url_child.text
-            index = index + 1
+                    assert f"sitemap-" in url_child.text

@@ -28,7 +28,7 @@ from isb_web.sqlmodel_database import SQLModelDAO
 def main(ctx, path: str, host: str):
     isb_lib.core.things_main(ctx, isb_web.config.Settings().database_url, isb_web.config.Settings().solr_url, "INFO")
     session = SQLModelDAO(isb_web.config.Settings().database_url).get_session()
-    build_sitemap(path, host, ThingSitemapIndexIterator(session))
+    # build_sitemap(path, host, ThingSitemapIndexIterator(session))
 
 
 if __name__ == "__main__":

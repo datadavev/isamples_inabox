@@ -57,7 +57,7 @@ class UrlSetEntry:
 
 class ThingUrlSetEntry(UrlSetEntry):
     def loc_suffix(self):
-        return f"thing/{self.identifier}?full=false&format=core"
+        return self.identifier
 
 
 table = str.maketrans(

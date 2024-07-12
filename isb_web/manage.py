@@ -97,6 +97,8 @@ async def login(request: starlette.requests.Request):
         redirect_uri += f"?thing={request.query_params['thing']}"
     elif "raw_jwt" in request.query_params and request.query_params["raw_jwt"] == "true":
         redirect_uri += "?raw_jwt=true"
+    elif "raw_token" in request.query_params and request.query_params["raw_token"] == "true":
+        redirect_uri += "?raw_token=true"
     orcid_auth_uri = await isbweb_auth.oauth.orcid.authorize_redirect(request, redirect_uri)
     return orcid_auth_uri
 
@@ -112,9 +114,11 @@ async def auth(request: starlette.requests.Request):
     token_dict = dict(token)
     request.session["user"] = token_dict
     redirect_url = url_utilities.joined_url(str(request.url), config.Settings().auth_response_redirect_fragment)
-    # redirect_url = "http://localhost:3000/#/dois"
+
     if "raw_jwt" in request.query_params and request.query_params["raw_jwt"] == "true":
         return PlainTextResponse(content=token_dict["id_token"])
+    elif "raw_token" in request.query_params and request.query_params["raw_token"] == "true":
+        return PlainTextResponse(content=token_dict["access_token"])
     elif "annotation" in request.query_params and request.query_params["annotation"] == "true":
         # if login is for annotation purpose, add access token as query param
         redirect_url += "?access_token=" + token["access_token"]

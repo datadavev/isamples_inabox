@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import logging
@@ -14,12 +15,13 @@ import igsn_lib.time
 import petl
 import ijson
 import time
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from sqlmodel import Session
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import JSONResponse, FileResponse
 from starlette.status import HTTP_201_CREATED, HTTP_404_NOT_FOUND, HTTP_200_OK, HTTP_202_ACCEPTED
 
+import isb_web
 from isamples_metadata.solr_field_constants import SOLR_ID, SOLR_LABEL, SOLR_HAS_CONTEXT_CATEGORY, \
     SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_KEYWORDS, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_REGISTRANT, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_RESULT_TIME, \
@@ -31,6 +33,8 @@ from isamples_metadata.solr_field_constants import SOLR_ID, SOLR_LABEL, SOLR_HAS
     SOLR_PRODUCED_BY_SAMPLING_SITE_DESCRIPTION, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, SOLR_PRODUCED_BY_LABEL, \
     SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_DESCRIPTION, SOLR_SOURCE
 from isb_lib.models.export_job import ExportJob
+from isb_lib.sitemaps import _build_sitemap
+from isb_lib.sitemaps.thing_sitemap import MAX_URLS_IN_SITEMAP, ThingSitemapIndexIterator
 from isb_lib.utilities.solr_result_transformer import SolrResultTransformer, TargetExportFormat
 from isb_web import isb_solr_query, analytics, sqlmodel_database, auth
 from isb_web.analytics import AnalyticsEvent
@@ -93,15 +97,28 @@ def _search_solr_and_export_results(export_job_id: str):
                 return
             docs = ijson.items(src, "response.docs.item", use_float=True)
             generator_docs = (doc for doc in docs)
-            transformed_response_path = f"/tmp/{export_job.uuid}"
+            if export_job.is_sitemap:
+                current_date = datetime.datetime.now().date()
+                formatted_date = current_date.strftime("%Y-%m-%d")
+                transformed_response_path = os.path.join(isb_web.config.Settings().sitemap_dir_prefix, formatted_date)
+                if not os.path.exists(transformed_response_path):
+                    os.mkdir(transformed_response_path)
+            else:
+                transformed_response_path = f"/tmp/{export_job.uuid}"
             table = petl.fromdicts(generator_docs)
-            solr_result_transformer = SolrResultTransformer(table, TargetExportFormat[export_job.export_format], transformed_response_path, False)  # type: ignore
-            transformed_response_path = solr_result_transformer.transform()
-            export_job.file_path = transformed_response_path
+            lines_per_file = -1 if not export_job.is_sitemap else MAX_URLS_IN_SITEMAP
+            solr_result_transformer = SolrResultTransformer(table, TargetExportFormat[export_job.export_format], transformed_response_path, False, export_job.is_sitemap, lines_per_file)  # type: ignore
+            file_path = solr_result_transformer.transform()[0]
+            export_job.file_path = file_path
             print("Finished writing query response!")
             table_length = petl.util.counting.nrows(table)
             finish_time = time.time()
             logging.info(f"Chunk of {table_length} rows starting at index 0 completed fetching and writing in {finish_time - start_time} seconds")
+            if export_job.is_sitemap:
+                sitemap_index_iterator = ThingSitemapIndexIterator(transformed_response_path)
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(_build_sitemap(transformed_response_path, isb_web.config.Settings().sitemap_url_prefix, sitemap_index_iterator))
             export_job.tcompleted = igsn_lib.time.dtnow()
             sqlmodel_database.save_or_update_export_job(session, export_job)
 
@@ -119,22 +136,42 @@ async def create(request: fastapi.Request, export_format: TargetExportFormat = T
     # supported parameters are: q, fq, start, rows, format (right now format should be either CSV or JSON)
 
     # These will be inserted into the solr request if not present on the API call
+    solr_api_defparams = _default_export_params("indexUpdatedTime asc")
+    params, properties = isb_solr_query.get_solr_params_from_request_as_dict(request, solr_api_defparams, ["q", "fq", "start", "rows", "fl"])
+    analytics.attach_analytics_state_to_request(AnalyticsEvent.THINGS_DOWNLOAD, request, properties)
+    return await _create_export_job(export_format, params, request, session)
+
+
+def _default_export_params(sort: str) -> dict[str, str]:
     solr_api_defparams = {
         "wt": "json",
         "q": "*:*",
         "fl": ",".join(DEFAULT_SOLR_FIELDS_FOR_EXPORT),
-        "sort": "id asc"
+        "sort": sort
     }
-    params, properties = isb_solr_query.get_solr_params_from_request_as_dict(request, solr_api_defparams, ["q", "fq", "start", "rows", "fl"])
-    analytics.attach_analytics_state_to_request(AnalyticsEvent.THINGS_DOWNLOAD, request, properties)
+    return solr_api_defparams
+
+
+async def _create_export_job(export_format: TargetExportFormat, params: dict[str, str], request: fastapi.Request,
+                             session: Session, is_sitemap: bool = False):
     export_job = ExportJob()
     export_job.creator_id = auth.orcid_id_from_session_or_scope(request)
     export_job.solr_query_params = params  # type: ignore
     export_job.export_format = export_format.value
+    export_job.is_sitemap = is_sitemap
     sqlmodel_database.save_or_update_export_job(session, export_job)
     executor.submit(search_solr_and_export_results, export_job.uuid)  # type: ignore
     status_dict = {"status": "created", "uuid": export_job.uuid}
     return fastapi.responses.JSONResponse(content=status_dict, status_code=HTTP_201_CREATED)
+
+
+@export_app.get("/create_sitemap")
+async def create_sitemap(request: fastapi.Request, session: Session = Depends(get_session)) -> JSONResponse:
+    orcid_id = auth.orcid_id_from_session_or_scope(request)
+    if orcid_id not in isb_web.config.Settings().orcid_superusers:
+        raise HTTPException(401, "orcid id not authorized to create sitemap")
+    solr_api_defparams = _default_export_params("indexUpdatedTime asc")
+    return await _create_export_job(TargetExportFormat.JSONL, solr_api_defparams, request, session, True)
 
 
 def _not_found_response() -> JSONResponse:

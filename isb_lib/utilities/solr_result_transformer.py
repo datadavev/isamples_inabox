@@ -1,4 +1,7 @@
+import datetime
 import json
+import math
+import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
@@ -6,6 +9,7 @@ from enum import Enum
 import petl
 from petl import Table
 
+import isb_web
 from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_AUTHORIZED_BY, METADATA_COMPLIES_WITH, \
     METADATA_LONGITUDE, METADATA_LATITUDE, METADATA_RELATED_RESOURCE, \
     METADATA_CURATION_LOCATION, METADATA_ACCESS_CONSTRAINTS, METADATA_CURATION, METADATA_SAMPLING_PURPOSE, \
@@ -23,7 +27,7 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_RESULT_TIME, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, \
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
-    SOLR_LABEL, SOLR_SOURCE
+    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT
 
 
 class ExportTransformException(Exception):
@@ -48,20 +52,20 @@ class TargetExportFormat(Enum):
 class AbstractExportTransformer(ABC):
     @staticmethod
     @abstractmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
+    def transform(table: Table, dest_path_no_extension: str, append: bool) -> list[str]:
         """Transform solr results into a target export format"""
         pass
 
 
 class CSVExportTransformer(AbstractExportTransformer):
     @staticmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
+    def transform(table: Table, dest_path_no_extension: str, append: bool) -> list[str]:
         dest_path = f"{dest_path_no_extension}.csv"
         if append:
             petl.io.csv.appendcsv(table, dest_path)
         else:
             petl.io.csv.tocsv(table, dest_path)
-        return dest_path
+        return [dest_path]
 
 
 class JSONExportTransformer(AbstractExportTransformer):
@@ -79,24 +83,63 @@ class JSONExportTransformer(AbstractExportTransformer):
             return obj
 
     @staticmethod
-    def transform(table: Table, dest_path_no_extension: str, append: bool) -> str:
+    def transform(table: Table, dest_path_no_extension: str, append: bool, is_sitemap: bool = False, lines_per_file: int = -1) -> list[str]:
         if append:
             raise ValueError("JSON Export doesn't support appending")
         extension = "jsonl"
-        dest_path = f"{dest_path_no_extension}.{extension}"
-        with open(dest_path, "w") as file:
-            for row in petl.util.base.dicts(table):
-                json.dump(JSONExportTransformer.filter_null_values(row), file)
-                file.write("\n")
-        return dest_path
+        if lines_per_file == -1:
+            full_file_paths = [f"{dest_path_no_extension}.{extension}"]
+        else:
+            # Use table length - 1 here since the header row counts as a row in the table (odd, but true)
+            num_files = math.ceil((table.len() - 1) / lines_per_file)
+            full_file_paths = [os.path.join(dest_path_no_extension, f"sitemap-{current_file_number}.{extension}") for current_file_number in range(0, num_files)]
+        dicts_view = petl.util.base.dicts(table)
+        rows_generator = (row for row in dicts_view)
+        file_path_to_last_id_in_file_paths: dict[str, str] = {}
+        last_id_in_file_to_file_paths: dict[str, str] = {}
+        for full_file_path in full_file_paths:
+            rows_in_file = 0
+            last_id_in_file = None
+            with open(full_file_path, "w") as file:
+                while lines_per_file == -1 or (rows_in_file) < lines_per_file:
+                    rows_in_file += 1
+                    try:
+                        row = next(rows_generator)
+                    except StopIteration:
+                        break
+                    json.dump(JSONExportTransformer.filter_null_values(row), file)
+                    last_id_in_file = row.get(METADATA_SAMPLE_IDENTIFIER)
+                    file.write("\n")
+            if last_id_in_file is not None:
+                file_path_to_last_id_in_file_paths[full_file_path] = last_id_in_file
+                last_id_in_file_to_file_paths[last_id_in_file] = full_file_path
+        if is_sitemap:
+            JSONExportTransformer._update_mod_dates_for_sitemap(file_path_to_last_id_in_file_paths,
+                                                                last_id_in_file_to_file_paths)
+        return full_file_paths
+
+    @staticmethod
+    def _update_mod_dates_for_sitemap(file_path_to_last_id_in_file_paths, last_id_in_file_to_file_paths):
+        last_mod_date_for_ids = isb_web.isb_solr_query.solr_last_mod_date_for_ids(file_path_to_last_id_in_file_paths.values())
+        for id, last_mod_date in last_mod_date_for_ids.items():
+            # For sitemap generation we set the mod date of the file to be the solr index updated time of the
+            # last record in the file.  This lets the sitemap index properly emit a last mod date on the file.
+            date_object = datetime.datetime.strptime(last_mod_date, SOLR_TIME_FORMAT)
+            # Convert the datetime to seconds since the epoch
+            new_modification_time = date_object.timestamp()
+            full_file_path = last_id_in_file_to_file_paths.get(id)
+            os.utime(full_file_path, (new_modification_time, new_modification_time))
 
 
 class SolrResultTransformer:
-    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool):
+    def __init__(self, table: Table, format: TargetExportFormat, result_uuid: str, append: bool,
+                 is_sitemap: bool = False, lines_per_file: int = -1):
         self._table = table
         self._format = format
         self._result_uuid = result_uuid
         self._append = append
+        self._lines_per_file = lines_per_file
+        self._is_sitemap = is_sitemap
 
     def _add_to_dict(self, target_dict: dict, target_key: str, source_dict: dict, source_key: str, default_value: str = ""):
         source_value = source_dict.get(source_key, default_value)
@@ -229,13 +272,13 @@ class SolrResultTransformer:
         mappings[METADATA_COMPLIES_WITH] = SOLR_COMPLIES_WITH
         self._table = petl.fieldmap(self._table, mappings)
 
-    def transform(self) -> str:
+    def transform(self) -> list[str]:
         """Transforms the table to the destination format.  Return value is the path the output file was written to."""
         if self._format == TargetExportFormat.CSV:
             self._rename_table_columns_csv()
             return CSVExportTransformer.transform(self._table, self._result_uuid, self._append)
         elif self._format == TargetExportFormat.JSONL:
             self._rename_table_columns_jsonl()
-            return JSONExportTransformer.transform(self._table, self._result_uuid, self._append)
+            return JSONExportTransformer.transform(self._table, self._result_uuid, self._append, self._is_sitemap, self._lines_per_file)
         else:
             raise ExportTransformException(f"Unsupported export format: {self._format}")

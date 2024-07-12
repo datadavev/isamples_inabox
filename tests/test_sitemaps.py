@@ -2,7 +2,9 @@ import asyncio
 import datetime
 import json
 import os.path
+import shutil
 import tempfile
+from xml.etree import ElementTree
 
 import lxml
 import pytest
@@ -11,6 +13,7 @@ import requests
 from isb_lib.sitemaps import SitemapIndexEntry, ThingSitemapIndexEntry, UrlSetEntry, ThingUrlSetEntry, \
     write_urlset_file, write_sitemap_index_file, INDEX_XML, build_sitemap, SiteMap
 from isb_lib.sitemaps.gh_pages_sitemap import GHPagesSitemapIndexIterator
+from isb_lib.sitemaps.thing_sitemap import ThingSitemapIndexIterator
 from test_utils import LocalFileAdapter
 
 
@@ -93,3 +96,24 @@ def test_sitemap_scan_items(local_file_requests_session):
                       local_file_requests_session, local_url_path)
     for item in sitemap.scanItems():
         assert item is not None
+
+
+def test_thing_sitemap_index_iterator():
+    directory_path = os.path.join(os.getcwd(), "./test_data/example_sitemap_files")
+    dest_directory_path = os.path.join(directory_path, "generated")
+    if os.path.exists(dest_directory_path):
+        shutil.rmtree(dest_directory_path)
+    os.mkdir(dest_directory_path)
+    sitemap_index_iterator = ThingSitemapIndexIterator(directory_path)
+    build_sitemap(dest_directory_path, "https://central.isample.xyz/sitemaps/123456/", sitemap_index_iterator)
+    sitemap_index_path = os.path.join(dest_directory_path, "sitemap-index.xml")
+    sitemap_zero = os.path.join(dest_directory_path, "sitemap-0.xml")
+    assert os.path.exists(sitemap_index_path)
+    assert os.path.exists(sitemap_zero)
+    sitemap_tree = ElementTree.parse(sitemap_zero)
+    # The urls should be ordered by filename -- assert that they are
+    for child in sitemap_tree.getroot():
+        if "url" in child.tag:
+            for url_child in child:
+                if "loc" in url_child.tag:
+                    assert "sitemap-" in url_child.text

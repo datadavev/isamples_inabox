@@ -9,13 +9,11 @@ import urllib.parse
 
 from requests import Response
 
-import isb_web.config
-from isb_lib.core import MEDIA_JSON
-
-BASE_URL = isb_web.config.Settings().solr_url
+BASE_URL = "http://localhost:8985/solr/isb_core_records/"
 _RPT_FIELD = "producedBy_samplingSite_location_rpt"
 LONGITUDE_FIELD = "producedBy_samplingSite_location_longitude"
 LATITUDE_FIELD = "producedBy_samplingSite_location_latitude"
+MEDIA_JSON = "application/json"
 
 DEFAULT_COLLECTION_NAME = "isb_core_records"
 
@@ -715,6 +713,25 @@ def solr_records_forh3_counts(
     )
     logging.info("Returning response")
     return response.json()
+
+
+def solr_last_mod_date_for_ids(ids: list[str], rsession=requests.session()) -> dict[str, str]:
+    """Returns a dictionary of id to index last mod date for the passed in ids"""
+    url = get_solr_url("select")
+    headers = {"Content-Type": MEDIA_JSON}
+    quoted_ids = [f'"{id}"' for id in ids]
+    joined_ids = ",".join(quoted_ids)
+    params = {
+        "q": f"id:({joined_ids})",
+        "fl": "id,indexUpdatedTime"
+    }
+    res = rsession.get(url, headers=headers, params=params)
+    json = res.json()
+    docs = json["response"]["docs"]
+    id_to_last_mod_date = {}
+    for doc in docs:
+        id_to_last_mod_date[doc["id"]] = doc["indexUpdatedTime"]
+    return id_to_last_mod_date
 
 
 def solr_counts_by_authority(rsession=requests.session()) -> dict[str, int]:

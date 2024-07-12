@@ -102,8 +102,9 @@ class Settings(BaseSettings):
     # uses a lot of memory so shouldn't be enabled by default.
     taxon_cache_enabled: bool = False
 
-    sitemap_dir_prefix: str = "/app/sitemaps/"
-    sitemap_url_prefix: str = "https://central.isample.xyz/isamples_central/sitemaps/"
+    sitemap_dir_prefix: str = "/app/sitemaps"
+    sitemap_url_prefix: str = ""
+    sitemap_solr_query: str = "*:*"
 
     class Config:
         env_file = "isb_web_config.env"

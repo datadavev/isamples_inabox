@@ -1,5 +1,6 @@
 import datetime
 import json
+import math
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -89,7 +90,8 @@ class JSONExportTransformer(AbstractExportTransformer):
         if lines_per_file == -1:
             full_file_paths = [f"{dest_path_no_extension}.{extension}"]
         else:
-            num_files = max(1, int((table.len() - 1) / lines_per_file))
+            # Use table length - 1 here since the header row counts as a row in the table (odd, but true)
+            num_files = math.ceil((table.len() - 1) / lines_per_file)
             full_file_paths = [os.path.join(dest_path_no_extension, f"sitemap-{current_file_number}.{extension}") for current_file_number in range(0, num_files)]
         dicts_view = petl.util.base.dicts(table)
         rows_generator = (row for row in dicts_view)

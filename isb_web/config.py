@@ -115,7 +115,6 @@ class Settings(BaseSettings):
         # This ends up with something like "/app/sitemaps/2024-07-16/sitemaps"
         return os.path.join(os.path.join(self.sitemap_dir_prefix, formatted_date), "sitemaps")
 
-
     class Config:
         env_file = "isb_web_config.env"
         case_sensitive = False

@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import math
 import os
 from abc import ABC, abstractmethod
@@ -120,7 +121,9 @@ class JSONExportTransformer(AbstractExportTransformer):
 
     @staticmethod
     def _update_mod_dates_for_sitemap(file_path_to_last_id_in_file_paths, last_id_in_file_to_file_paths):
+        logging.info(f"Going to fetch solr mod dates for {file_path_to_last_id_in_file_paths}")
         last_mod_date_for_ids = isb_web.isb_solr_query.solr_last_mod_date_for_ids(file_path_to_last_id_in_file_paths.values())
+        logging.info(f"Received solr mod dates {last_mod_date_for_ids}")
         for id, last_mod_date in last_mod_date_for_ids.items():
             # For sitemap generation we set the mod date of the file to be the solr index updated time of the
             # last record in the file.  This lets the sitemap index properly emit a last mod date on the file.

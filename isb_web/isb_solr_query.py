@@ -9,6 +9,8 @@ import urllib.parse
 
 from requests import Response
 
+from isb_web import config
+
 BASE_URL = "http://localhost:8985/solr/isb_core_records/"
 _RPT_FIELD = "producedBy_samplingSite_location_rpt"
 LONGITUDE_FIELD = "producedBy_samplingSite_location_longitude"
@@ -85,7 +87,7 @@ def clip_float(v, min_v, max_v):
 
 
 def get_solr_url(path_component: str):
-    return urllib.parse.urljoin(BASE_URL, path_component)
+    return urllib.parse.urljoin(config.Settings().solr_url, path_component)
 
 
 def set_default_params(params, defs, dict: bool = False):
@@ -723,7 +725,8 @@ def solr_last_mod_date_for_ids(ids: list[str], rsession=requests.session()) -> d
     joined_ids = ",".join(quoted_ids)
     params = {
         "q": f"id:({joined_ids})",
-        "fl": "id,indexUpdatedTime"
+        "fl": "id,indexUpdatedTime",
+        "rows": len(ids)
     }
     res = rsession.get(url, headers=headers, params=params)
     json = res.json()

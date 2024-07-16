@@ -201,5 +201,8 @@ def test_solr_integration_test(rsession: requests.Session, solr_url: str, id: st
 
 @pytest.mark.skipif(os.environ.get("CI") is not None, reason="Only run this test manually, not in CI.")
 def test_solr_last_mod_date_for_ids(rsession: requests.Session, solr_url: str):
-    last_mod = solr_last_mod_date_for_ids(["ark:/21547/CYR2envbio09_975", "ark:/21547/CYR2envbio09_976"])
+    last_mod = solr_last_mod_date_for_ids(["ark:/28722/k2h41tj3k", "ark:/28722/k27s7rc0d", "ark:/28722/k2mp51d2r",
+                                           "ark:/28722/k2qr52r85", "http://n2t.net/ark:/28722/k2w37vf8d", "http://n2t.net/ark:/28722/k2xs5sn39",
+                                           "http://n2t.net/ark:/28722/k2g73gk3c", "ark:/28722/k29z9h015", "ark:/28722/k2dv1xf48", "ark:/28722/k22j6s97z",
+                                           "ark:/28722/k2pc39c88", "ark:/28722/k2hq46n4z", "ark:/28722/k28k75k9n", "ark:/28722/k2kk96w47"])
     print(f"last mod is {last_mod}")

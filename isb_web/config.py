@@ -1,3 +1,6 @@
+import os
+import datetime
+
 from pydantic import BaseSettings
 
 
@@ -102,9 +105,15 @@ class Settings(BaseSettings):
     # uses a lot of memory so shouldn't be enabled by default.
     taxon_cache_enabled: bool = False
 
-    sitemap_dir_prefix: str = "/app/sitemaps"
+    sitemap_dir_prefix: str = "/app/sitemaps/"
     sitemap_url_prefix: str = ""
     sitemap_solr_query: str = "*:*"
+
+    def get_sitemap_output_path(self):
+        current_date = datetime.datetime.now().date()
+        formatted_date = current_date.strftime("%Y-%m-%d")
+        # This ends up with something like "/app/sitemaps/2024-07-16/sitemaps"
+        return os.path.join(os.path.join(self.sitemap_dir_prefix, formatted_date), "sitemaps")
 
     class Config:
         env_file = "isb_web_config.env"

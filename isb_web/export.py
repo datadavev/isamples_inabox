@@ -74,12 +74,15 @@ def _handle_error(session: Session, export_job: ExportJob, error: str):
 
 def _search_solr_and_export_results(export_job_id: str):
     """Task function that gets a queued export job from the db, executes the solr query, and writes results to disk"""
+    logging.info("going to search solr and export results")
 
     # note that we don't seem to be able to work with the session generator on the background thread, so explicitly
     # open and close a new session for each task we execute
     with dao.get_session() as session:  # type: ignore
+        logging.info("going to get session to get export job")
         export_job = sqlmodel_database.export_job_with_uuid(session, export_job_id)
         if export_job is not None:
+            logging.info("have export job")
             export_job.tstarted = igsn_lib.time.dtnow()
             sqlmodel_database.save_or_update_export_job(session, export_job)
             start_time = time.time()
@@ -88,6 +91,7 @@ def _search_solr_and_export_results(export_job_id: str):
             export_handler = isb_solr_query.get_solr_url("export")
             full_url = f"{export_handler}?{encoded_params}"
             try:
+                logging.info(f"going to try and open {full_url}")
                 src = urlopen(full_url)
             except HTTPError as e:
                 _handle_error(session, export_job, f"HTTP Error, code: {e.code} reason: {e.reason}")
@@ -98,10 +102,10 @@ def _search_solr_and_export_results(export_job_id: str):
             docs = ijson.items(src, "response.docs.item", use_float=True)
             generator_docs = (doc for doc in docs)
             if export_job.is_sitemap:
-                current_date = datetime.datetime.now().date()
-                formatted_date = current_date.strftime("%Y-%m-%d")
-                transformed_response_path = os.path.join(isb_web.config.Settings().sitemap_dir_prefix, formatted_date)
+                transformed_response_path = isb_web.config.Settings().get_sitemap_output_path()
+                logging.info(f"Going to write solr results to {transformed_response_path}")
                 if not os.path.exists(transformed_response_path):
+                    logging.info(f"Results directory didn't exist, will create at {transformed_response_path}")
                     os.mkdir(transformed_response_path)
             else:
                 transformed_response_path = f"/tmp/{export_job.uuid}"

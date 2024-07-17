@@ -205,7 +205,7 @@ def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str
 
 
 def _json_line_to_thing_dict(json_dict: dict, json_lines_url: str, now: datetime.datetime, time_fetched: datetime.datetime) -> tuple[dict, str]:
-    thing_dict = {}
+    thing_dict: dict[str, typing.Any] = {}
     thing_identifier = json_dict[METADATA_SAMPLE_IDENTIFIER]
     thing_dict["resolved_content"] = json_dict
     thing_dict["tstamp"] = now
@@ -225,7 +225,8 @@ def _json_line_to_thing_dict(json_dict: dict, json_lines_url: str, now: datetime
                 h3 = isamples_metadata.Transformer.geo_to_h3(sample_location.get(METADATA_LATITUDE),
                                                              sample_location.get(METADATA_LONGITUDE),
                                                              Transformer.DEFAULT_H3_RESOLUTION)
-                thing_dict["h3"] = h3
+                if h3 is not None:
+                    thing_dict["h3"] = h3
     return thing_dict, thing_identifier
 
 

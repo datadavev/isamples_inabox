@@ -15,6 +15,7 @@ import igsn_lib.oai
 import igsn_lib.time
 import isb_lib.core
 from isamples_metadata import GEOMETransformer
+from isamples_metadata.Transformer import Transformer
 from isamples_metadata.core_json_transformer import CoreJSONTransformer
 from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.thing import Thing
@@ -392,6 +393,7 @@ def reparseAsCoreRecord(thing: Thing) -> typing.List[typing.Dict]:
     _validateResolvedContent(thing)
     core_records = []
     if thing.resolved_content is not None:
+        transformer: Transformer
         if thing.resolved_media_type == MEDIA_JSONL:
             transformer = CoreJSONTransformer(thing.resolved_content)
             core_records = [isb_lib.core.coreRecordAsSolrDoc(transformer)]

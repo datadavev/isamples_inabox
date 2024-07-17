@@ -74,6 +74,7 @@ __NUM_THINGS_FETCHED = 0
     help="If specified, the start index of the sitemap files to ingest",
 )
 def main(ctx, url: str, authority: str, ignore_last_modified: bool, batch_size: int, file: str, start: int):
+    logging.info(f"Started sitemap consumption at {datetime.datetime.now()}")
     solr_url = isb_web.config.Settings().solr_url
     rsession = requests.session()
     adapter = requests.adapters.HTTPAdapter(pool_connections=5, pool_maxsize=5)
@@ -109,7 +110,7 @@ def main(ctx, url: str, authority: str, ignore_last_modified: bool, batch_size: 
         file,
         start
     )
-    logging.info(f"Completed.  Fetched {__NUM_THINGS_FETCHED} things total.")
+    logging.info(f"Completed at {datetime.datetime.now()}.  Fetched {__NUM_THINGS_FETCHED} things total.")
 
 
 def thing_fetcher_for_url(thing_url: str, rsession) -> ThingFetcher:

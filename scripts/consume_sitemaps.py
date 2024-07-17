@@ -9,6 +9,7 @@ from typing import Iterator
 import click
 import requests
 
+import isamples_metadata
 import isb_lib
 import isb_lib.core
 import isb_web
@@ -16,6 +17,9 @@ import isb_web.config
 import logging
 import re
 
+from isamples_metadata.Transformer import Transformer
+from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_PRODUCED_BY, \
+    METADATA_SAMPLING_SITE, METADATA_SAMPLE_LOCATION, METADATA_LATITUDE, METADATA_LONGITUDE
 from isb_lib.models.thing import Thing
 from isb_lib.sitemaps.sitemap_fetcher import (
     SitemapIndexFetcher,
@@ -234,7 +238,7 @@ def fetch_sitemap_files(
 
                     for json_dict in things_fetcher.json_dicts:
                         thing_dict = {}
-                        thing_identifier = json_dict["sample_identifier"]
+                        thing_identifier = json_dict[METADATA_SAMPLE_IDENTIFIER]
                         thing_dict["resolved_content"] = json_dict
                         now = datetime.datetime.now()
                         thing_dict["tstamp"] = now
@@ -245,7 +249,16 @@ def fetch_sitemap_files(
                         thing_dict["resolved_status"] = 200
                         thing_dict["tresolved"] = time_fetched
                         thing_dict["resolved_media_type"] = "application/jsonl"
-                        # TODO: h3
+
+                        produced_by = json_dict.get(METADATA_PRODUCED_BY)
+                        if produced_by is not None:
+                            sampling_site = produced_by.get(METADATA_SAMPLING_SITE)
+                            if sampling_site is not None:
+                                sample_location = sampling_site.get(METADATA_SAMPLE_LOCATION)
+                                if sample_location is not None:
+                                    h3 = isamples_metadata.Transformer.geo_to_h3(sample_location.get(METADATA_LATITUDE), sample_location.get(METADATA_LONGITUDE), Transformer.DEFAULT_H3_RESOLUTION)
+                                    thing_dict["h3"] = h3
+
                         if thing_identifier in thing_ids.keys():
                             # existing row in the db, for the update to work we need to insert the pk into the dict
                             thing_dict["primary_key"] = thing_ids[thing_identifier]

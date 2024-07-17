@@ -30,8 +30,7 @@ from isb_lib.sitemaps.sitemap_fetcher import (
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import (
     SQLModelDAO,
-    all_thing_identifiers,
-    thing_identifiers_from_resolved_content,
+    all_thing_identifiers
 )
 
 __NUM_THINGS_FETCHED = 0
@@ -103,17 +102,7 @@ def main(ctx, url: str, authority: str, ignore_last_modified: bool, batch_size: 
     logging.info(
         f"Going to fetch records for authority {authority} with updated date > {last_updated_date}"
     )
-    fetch_sitemap_files(
-        authority,
-        last_updated_date,
-        thing_ids_to_pks,
-        rsession,
-        url,
-        db_session,
-        batch_size,
-        file,
-        start
-    )
+    fetch_sitemap_files(authority, last_updated_date, thing_ids_to_pks, rsession, url, db_session, file, start)
     logging.info(f"Completed at {datetime.datetime.now()}.  Fetched {__NUM_THINGS_FETCHED} things total.")
 
 
@@ -177,17 +166,8 @@ def construct_thing_futures(
     return constructed_all_futures_for_sitemap_file
 
 
-def fetch_sitemap_files(
-    authority,
-    last_updated_date,
-    thing_ids: typing.Dict[str, int],
-    rsession,
-    url,
-    db_session,
-    batch_size: int,
-    file: str,
-    start: int
-):
+def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str, int], rsession, url, db_session,
+                        file: str, start: int):
     sitemap_index_fetcher = SitemapIndexFetcher(
         url, authority, last_updated_date, rsession
     )

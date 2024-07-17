@@ -57,6 +57,7 @@ ELEVATION_PATTERN = re.compile(r"\s*(-?\d+\.?\d*)\s*m?", re.IGNORECASE)
 MEDIA_JSON = "application/json"
 MEDIA_NQUADS = "application/n-quads"
 MEDIA_GEO_JSON = "application/geo+json"
+MEDIA_JSONL = "application/jsonl"
 
 
 def getLogger():

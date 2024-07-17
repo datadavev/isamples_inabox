@@ -9,6 +9,8 @@ import isb_lib.core
 import logging
 
 from isamples_metadata import SmithsonianTransformer
+from isamples_metadata.core_json_transformer import CoreJSONTransformer
+from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.thing import Thing
 
 
@@ -95,9 +97,12 @@ def reparse_as_core_record(thing: Thing) -> typing.List[typing.Dict]:
     _validate_resolved_content(thing)
     try:
         if thing.resolved_content is not None:
-            transformer = isamples_metadata.SmithsonianTransformer.SmithsonianTransformer(
-                thing.resolved_content
-            )
+            if thing.resolved_media_type == MEDIA_JSONL:
+                transformer = CoreJSONTransformer(thing.resolved_content)
+            else:
+                transformer = isamples_metadata.SmithsonianTransformer.SmithsonianTransformer(
+                    thing.resolved_content
+                )
             solr_doc = isb_lib.core.coreRecordAsSolrDoc(transformer)
             # This isn't present in Smithsonian data.  Fall back to the value on Thing
             solr_doc["sourceUpdatedTime"] = isb_lib.core.datetimeToSolrStr(thing.tstamp)

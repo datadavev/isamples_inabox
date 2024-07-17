@@ -2,7 +2,6 @@ import concurrent.futures
 import datetime
 import json
 import typing
-import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from typing import Iterator
 
@@ -15,7 +14,6 @@ import isb_lib.core
 import isb_web
 import isb_web.config
 import logging
-import re
 
 from isamples_metadata.Transformer import Transformer
 from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_PRODUCED_BY, \
@@ -24,7 +22,6 @@ from isb_lib.models.thing import Thing
 from isb_lib.sitemaps.sitemap_fetcher import (
     SitemapIndexFetcher,
     SitemapFileFetcher,
-    ThingFetcher,
     ThingsJSONLinesFetcher,
 )
 from isb_web import sqlmodel_database
@@ -106,45 +103,6 @@ def main(ctx, url: str, authority: str, ignore_last_modified: bool, batch_size: 
     logging.info(f"Completed at {datetime.datetime.now()}.  Fetched {__NUM_THINGS_FETCHED} things total.")
 
 
-def thing_fetcher_for_url(thing_url: str, rsession) -> ThingFetcher:
-    # At this point, we need to massage the URLs a bit, the sitemap publishes them like so:
-    # https://mars.cyverse.org/thing/ark:/21547/DxI2SKS002?full=false&amp;format=core
-    # We need to change full to true to get all the metadata, as well as the original format
-    parsed_url = urllib.parse.urlparse(thing_url)
-    parsed_url = parsed_url._replace(query="full=true&format=original")
-    thing_fetcher = ThingFetcher(parsed_url.geturl(), rsession)
-    logging.info(f"Constructed ThingFetcher for {parsed_url.geturl()}")
-    return thing_fetcher
-
-
-THING_URL_REGEX = re.compile(r"(.*)/thing/([^?]+)?")
-
-
-def _group_from_thing_url_regex(thing_url: str, group: int) -> typing.Optional[str]:
-    match = THING_URL_REGEX.match(thing_url)
-    if match is None:
-        logging.critical(f"Didn't find match in thing URL {thing_url}")
-        return None
-    else:
-        group_str = match.group(group)
-        return group_str
-
-
-def thing_identifier_from_thing_url(thing_url: str) -> typing.Optional[str]:
-    # At this point, we need to massage the URLs a bit, the sitemap publishes them like so:
-    # https://mars.cyverse.org/thing/ark:/21547/DxI2SKS002?full=false&amp;format=core
-    # We need to change full to true to get all the metadata, as well as the original format
-    return _group_from_thing_url_regex(thing_url, 2)
-
-
-def pre_thing_host_url(thing_url: str) -> typing.Optional[str]:
-    # At this point, we need to parse out the the URL a bit, the sitemap publishes them like so:
-    # https://mars.cyverse.org/thing/ark:/21547/DxI2SKS002?full=false&amp;format=core
-    # We need to grab the part of the URL before thing (https://mars.cyverse.org/) and change it to
-    # https://mars.cyverse.org/things to do the bulk fetch
-    return _group_from_thing_url_regex(thing_url, 1)
-
-
 def construct_thing_futures(
     thing_futures: list,
     sitemap_file_iterator: Iterator,
@@ -217,27 +175,10 @@ def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str
                     current_new_things_batch = []
 
                     for json_dict in things_fetcher.json_dicts:
-                        thing_dict = {}
-                        thing_identifier = json_dict[METADATA_SAMPLE_IDENTIFIER]
-                        thing_dict["resolved_content"] = json_dict
                         now = datetime.datetime.now()
-                        thing_dict["tstamp"] = now
-                        thing_dict["identifiers"] = json.dumps([thing_identifier])
-                        thing_dict["id"] = thing_identifier
-                        thing_dict["authority_id"] = json_dict["source_collection"]
-                        thing_dict["resolved_url"] = things_fetcher.json_lines_url
-                        thing_dict["resolved_status"] = 200
-                        thing_dict["tresolved"] = time_fetched
-                        thing_dict["resolved_media_type"] = "application/jsonl"
-
-                        produced_by = json_dict.get(METADATA_PRODUCED_BY)
-                        if produced_by is not None:
-                            sampling_site = produced_by.get(METADATA_SAMPLING_SITE)
-                            if sampling_site is not None:
-                                sample_location = sampling_site.get(METADATA_SAMPLE_LOCATION)
-                                if sample_location is not None:
-                                    h3 = isamples_metadata.Transformer.geo_to_h3(sample_location.get(METADATA_LATITUDE), sample_location.get(METADATA_LONGITUDE), Transformer.DEFAULT_H3_RESOLUTION)
-                                    thing_dict["h3"] = h3
+                        json_lines_url = things_fetcher.json_lines_url
+                        thing_dict, thing_identifier = _json_line_to_thing_dict(json_dict, json_lines_url, now,
+                                                                                time_fetched)
 
                         if thing_identifier in thing_ids.keys():
                             # existing row in the db, for the update to work we need to insert the pk into the dict
@@ -261,6 +202,31 @@ def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str
                 else:
                     logging.error(f"Error fetching thing for {things_fetcher.url}")
                 thing_futures.remove(thing_fut)
+
+
+def _json_line_to_thing_dict(json_dict: dict, json_lines_url: str, now: datetime.datetime, time_fetched: datetime.datetime) -> tuple[dict, str]:
+    thing_dict = {}
+    thing_identifier = json_dict[METADATA_SAMPLE_IDENTIFIER]
+    thing_dict["resolved_content"] = json_dict
+    thing_dict["tstamp"] = now
+    thing_dict["identifiers"] = json.dumps([thing_identifier])
+    thing_dict["id"] = thing_identifier
+    thing_dict["authority_id"] = json_dict["source_collection"]
+    thing_dict["resolved_url"] = json_lines_url
+    thing_dict["resolved_status"] = 200
+    thing_dict["tresolved"] = time_fetched
+    thing_dict["resolved_media_type"] = "application/jsonl"
+    produced_by = json_dict.get(METADATA_PRODUCED_BY)
+    if produced_by is not None:
+        sampling_site = produced_by.get(METADATA_SAMPLING_SITE)
+        if sampling_site is not None:
+            sample_location = sampling_site.get(METADATA_SAMPLE_LOCATION)
+            if sample_location is not None:
+                h3 = isamples_metadata.Transformer.geo_to_h3(sample_location.get(METADATA_LATITUDE),
+                                                             sample_location.get(METADATA_LONGITUDE),
+                                                             Transformer.DEFAULT_H3_RESOLUTION)
+                thing_dict["h3"] = h3
+    return thing_dict, thing_identifier
 
 
 if __name__ == "__main__":

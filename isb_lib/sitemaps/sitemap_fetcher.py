@@ -1,6 +1,5 @@
 from __future__ import annotations
 import re
-import urllib.parse
 from abc import ABC
 import datetime
 from typing import Iterator, Optional
@@ -59,41 +58,6 @@ class ThingsJSONLinesFetcher:
                 f"Error fetching things from: url: {self.json_lines_url} exception is {e}"
             )
         return self
-
-
-class ThingFetcher:
-    def __init__(self, url: str, session: requests.Session = requests.session()):
-        self.url = url
-        self._session = session
-        self.json_dict = None
-        self.primary_key_fetched = None
-
-    def fetch_thing(self) -> ThingFetcher:
-        try:
-            response = self._session.get(self.url)
-            json_dict = response.json()
-            json_dict["tstamp"] = datetime.datetime.now()
-            # thing = Thing()
-            # thing.take_values_from_json_dict(json_dict)
-            self.json_dict = json_dict
-            self.primary_key_fetched = json_dict["primary_key"]
-            return self
-        except Exception as e:
-            logging.error(
-                f"Error fetching thing from url: {self.url}, exception is: {e}"
-            )
-            # self.thing = None
-            return self
-
-    def thing_identifier(self) -> Optional[str]:
-        url_path = urllib.parse.urlparse(self.url).path
-        match = IDENTIFIER_REGEX.search(url_path)
-        if match is None:
-            logging.critical(f"Didn't find identifier in URL {self.url}")
-            return None
-        else:
-            identifier = match.group(1)
-            return identifier
 
 
 class SitemapFetcher(ABC):
@@ -164,21 +128,6 @@ class SitemapFileFetcher(SitemapFetcher):
         """Fetches the contents of the particular sitemap file and stores the URLs to fetch"""
         self._fetch_file()
         return self
-
-    def fetch_child_files(self) -> typing.List[ThingFetcher]:
-        """Fetches the actual Things, one per file"""
-        thing_fetchers = []
-        for url in self.urls_to_fetch:
-            thing_fetcher = ThingFetcher(
-                self.prepare_thing_file_url(url), self._session
-            )
-            thing_fetcher.fetch_thing()
-            thing_fetchers.append(thing_fetcher)
-        return thing_fetchers
-
-    def prepare_thing_file_url(self, file_url: str) -> str:
-        """Mainly used as a placeholder for overriding in unit testing"""
-        return file_url
 
 
 class SitemapIndexFetcher(SitemapFetcher):

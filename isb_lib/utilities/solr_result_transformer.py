@@ -197,8 +197,10 @@ class SolrResultTransformer:
         return produced_by_dict
 
     def _formatted_controlled_vocabulary(self, rec: dict, key: str) -> list[dict]:
+        # The problem with the current vocabulary output is here.
+        # TODO: maybe include the label if we have it?
         values = rec.get(key, [])
-        return [{METADATA_LABEL: value} for value in values]
+        return [{METADATA_IDENTIFIER: value} for value in values]
 
     def _has_specimen_categories(self, rec: dict) -> list:
         return self._formatted_controlled_vocabulary(rec, SOLR_HAS_SPECIMEN_CATEGORY)

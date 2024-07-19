@@ -5,6 +5,7 @@ import logging
 import datetime
 import hashlib
 import json
+import traceback
 import typing
 import faulthandler
 from signal import SIGINT
@@ -719,6 +720,7 @@ class CoreSolrImporter:
                     getLogger().info(f"Excluding record {thing.id} from index due to known exclusion: \"{e}\".")
                     continue
                 except Exception as e:
+                    traceback.print_exc()
                     getLogger().error("Failed trying to run transformer, skipping record %s exception %s",
                                       thing.resolved_content, e)
                     continue

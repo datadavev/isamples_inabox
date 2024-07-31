@@ -345,8 +345,8 @@ def populateIsbCoreSolr(ctx, ignore_last_modified: bool):
     solr_importer = isb_lib.core.CoreSolrImporter(
         db_url=db_url,
         authority_id=isb_lib.geome_adapter.GEOMEItem.AUTHORITY_ID,
-        db_batch_size=1000,
-        solr_batch_size=1000,
+        db_batch_size=50000,
+        solr_batch_size=50000,
         solr_url=solr_url,
         min_time_created=max_solr_updated_date
     )

@@ -131,8 +131,8 @@ def populate_isb_core_solr(ctx):
     solr_importer = isb_lib.core.CoreSolrImporter(
         db_url=db_url,
         authority_id=isb_lib.smithsonian_adapter.SmithsonianItem.AUTHORITY_ID,
-        db_batch_size=1000,
-        solr_batch_size=1000,
+        db_batch_size=50000,
+        solr_batch_size=50000,
         solr_url=solr_url,
     )
     allkeys = solr_importer.run_solr_import(

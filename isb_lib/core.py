@@ -24,7 +24,9 @@ from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, MET
     METADATA_CURATION_LOCATION, METADATA_SAMPLE_LOCATION, METADATA_KEYWORD, METADATA_NAME, \
     METADATA_ROLE, METADATA_IDENTIFIER
 from isamples_metadata.metadata_exceptions import MetadataException
-from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS
+from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, \
+    SOLR_CURATION_LABEL, SOLR_CURATION_DESCRIPTION, SOLR_CURATION_ACCESS_CONSTRAINTS, SOLR_CURATION_LOCATION, \
+    SOLR_CURATION_RESPONSIBILITY
 from isb_lib.models.thing import Thing
 from isamples_metadata.Transformer import Transformer, geo_to_h3
 import dateparser
@@ -257,15 +259,15 @@ def _gather_curation_responsibility(responsibility_dicts: list[str]) -> str:
 def handle_curation_fields(coreMetadata: typing.Dict, doc: typing.Dict):
     curation = coreMetadata[METADATA_CURATION]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_LABEL):
-        doc["curation_label"] = curation[METADATA_LABEL]
+        doc[SOLR_CURATION_LABEL] = curation[METADATA_LABEL]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_DESCRIPTION):
-        doc["curation_description"] = curation[METADATA_DESCRIPTION]
+        doc[SOLR_CURATION_DESCRIPTION] = curation[METADATA_DESCRIPTION]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_ACCESS_CONSTRAINTS):
-        doc["curation_accessConstraints"] = curation[METADATA_ACCESS_CONSTRAINTS]
+        doc[SOLR_CURATION_ACCESS_CONSTRAINTS] = curation[METADATA_ACCESS_CONSTRAINTS]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_CURATION_LOCATION):
-        doc["curation_location"] = curation[METADATA_CURATION_LOCATION]
+        doc[SOLR_CURATION_LOCATION] = curation[METADATA_CURATION_LOCATION]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_RESPONSIBILITY):
-        doc["curation_responsibility"] = _gather_curation_responsibility(curation[METADATA_RESPONSIBILITY])
+        doc[SOLR_CURATION_RESPONSIBILITY] = _gather_curation_responsibility(curation[METADATA_RESPONSIBILITY])
 
 
 def shapely_to_solr(shape: shapely.geometry.shape):

@@ -6,11 +6,13 @@ from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 
 class CoreJSONTransformer(Transformer):
+    """This class is the transformer that effectively just passes through the .jsonl output through to the next
+    step in the pipeline"""
 
     def transform(self, include_h3: bool = True) -> typing.Dict:
         transformed = self.source_record.copy()
+        transformed["isb_core_id"] = transformed[METADATA_AT_ID]
         transformed[METADATA_AT_ID] = transformed[METADATA_SAMPLE_IDENTIFIER]
-        transformed["isb_core_id"] = transformed[METADATA_SAMPLE_IDENTIFIER]
         return transformed
 
 

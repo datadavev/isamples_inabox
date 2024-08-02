@@ -32,7 +32,7 @@ def main(ctx, db_url, file, batch_size, verbosity):
 
 
 def read_taxon_data(session: Session, batch_size: int, taxon_file: str):
-    dataframe = pandas.read_csv(taxon_file, sep="\t", error_bad_lines=False)
+    dataframe = pandas.read_csv(taxon_file, sep="\t", on_bad_lines="warn")
     current_batch_size = 0
     total_rows = 0
     for row in dataframe.iterrows():

@@ -154,12 +154,16 @@ class SolrResultTransformer:
                                            rec: dict,
                                            responsibility_key_solr: str,
                                            responsibility_key: str,
-                                           container: dict):
+                                           container: dict,
+                                           default_role: Optional[str] = None):
         responsibilities = rec.get(responsibility_key_solr, [])
         responsibility_dicts = []
         for responsibility in responsibilities:
-            pieces = responsibility.split(":")
-            responsibility_dicts.append({METADATA_ROLE: pieces[0], METADATA_NAME: pieces[1]})
+            if ":" in responsibility:
+                pieces = responsibility.split(":")
+                responsibility_dicts.append({METADATA_ROLE: pieces[0], METADATA_NAME: pieces[1]})
+            else:
+                responsibility_dicts.append({METADATA_ROLE: default_role, METADATA_NAME: responsibility})
         if len(responsibility_dicts) > 0:
             container[responsibility_key] = responsibility_dicts
 
@@ -168,7 +172,7 @@ class SolrResultTransformer:
         self._add_to_dict(curation_dict, METADATA_LABEL, rec, SOLR_CURATION_LABEL)
         self._add_to_dict(curation_dict, METADATA_DESCRIPTION, rec, SOLR_CURATION_DESCRIPTION)
         self._add_to_dict(curation_dict, METADATA_CURATION_LOCATION, rec, SOLR_CURATION_LOCATION)
-        self._add_responsibilities_to_container(rec, SOLR_CURATION_RESPONSIBILITY, METADATA_RESPONSIBILITY, curation_dict)
+        self._add_responsibilities_to_container(rec, SOLR_CURATION_RESPONSIBILITY, METADATA_RESPONSIBILITY, curation_dict, "curator")
         access_constraints = rec.get(SOLR_CURATION_ACCESS_CONSTRAINTS, "").split("|")
         if len(access_constraints) > 0:
             curation_dict[METADATA_ACCESS_CONSTRAINTS] = access_constraints

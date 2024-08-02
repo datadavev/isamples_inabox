@@ -15,6 +15,9 @@ import igsn_lib.oai
 import igsn_lib.time
 import isb_lib.core
 from isamples_metadata import GEOMETransformer
+from isamples_metadata.Transformer import Transformer
+from isamples_metadata.core_json_transformer import CoreJSONTransformer
+from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.thing import Thing
 
 HTTP_TIMEOUT = 10.0  # seconds
@@ -390,10 +393,15 @@ def reparseAsCoreRecord(thing: Thing) -> typing.List[typing.Dict]:
     _validateResolvedContent(thing)
     core_records = []
     if thing.resolved_content is not None:
-        transformer = isamples_metadata.GEOMETransformer.GEOMETransformer(thing.resolved_content, thing.tcreated)
-        parent_core_record = isb_lib.core.coreRecordAsSolrDoc(transformer)
-        core_records.append(parent_core_record)
-        for child_transfomer in transformer.child_transformers:
-            child_core_record = isb_lib.core.coreRecordAsSolrDoc(child_transfomer)
-            core_records.append(child_core_record)
+        transformer: Transformer
+        if thing.resolved_media_type == MEDIA_JSONL:
+            transformer = CoreJSONTransformer(thing.resolved_content)
+            core_records = [isb_lib.core.coreRecordAsSolrDoc(transformer)]
+        else:
+            transformer = isamples_metadata.GEOMETransformer.GEOMETransformer(thing.resolved_content, thing.tcreated)
+            parent_core_record = isb_lib.core.coreRecordAsSolrDoc(transformer)
+            core_records.append(parent_core_record)
+            for child_transfomer in transformer.child_transformers:
+                child_core_record = isb_lib.core.coreRecordAsSolrDoc(child_transfomer)
+                core_records.append(child_core_record)
     return core_records

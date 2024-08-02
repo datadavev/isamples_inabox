@@ -115,11 +115,11 @@ def main(ctx):
 
 def convert_to_controlled_vocabulary_identifiers(solr_url: str, session: Session):
     total_records = 0
-    batch_size = 100
+    batch_size = 10000
     current_mutated_batch = []
     rsession = requests.session()
     iterator = ISBCoreSolrRecordIterator(
-        rsession, "-(_nest_path_:*) AND -(source:GEOME)", batch_size, 0, "id asc"
+        rsession, "-(_nest_path_:*)", batch_size, 0, "id asc"
     )
     for record in iterator:
         mutated_record = mutate_record(record)
@@ -146,9 +146,9 @@ def mutate_record(record: dict) -> Optional[dict]:
     # Do whatever work is required to mutate the record to update things…
     record_copy = record.copy()
     # Remove old problematic fields
-    current_materials: list[str] = record.pop(SOLR_HAS_MATERIAL_CATEGORY)
-    current_specimens: list[str] = record.pop(SOLR_HAS_SPECIMEN_CATEGORY)
-    current_contexts: list[str] = record.pop(SOLR_HAS_CONTEXT_CATEGORY)
+    current_materials: list[str] = record.pop(SOLR_HAS_MATERIAL_CATEGORY, [])
+    current_specimens: list[str] = record.pop(SOLR_HAS_SPECIMEN_CATEGORY, [])
+    current_contexts: list[str] = record.pop(SOLR_HAS_CONTEXT_CATEGORY, [])
 
     new_materials = []
     for label in current_materials:

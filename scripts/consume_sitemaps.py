@@ -2,32 +2,33 @@ import concurrent.futures
 import datetime
 import json
 import typing
-import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from typing import Iterator
 
 import click
 import requests
 
+import isamples_metadata
 import isb_lib
 import isb_lib.core
 import isb_web
 import isb_web.config
 import logging
-import re
 
+from isamples_metadata.Transformer import Transformer
+from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_PRODUCED_BY, \
+    METADATA_SAMPLING_SITE, METADATA_SAMPLE_LOCATION, METADATA_LATITUDE, METADATA_LONGITUDE
+from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.thing import Thing
 from isb_lib.sitemaps.sitemap_fetcher import (
     SitemapIndexFetcher,
     SitemapFileFetcher,
-    ThingFetcher,
-    ThingsFetcher,
+    ThingsJSONLinesFetcher,
 )
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import (
     SQLModelDAO,
-    all_thing_identifiers,
-    thing_identifiers_from_resolved_content,
+    all_thing_identifiers
 )
 
 __NUM_THINGS_FETCHED = 0
@@ -58,8 +59,8 @@ __NUM_THINGS_FETCHED = 0
 @click.option(
     "-b",
     "--batch_size",
-    default=20000,
-    help="The max number of records to fetch at a time",
+    default=1,
+    help="The max number of JSON lines files to fetch at a time",
 )
 @click.option(
     "-f",
@@ -74,6 +75,7 @@ __NUM_THINGS_FETCHED = 0
     help="If specified, the start index of the sitemap files to ingest",
 )
 def main(ctx, url: str, authority: str, ignore_last_modified: bool, batch_size: int, file: str, start: int):
+    logging.info(f"Started sitemap consumption at {datetime.datetime.now()}")
     solr_url = isb_web.config.Settings().solr_url
     rsession = requests.session()
     adapter = requests.adapters.HTTPAdapter(pool_connections=5, pool_maxsize=5)
@@ -98,57 +100,8 @@ def main(ctx, url: str, authority: str, ignore_last_modified: bool, batch_size: 
     logging.info(
         f"Going to fetch records for authority {authority} with updated date > {last_updated_date}"
     )
-    fetch_sitemap_files(
-        authority,
-        last_updated_date,
-        thing_ids_to_pks,
-        rsession,
-        url,
-        db_session,
-        batch_size,
-        file,
-        start
-    )
-    logging.info(f"Completed.  Fetched {__NUM_THINGS_FETCHED} things total.")
-
-
-def thing_fetcher_for_url(thing_url: str, rsession) -> ThingFetcher:
-    # At this point, we need to massage the URLs a bit, the sitemap publishes them like so:
-    # https://mars.cyverse.org/thing/ark:/21547/DxI2SKS002?full=false&amp;format=core
-    # We need to change full to true to get all the metadata, as well as the original format
-    parsed_url = urllib.parse.urlparse(thing_url)
-    parsed_url = parsed_url._replace(query="full=true&format=original")
-    thing_fetcher = ThingFetcher(parsed_url.geturl(), rsession)
-    logging.info(f"Constructed ThingFetcher for {parsed_url.geturl()}")
-    return thing_fetcher
-
-
-THING_URL_REGEX = re.compile(r"(.*)/thing/([^?]+)?")
-
-
-def _group_from_thing_url_regex(thing_url: str, group: int) -> typing.Optional[str]:
-    match = THING_URL_REGEX.match(thing_url)
-    if match is None:
-        logging.critical(f"Didn't find match in thing URL {thing_url}")
-        return None
-    else:
-        group_str = match.group(group)
-        return group_str
-
-
-def thing_identifier_from_thing_url(thing_url: str) -> typing.Optional[str]:
-    # At this point, we need to massage the URLs a bit, the sitemap publishes them like so:
-    # https://mars.cyverse.org/thing/ark:/21547/DxI2SKS002?full=false&amp;format=core
-    # We need to change full to true to get all the metadata, as well as the original format
-    return _group_from_thing_url_regex(thing_url, 2)
-
-
-def pre_thing_host_url(thing_url: str) -> typing.Optional[str]:
-    # At this point, we need to parse out the the URL a bit, the sitemap publishes them like so:
-    # https://mars.cyverse.org/thing/ark:/21547/DxI2SKS002?full=false&amp;format=core
-    # We need to grab the part of the URL before thing (https://mars.cyverse.org/) and change it to
-    # https://mars.cyverse.org/things to do the bulk fetch
-    return _group_from_thing_url_regex(thing_url, 1)
+    fetch_sitemap_files(authority, last_updated_date, thing_ids_to_pks, rsession, url, db_session, file, start)
+    logging.info(f"Completed at {datetime.datetime.now()}.  Fetched {__NUM_THINGS_FETCHED} things total.")
 
 
 def construct_thing_futures(
@@ -156,55 +109,24 @@ def construct_thing_futures(
     sitemap_file_iterator: Iterator,
     sitemap_file_url: str,
     rsession: requests.Session,
-    thing_executor: ThreadPoolExecutor,
-    batch_size: int,
+    thing_executor: ThreadPoolExecutor
 ) -> bool:
     constructed_all_futures_for_sitemap_file = False
     while not constructed_all_futures_for_sitemap_file:
-        thing_ids: set = set()
-        things_url = None
-        while len(thing_ids) < batch_size:
-            try:
-                url = next(sitemap_file_iterator)
-                if things_url is None:
-                    # parse out the base things url from the first one we grab (they should all be the same)
-                    things_url = pre_thing_host_url(url)
-                    if things_url is not None:
-                        things_url += "/things"
-                    else:
-                        logging.critical(
-                            f"Couldn't parse out things url from url {url} -- unable to construct things."
-                        )
-                identifier = thing_identifier_from_thing_url(url)
-                if identifier is not None:
-                    thing_ids.add(identifier)
-                else:
-                    logging.critical(
-                        f"Cannot parse out identifier from url {url} -- will not fetch thing."
-                    )
-            except StopIteration:
-                constructed_all_futures_for_sitemap_file = True
-                break
-        if len(thing_ids) > 0 and things_url is not None:
-            things_fetcher = ThingsFetcher(
-                things_url, sitemap_file_url, thing_ids, rsession
+        try:
+            thing_json_lines_url = next(sitemap_file_iterator)
+            things_fetcher = ThingsJSONLinesFetcher(
+                thing_json_lines_url, sitemap_file_url, rsession
             )
             things_future = thing_executor.submit(things_fetcher.fetch_things)
             thing_futures.append(things_future)
+        except StopIteration:
+            constructed_all_futures_for_sitemap_file = True
     return constructed_all_futures_for_sitemap_file
 
 
-def fetch_sitemap_files(
-    authority,
-    last_updated_date,
-    thing_ids: typing.Dict[str, int],
-    rsession,
-    url,
-    db_session,
-    batch_size: int,
-    file: str,
-    start: int
-):
+def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str, int], rsession, url, db_session,
+                        file: str, start: int):
     sitemap_index_fetcher = SitemapIndexFetcher(
         url, authority, last_updated_date, rsession
     )
@@ -234,40 +156,38 @@ def fetch_sitemap_files(
                 sitemap_file_iterator,
                 sitemap_file_fetcher.url,
                 rsession,
-                thing_executor,
-                batch_size,
+                thing_executor
             )
             # Then read out results and save to the database after the queue is filled to capacity.
             # Provided there are more urls in the iterator, return to the top of the loop to fill the queue again
             for thing_fut in concurrent.futures.as_completed(thing_futures):
+                time_fetched = datetime.datetime.now()
                 things_fetcher = thing_fut.result()
                 if (
                     things_fetcher is not None
-                    and things_fetcher.json_things is not None
+                    and things_fetcher.json_dicts is not None
                 ):
                     global __NUM_THINGS_FETCHED
-                    __NUM_THINGS_FETCHED += len(things_fetcher.json_things)
+                    __NUM_THINGS_FETCHED += len(things_fetcher.json_dicts)
                     logging.info(
-                        f"About to process {len(things_fetcher.json_things)} things"
+                        f"About to process {len(things_fetcher.json_dicts)} things"
                     )
                     current_existing_things_batch = []
                     current_new_things_batch = []
 
-                    for json_thing in things_fetcher.json_things:
-                        json_thing["tstamp"] = datetime.datetime.now()
-                        identifiers = thing_identifiers_from_resolved_content(
-                            authority, json_thing["resolved_content"]
-                        )
-                        identifiers.append(json_thing["id"])
-                        json_thing["identifiers"] = json.dumps(identifiers)
-                        # remove the pk as that isn't guaranteed to be the same
-                        del json_thing["primary_key"]
-                        if thing_ids.__contains__(json_thing["id"]):
+                    for json_dict in things_fetcher.json_dicts:
+                        now = datetime.datetime.now()
+                        json_lines_url = things_fetcher.json_lines_url
+                        thing_dict, thing_identifier = _json_line_to_thing_dict(json_dict, json_lines_url, now,
+                                                                                time_fetched)
+
+                        if thing_identifier in thing_ids.keys():
                             # existing row in the db, for the update to work we need to insert the pk into the dict
-                            json_thing["primary_key"] = thing_ids[json_thing["id"]]
-                            current_existing_things_batch.append(json_thing)
+                            thing_dict["primary_key"] = thing_ids[thing_identifier]
+                            current_existing_things_batch.append(thing_dict)
                         else:
-                            current_new_things_batch.append(json_thing)
+                            thing_dict["tcreated"] = now
+                            current_new_things_batch.append(thing_dict)
                     db_session.bulk_insert_mappings(
                         mapper=Thing,
                         mappings=current_new_things_batch,
@@ -278,11 +198,37 @@ def fetch_sitemap_files(
                     )
                     db_session.commit()
                     logging.info(
-                        f"Just processed {len(things_fetcher.json_things)} things"
+                        f"Just processed {len(things_fetcher.json_dicts)} things"
                     )
                 else:
                     logging.error(f"Error fetching thing for {things_fetcher.url}")
                 thing_futures.remove(thing_fut)
+
+
+def _json_line_to_thing_dict(json_dict: dict, json_lines_url: str, now: datetime.datetime, time_fetched: datetime.datetime) -> tuple[dict, str]:
+    thing_dict: dict[str, typing.Any] = {}
+    thing_identifier = json_dict[METADATA_SAMPLE_IDENTIFIER]
+    thing_dict["resolved_content"] = json_dict
+    thing_dict["tstamp"] = now
+    thing_dict["identifiers"] = json.dumps([thing_identifier])
+    thing_dict["id"] = thing_identifier
+    thing_dict["authority_id"] = json_dict["source_collection"]
+    thing_dict["resolved_url"] = json_lines_url
+    thing_dict["resolved_status"] = 200
+    thing_dict["tresolved"] = time_fetched
+    thing_dict["resolved_media_type"] = MEDIA_JSONL
+    produced_by = json_dict.get(METADATA_PRODUCED_BY)
+    if produced_by is not None:
+        sampling_site = produced_by.get(METADATA_SAMPLING_SITE)
+        if sampling_site is not None:
+            sample_location = sampling_site.get(METADATA_SAMPLE_LOCATION)
+            if sample_location is not None:
+                h3 = isamples_metadata.Transformer.geo_to_h3(sample_location.get(METADATA_LATITUDE),
+                                                             sample_location.get(METADATA_LONGITUDE),
+                                                             Transformer.DEFAULT_H3_RESOLUTION)
+                if h3 is not None:
+                    thing_dict["h3"] = h3
+    return thing_dict, thing_identifier
 
 
 if __name__ == "__main__":

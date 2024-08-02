@@ -8,7 +8,6 @@ from sqlmodel import SQLModel, create_engine, Session
 from isb_lib.sitemaps.sitemap_fetcher import (
     SitemapIndexFetcher,
     SitemapFileFetcher,
-    ThingFetcher,
 )
 from test_utils import LocalFileAdapter
 
@@ -92,11 +91,3 @@ def test_sitemap_fetcher(
         # Note that this data has been doctored to have the same number of qualified urls for the sitemap index
         # and the individual child files, so this assertion is valid -- otherwise this wouldn't necessarily work
         assert expected_num_urls == len(child_fetcher.urls_to_fetch)
-
-
-def test_thing_fetcher_thing_identifier():
-    thing_fetcher = ThingFetcher(
-        "https://mars.cyverse.org/thing/ark:/65665/3cb09f2ef-0548-4670-b99c-d4a60bd750c3?full=true&format=original"
-    )
-    thing_identifier = thing_fetcher.thing_identifier()
-    assert "ark:/65665/3cb09f2ef-0548-4670-b99c-d4a60bd750c3" == thing_identifier

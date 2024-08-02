@@ -6,6 +6,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
+from typing import Optional
 
 import petl
 from petl import Table
@@ -18,7 +19,7 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_RESULT_TIME, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_DESCRIPTION, METADATA_INFORMAL_CLASSIFICATION, \
     METADATA_KEYWORDS, METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
-    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE
+    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE, METADATA_AT_ID, METADATA_TARGET
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_CURATION_RESPONSIBILITY, \
@@ -28,7 +29,7 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_RESULT_TIME, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, \
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
-    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT
+    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT, SOLR_ISB_CORE_ID
 
 
 class ExportTransformException(Exception):
@@ -153,12 +154,16 @@ class SolrResultTransformer:
                                            rec: dict,
                                            responsibility_key_solr: str,
                                            responsibility_key: str,
-                                           container: dict):
+                                           container: dict,
+                                           default_role: Optional[str] = None):
         responsibilities = rec.get(responsibility_key_solr, [])
         responsibility_dicts = []
         for responsibility in responsibilities:
-            pieces = responsibility.split(":")
-            responsibility_dicts.append({METADATA_ROLE: pieces[0], METADATA_NAME: pieces[1]})
+            if ":" in responsibility:
+                pieces = responsibility.split(":")
+                responsibility_dicts.append({METADATA_ROLE: pieces[0], METADATA_NAME: pieces[1]})
+            else:
+                responsibility_dicts.append({METADATA_ROLE: default_role, METADATA_NAME: responsibility})
         if len(responsibility_dicts) > 0:
             container[responsibility_key] = responsibility_dicts
 
@@ -167,11 +172,18 @@ class SolrResultTransformer:
         self._add_to_dict(curation_dict, METADATA_LABEL, rec, SOLR_CURATION_LABEL)
         self._add_to_dict(curation_dict, METADATA_DESCRIPTION, rec, SOLR_CURATION_DESCRIPTION)
         self._add_to_dict(curation_dict, METADATA_CURATION_LOCATION, rec, SOLR_CURATION_LOCATION)
-        self._add_responsibilities_to_container(rec, SOLR_CURATION_RESPONSIBILITY, METADATA_RESPONSIBILITY, curation_dict)
+        self._add_responsibilities_to_container(rec, SOLR_CURATION_RESPONSIBILITY, METADATA_RESPONSIBILITY, curation_dict, "curator")
         access_constraints = rec.get(SOLR_CURATION_ACCESS_CONSTRAINTS, "").split("|")
         if len(access_constraints) > 0:
             curation_dict[METADATA_ACCESS_CONSTRAINTS] = access_constraints
         return curation_dict
+
+    def _related_resource_dicts(self, rec: dict) -> Optional[list[dict]]:
+        related_resource_ids = rec.get(SOLR_RELATED_RESOURCE_ISB_CORE_ID, [])
+        if len(related_resource_ids) > 0:
+            return [{METADATA_TARGET: related_resource_id} for related_resource_id in related_resource_ids]
+        else:
+            return None
 
     def _produced_by_dict(self, rec: dict) -> dict:
         produced_by_dict: dict = {}
@@ -197,8 +209,10 @@ class SolrResultTransformer:
         return produced_by_dict
 
     def _formatted_controlled_vocabulary(self, rec: dict, key: str) -> list[dict]:
+        # The problem with the current vocabulary output is here.
+        # TODO: maybe include the label if we have it?
         values = rec.get(key, [])
-        return [{METADATA_LABEL: value} for value in values]
+        return [{METADATA_IDENTIFIER: value} for value in values]
 
     def _has_specimen_categories(self, rec: dict) -> list:
         return self._formatted_controlled_vocabulary(rec, SOLR_HAS_SPECIMEN_CATEGORY)
@@ -258,6 +272,7 @@ class SolrResultTransformer:
 
         mappings = OrderedDict()
         mappings[METADATA_SAMPLE_IDENTIFIER] = SOLR_ID
+        mappings[METADATA_AT_ID] = SOLR_ISB_CORE_ID
         mappings[METADATA_LABEL] = SOLR_LABEL
         mappings[METADATA_DESCRIPTION] = SOLR_DESCRIPTION
         mappings["source_collection"] = SOLR_SOURCE  # this isn't present in the exported metadata
@@ -270,7 +285,7 @@ class SolrResultTransformer:
         mappings[METADATA_REGISTRANT] = self._registrant_dict
         mappings[METADATA_SAMPLING_PURPOSE] = SOLR_SAMPLING_PURPOSE
         mappings[METADATA_CURATION] = self._curation_dict
-        mappings[METADATA_RELATED_RESOURCE] = SOLR_RELATED_RESOURCE_ISB_CORE_ID
+        mappings[METADATA_RELATED_RESOURCE] = self._related_resource_dicts
         mappings[METADATA_AUTHORIZED_BY] = SOLR_AUTHORIZED_BY
         mappings[METADATA_COMPLIES_WITH] = SOLR_COMPLIES_WITH
         self._table = petl.fieldmap(self._table, mappings)

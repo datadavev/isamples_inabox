@@ -5,6 +5,7 @@ import logging
 import datetime
 import hashlib
 import json
+import traceback
 import typing
 import faulthandler
 from signal import SIGINT
@@ -23,6 +24,9 @@ from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, MET
     METADATA_CURATION_LOCATION, METADATA_SAMPLE_LOCATION, METADATA_KEYWORD, METADATA_NAME, \
     METADATA_ROLE, METADATA_IDENTIFIER
 from isamples_metadata.metadata_exceptions import MetadataException
+from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, \
+    SOLR_CURATION_LABEL, SOLR_CURATION_DESCRIPTION, SOLR_CURATION_ACCESS_CONSTRAINTS, SOLR_CURATION_LOCATION, \
+    SOLR_CURATION_RESPONSIBILITY
 from isb_lib.models.thing import Thing
 from isamples_metadata.Transformer import Transformer, geo_to_h3
 import dateparser
@@ -57,6 +61,7 @@ ELEVATION_PATTERN = re.compile(r"\s*(-?\d+\.?\d*)\s*m?", re.IGNORECASE)
 MEDIA_JSON = "application/json"
 MEDIA_NQUADS = "application/n-quads"
 MEDIA_GEO_JSON = "application/geo+json"
+MEDIA_JSONL = "application/jsonl"
 
 
 def getLogger():
@@ -254,15 +259,15 @@ def _gather_curation_responsibility(responsibility_dicts: list[str]) -> str:
 def handle_curation_fields(coreMetadata: typing.Dict, doc: typing.Dict):
     curation = coreMetadata[METADATA_CURATION]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_LABEL):
-        doc["curation_label"] = curation[METADATA_LABEL]
+        doc[SOLR_CURATION_LABEL] = curation[METADATA_LABEL]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_DESCRIPTION):
-        doc["curation_description"] = curation[METADATA_DESCRIPTION]
+        doc[SOLR_CURATION_DESCRIPTION] = curation[METADATA_DESCRIPTION]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_ACCESS_CONSTRAINTS):
-        doc["curation_accessConstraints"] = curation[METADATA_ACCESS_CONSTRAINTS]
+        doc[SOLR_CURATION_ACCESS_CONSTRAINTS] = curation[METADATA_ACCESS_CONSTRAINTS]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_CURATION_LOCATION):
-        doc["curation_location"] = curation[METADATA_CURATION_LOCATION]
+        doc[SOLR_CURATION_LOCATION] = curation[METADATA_CURATION_LOCATION]
     if _shouldAddMetadataValueToSolrDoc(curation, METADATA_RESPONSIBILITY):
-        doc["curation_responsibility"] = _gather_curation_responsibility(curation[METADATA_RESPONSIBILITY])
+        doc[SOLR_CURATION_RESPONSIBILITY] = _gather_curation_responsibility(curation[METADATA_RESPONSIBILITY])
 
 
 def shapely_to_solr(shape: shapely.geometry.shape):
@@ -334,12 +339,13 @@ def handle_produced_by_fields(coreMetadata: typing.Dict, doc: typing.Dict):  # n
         if METADATA_SAMPLE_LOCATION in samplingSite:
             location = samplingSite[METADATA_SAMPLE_LOCATION]
             if _shouldAddMetadataValueToSolrDoc(location, METADATA_ELEVATION):
-                location_str = location[METADATA_ELEVATION]
-                match = ELEVATION_PATTERN.match(location_str)
-                if match is not None:
-                    doc["producedBy_samplingSite_location_elevationInMeters"] = float(
-                        match.group(1)
-                    )
+                elevation_value = location[METADATA_ELEVATION]
+                if type(elevation_value) is str:
+                    match = ELEVATION_PATTERN.match(elevation_value)
+                    if match is not None:
+                        doc[SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS] = float(match.group(1))
+                elif type(elevation_value) is float:
+                    doc[SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS] = elevation_value
             if _shouldAddMetadataValueToSolrDoc(
                 location, METADATA_LATITUDE
             ) and _shouldAddMetadataValueToSolrDoc(location, METADATA_LONGITUDE):
@@ -350,7 +356,11 @@ def handle_related_resources(coreMetadata: typing.Dict, doc: typing.Dict):
     related_resources = coreMetadata[METADATA_RELATED_RESOURCE]
     related_resource_ids = []
     for related_resource in related_resources:
-        related_resource_ids.append(related_resource["target"])
+        if type(related_resource) is dict:
+            related_resource_ids.append(related_resource["target"])
+        elif type(related_resource) is str:
+            # if it's a string, just treat it as an id
+            related_resource_ids.append(related_resource)
     doc["relatedResource_isb_core_id"] = related_resource_ids
 
 
@@ -718,6 +728,7 @@ class CoreSolrImporter:
                     getLogger().info(f"Excluding record {thing.id} from index due to known exclusion: \"{e}\".")
                     continue
                 except Exception as e:
+                    traceback.print_exc()
                     getLogger().error("Failed trying to run transformer, skipping record %s exception %s",
                                       thing.resolved_content, e)
                     continue
@@ -739,8 +750,7 @@ class CoreSolrImporter:
                     if ("producedBy_samplingSite_location_cesium_height" in core_record):
                         core_record.pop("producedBy_samplingSite_location_cesium_height")
                     core_records.append(core_record)
-                for r in core_records:
-                    allkeys.add(r["id"])
+                    allkeys.add(core_record["id"])
                 batch_size = len(core_records)
                 if batch_size > self._solr_batch_size:
                     solrAddRecords(
@@ -753,6 +763,8 @@ class CoreSolrImporter:
                         len(allkeys),
                     )
                     core_records = []
+                elif batch_size % 1000 == 0:
+                    logging.info(f"have done {batch_size}, current time is {datetime.datetime.now()}")
             if len(core_records) > 0:
                 solrAddRecords(
                     rsession,

@@ -16,6 +16,7 @@ from isamples_metadata.SESARTransformer import SESARTransformer
 from isamples_metadata.GEOMETransformer import GEOMETransformer, GEOMEChildTransformer
 from isamples_metadata.OpenContextTransformer import OpenContextTransformer
 from isamples_metadata.SmithsonianTransformer import SmithsonianTransformer
+from isamples_metadata.core_json_transformer import CoreJSONTransformer
 from isamples_metadata.metadata_constants import METADATA_COMPLIES_WITH
 from isamples_metadata.taxonomy.metadata_model_client import ModelServerClient, PredictionResult
 from isb_lib import geome_adapter, sesar_adapter
@@ -353,6 +354,13 @@ def test_open_context_place_names():
         transformer = OpenContextTransformer(source_record)
         place_names = transformer.sampling_site_place_names()
         assert ["Asia", "Turkey", "Avkat Survey Area", "SU Group 10", "S1001"] == place_names
+
+
+def test_core_json_transformer():
+    resolved_content = json.loads("""{"@id": "metadata/65665/300008335-8d74-4c3f-873c-a9d8b4b3d6a8", "label": "Bathymodiolus sp. AJ9VQ03", "keywords": [{"keyword": "Animalia"}, {"keyword": "Bathymodiolus sp."}, {"keyword": "Bivalvia"}, {"keyword": "IZ"}, {"keyword": "Mollusca"}, {"keyword": "Mytilidae"}, {"keyword": "North Atlantic Ocean"}], "description": "basisOfRecord: MaterialSample | occurrenceRemarks: Order: 2885; Box Number: MBARI_0036; Box Position: F/5; MBARI Note: SIO Box 6; Sinatra | catalogNumber: USNM 1464106 | recordNumber: A3120-(B3-5) | fieldNumber: AL-3120 | type: PhysicalObject | individualCount: 1 | disposition: in collection | startDayOfYear: 191 | endDayOfYear: 191", "produced_by": {"label": "", "identifier": "", "result_time": "1997-07-10", "sampling_site": {"label": "MID-ATLANTIC RIDGE - Lucky Strike", "place_name": ["MID-ATLANTIC RIDGE - Lucky Strike", "North Atlantic Ocean"], "description": "verbatimLatitude: 37-17.629N | verbatimLongitude: 32-16.532W", "sample_location": {"latitude": 37.2938, "elevation": "", "longitude": -32.2755}}, "responsibility": [{"name": " R. Vrijenhoek et al.", "role": "recordedBy"}], "has_feature_of_interest": ""}, "sample_identifier": "ark:/65665/300008335-8d74-4c3f-873c-a9d8b4b3d6a8", "source_collection": "SMITHSONIAN", "has_context_category": [{"label": "Marine water body bottom"}], "has_material_category": [{"label": "Organic material"}], "has_specimen_category": [{"label": "Organism part"}], "informal_classification": ["Bathymodiolus sp."]}""")
+    transformer = CoreJSONTransformer(resolved_content)
+    transformed = transformer.transform()
+    assert transformed is not None
 
 
 def isamples_schema_json() -> typing.Dict:

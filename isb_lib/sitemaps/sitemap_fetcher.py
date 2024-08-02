@@ -1,6 +1,5 @@
 from __future__ import annotations
 import re
-import urllib.parse
 from abc import ABC
 import datetime
 from typing import Iterator, Optional
@@ -19,83 +18,46 @@ IDENTIFIER_REGEX = re.compile(r".*/thing/(.*)")
 NUM_RETRIES = 5
 
 
-class ThingsFetcher:
+class ThingsJSONLinesFetcher:
     def __init__(
         self,
-        url: str,
+        json_lines_url: str,
         sitemap_url: str,
-        identifiers: set[str],
         session: requests.Session = requests.session(),
     ):
-        self.url = url
+        self.json_lines_url = json_lines_url
         self.sitemap_url = sitemap_url
         self._session = session
-        self.identifiers = list(identifiers)
-        self.json_things: list[dict] = []
+        self.json_dicts: list[dict] = []
         self.primary_keys_fetched: Optional[list[str]] = None
 
-    def fetch_things(self) -> ThingsFetcher:
+    def fetch_things(self) -> ThingsJSONLinesFetcher:
         try:
             for i in range(NUM_RETRIES):
                 # headers = {"Content-Type": "application/json"}
-                params = {
-                    "identifiers": self.identifiers,
-                }
-                data = json.dumps(params).encode("utf-8")
-                logging.info(f"Going to fetch {len(self.identifiers)} things from {self.sitemap_url} at {self.url}")
-                response = self._session.post(self.url, data=data, timeout=90)
+                logging.info(f"Going to fetch json lines things from {self.sitemap_url} at {self.json_lines_url}")
+                response = self._session.get(self.json_lines_url, timeout=90)
                 if response.status_code != 200:
-                    logging.error(f"Got response code {response.status_code} from {self.url}, will retry")
+                    logging.error(f"Got response code {response.status_code} from {self.json_lines_url}, will retry")
                     continue
                 else:
-                    self.json_things = response.json()
-                    logging.info(f"Completed fetching {len(self.identifiers)} things from {self.sitemap_url} at {self.url}")
+                    json_things = []
+                    response_text = response.text
+                    for line in response_text.splitlines():
+                        json_things.append(json.loads(line))
+                    self.json_dicts = json_things
+                    logging.info(f"Completed fetching json lines things from {self.sitemap_url} at {self.json_lines_url}")
                     self.primary_keys_fetched = [
-                        json_thing["primary_key"] for json_thing in self.json_things
+                        json_thing["sample_identifier"] for json_thing in self.json_dicts
                     ]
                     break
-            if len(self.json_things) == 0:
-                raise RuntimeError(f"Didn't receive a valid response from {self.url} after {NUM_RETRIES} attempts.")
+            if len(self.json_dicts) == 0:
+                raise RuntimeError(f"Didn't receive a valid response from {self.json_lines_url} after {NUM_RETRIES} attempts.")
         except Exception as e:
             logging.critical(
-                f"Error fetching things from: url: {self.url} exception is {e}"
+                f"Error fetching things from: url: {self.json_lines_url} exception is {e}"
             )
         return self
-
-
-class ThingFetcher:
-    def __init__(self, url: str, session: requests.Session = requests.session()):
-        self.url = url
-        self._session = session
-        self.json_dict = None
-        self.primary_key_fetched = None
-
-    def fetch_thing(self) -> ThingFetcher:
-        try:
-            response = self._session.get(self.url)
-            json_dict = response.json()
-            json_dict["tstamp"] = datetime.datetime.now()
-            # thing = Thing()
-            # thing.take_values_from_json_dict(json_dict)
-            self.json_dict = json_dict
-            self.primary_key_fetched = json_dict["primary_key"]
-            return self
-        except Exception as e:
-            logging.error(
-                f"Error fetching thing from url: {self.url}, exception is: {e}"
-            )
-            # self.thing = None
-            return self
-
-    def thing_identifier(self) -> Optional[str]:
-        url_path = urllib.parse.urlparse(self.url).path
-        match = IDENTIFIER_REGEX.search(url_path)
-        if match is None:
-            logging.critical(f"Didn't find identifier in URL {self.url}")
-            return None
-        else:
-            identifier = match.group(1)
-            return identifier
 
 
 class SitemapFetcher(ABC):
@@ -166,21 +128,6 @@ class SitemapFileFetcher(SitemapFetcher):
         """Fetches the contents of the particular sitemap file and stores the URLs to fetch"""
         self._fetch_file()
         return self
-
-    def fetch_child_files(self) -> typing.List[ThingFetcher]:
-        """Fetches the actual Things, one per file"""
-        thing_fetchers = []
-        for url in self.urls_to_fetch:
-            thing_fetcher = ThingFetcher(
-                self.prepare_thing_file_url(url), self._session
-            )
-            thing_fetcher.fetch_thing()
-            thing_fetchers.append(thing_fetcher)
-        return thing_fetchers
-
-    def prepare_thing_file_url(self, file_url: str) -> str:
-        """Mainly used as a placeholder for overriding in unit testing"""
-        return file_url
 
 
 class SitemapIndexFetcher(SitemapFetcher):

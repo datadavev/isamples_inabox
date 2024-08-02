@@ -6,6 +6,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
+from typing import Optional
 
 import petl
 from petl import Table
@@ -18,7 +19,7 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_RESULT_TIME, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_DESCRIPTION, METADATA_INFORMAL_CLASSIFICATION, \
     METADATA_KEYWORDS, METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
-    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE, METADATA_AT_ID
+    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE, METADATA_AT_ID, METADATA_TARGET
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_CURATION_RESPONSIBILITY, \
@@ -173,6 +174,13 @@ class SolrResultTransformer:
             curation_dict[METADATA_ACCESS_CONSTRAINTS] = access_constraints
         return curation_dict
 
+    def _related_resource_dicts(self, rec: dict) -> Optional[list[dict]]:
+        related_resource_ids = rec.get(SOLR_RELATED_RESOURCE_ISB_CORE_ID, [])
+        if len(related_resource_ids) > 0:
+            return [{METADATA_TARGET: related_resource_id} for related_resource_id in related_resource_ids]
+        else:
+            return None
+
     def _produced_by_dict(self, rec: dict) -> dict:
         produced_by_dict: dict = {}
         self._add_to_dict(produced_by_dict, METADATA_IDENTIFIER, rec, SOLR_PRODUCED_BY_ISB_CORE_ID)
@@ -273,7 +281,7 @@ class SolrResultTransformer:
         mappings[METADATA_REGISTRANT] = self._registrant_dict
         mappings[METADATA_SAMPLING_PURPOSE] = SOLR_SAMPLING_PURPOSE
         mappings[METADATA_CURATION] = self._curation_dict
-        mappings[METADATA_RELATED_RESOURCE] = SOLR_RELATED_RESOURCE_ISB_CORE_ID
+        mappings[METADATA_RELATED_RESOURCE] = self._related_resource_dicts
         mappings[METADATA_AUTHORIZED_BY] = SOLR_AUTHORIZED_BY
         mappings[METADATA_COMPLIES_WITH] = SOLR_COMPLIES_WITH
         self._table = petl.fieldmap(self._table, mappings)

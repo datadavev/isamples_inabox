@@ -1,7 +1,6 @@
 import typing
 
 from isamples_metadata.Transformer import Transformer
-from isamples_metadata.metadata_constants import METADATA_AT_ID, METADATA_SAMPLE_IDENTIFIER
 from isamples_metadata.vocabularies.vocabulary_mapper import VocabularyTerm
 
 
@@ -11,7 +10,6 @@ class CoreJSONTransformer(Transformer):
 
     def transform(self, include_h3: bool = True) -> typing.Dict:
         return self.source_record.copy()
-
 
     # Note that all methods below here are actually unused but the superclass declares them as abstract so we
     # need to provide implementations for them.

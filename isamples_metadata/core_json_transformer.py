@@ -10,10 +10,7 @@ class CoreJSONTransformer(Transformer):
     step in the pipeline"""
 
     def transform(self, include_h3: bool = True) -> typing.Dict:
-        transformed = self.source_record.copy()
-        transformed["isb_core_id"] = transformed[METADATA_AT_ID]
-        transformed[METADATA_AT_ID] = transformed[METADATA_SAMPLE_IDENTIFIER]
-        return transformed
+        return self.source_record.copy()
 
 
     # Note that all methods below here are actually unused but the superclass declares them as abstract so we

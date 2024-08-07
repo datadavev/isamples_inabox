@@ -207,8 +207,8 @@ def test_coreRecordAsSolrDoc2():
     ],
     "has_sample_object_type": [
         {
-            "label": "Physical specimen",
-            "identifier": "https://w3id.org/isample/vocabulary/specimen/0.9/spec:physicalspecimen"
+            "label": "Material sample",
+            "identifier": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample"
         }
     ],
     "has_sample_object_type_confidence": [

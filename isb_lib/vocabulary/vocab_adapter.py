@@ -1,9 +1,9 @@
 """Module for formatting vocabulary terms in a format suitable for iSamples UI ingestion, e.g.
 
 {
-  "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen": {
+  "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample": {
     "label": {
-      "en": "Physical specimen"
+      "en": "Material sample"
     },
     "children": [
     …

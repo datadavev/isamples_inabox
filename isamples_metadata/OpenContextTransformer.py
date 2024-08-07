@@ -136,7 +136,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Sample, Collection, or Aggregation",
             "Object"
         ],
-        "physicalspecimen",
+        "materialsample",
         vocabulary_mapper.specimen_type
     )
     _organismProductMapper = StringEqualityCategoryMapper(
@@ -148,7 +148,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Human Subject",
             "Reference Collection",
         ],
-        "physicalspecimen",
+        "materialsample",
         vocabulary_mapper.specimen_type
     )
 

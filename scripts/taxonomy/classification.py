@@ -77,8 +77,8 @@ def generate_test_records(
                     material_dict = {"material": {"values": material_pred, "confidence": material_confidence}}
                     material_result[citation_uri] = material_dict
             if not oc_transformer._specimen_type():
-                specimen_pred = oc_transformer.has_specimen_categories()
-                specimen_confidence = oc_transformer.has_specimen_category_confidences([])
+                specimen_pred = oc_transformer.has_sample_object_types()
+                specimen_confidence = oc_transformer.has_sample_object_type_confidences([])
                 if not specimen_confidence:
                     specimen_confidence = [Transformer.RULE_BASED_CONFIDENCE]
                     specimen_dict = {"materialSample": {"values": specimen_pred, "confidence": specimen_confidence}}

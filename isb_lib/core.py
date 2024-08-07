@@ -15,12 +15,12 @@ import igsn_lib.time
 from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_AT_ID, METADATA_LABEL, \
     METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_HAS_CONTEXT_CATEGORY_CONFIDENCE, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE, \
-    METADATA_HAS_SPECIMEN_CATEGORY, \
+    METADATA_HAS_SAMPLE_OBJECT_TYPE, \
     METADATA_KEYWORDS, METADATA_PRODUCED_BY, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_RESULT_TIME, \
     METADATA_SAMPLING_SITE, METADATA_ELEVATION, METADATA_LATITUDE, \
     METADATA_LONGITUDE, METADATA_PLACE_NAME, METADATA_SUBSAMPLE, METADATA_REGISTRANT, METADATA_SAMPLING_PURPOSE, \
     METADATA_CURATION, METADATA_ACCESS_CONSTRAINTS, METADATA_RESPONSIBILITY, \
-    METADATA_RELATED_RESOURCE, METADATA_DESCRIPTION, METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE, \
+    METADATA_RELATED_RESOURCE, METADATA_DESCRIPTION, METADATA_HAS_SAMPLE_OBJECT_TYPE_CONFIDENCE, \
     METADATA_CURATION_LOCATION, METADATA_SAMPLE_LOCATION, METADATA_KEYWORD, METADATA_NAME, \
     METADATA_ROLE, METADATA_IDENTIFIER
 from isamples_metadata.metadata_exceptions import MetadataException
@@ -212,10 +212,10 @@ def _coreRecordAsSolrDoc(coreMetadata: typing.Dict) -> typing.Dict:  # noqa: C90
         doc["hasMaterialCategory"] = _gather_vocabulary_identifiers(coreMetadata[METADATA_HAS_MATERIAL_CATEGORY])
     if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE):
         doc["hasMaterialCategoryConfidence"] = coreMetadata[METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE]
-    if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_HAS_SPECIMEN_CATEGORY):
-        doc["hasSpecimenCategory"] = _gather_vocabulary_identifiers(coreMetadata[METADATA_HAS_SPECIMEN_CATEGORY])
-    if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE):
-        doc["hasSpecimenCategoryConfidence"] = coreMetadata[METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE]
+    if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_HAS_SAMPLE_OBJECT_TYPE):
+        doc["hasSpecimenCategory"] = _gather_vocabulary_identifiers(coreMetadata[METADATA_HAS_SAMPLE_OBJECT_TYPE])
+    if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_HAS_SAMPLE_OBJECT_TYPE_CONFIDENCE):
+        doc["hasSpecimenCategoryConfidence"] = coreMetadata[METADATA_HAS_SAMPLE_OBJECT_TYPE_CONFIDENCE]
     if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_KEYWORDS):
         doc["keywords"] = _gather_keyword_labels(coreMetadata[METADATA_KEYWORDS])
     if _shouldAddMetadataValueToSolrDoc(coreMetadata, "informalClassification"):

@@ -7,10 +7,10 @@ from isamples_metadata.OpenContextTransformer import OpenContextTransformer
 from isamples_metadata.SESARTransformer import SESARTransformer
 from isamples_metadata.SmithsonianTransformer import SmithsonianTransformer
 from isamples_metadata.metadata_constants import METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
-    METADATA_HAS_SPECIMEN_CATEGORY
+    METADATA_HAS_SAMPLE_OBJECT_TYPE
 from isb_lib.vocabulary import vocab_adapter
 from isb_web.sqlmodel_database import SQLModelDAO, random_things_with_authority, taxonomy_name_to_kingdom_map
-from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, PHYSICALSPECIMEN_URI
+from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, MATERIALSAMPLEOBJECTTYPE_URI
 
 
 @click.command()
@@ -34,7 +34,7 @@ def main(ctx, db_url, authority, verbosity):
     repository = term_store.get_repository(session)
     vocab_adapter.uijson_vocabulary_dict(SAMPLEDFEATURE_URI, repository)
     vocab_adapter.uijson_vocabulary_dict(MATERIAL_URI, repository)
-    vocab_adapter.uijson_vocabulary_dict(PHYSICALSPECIMEN_URI, repository)
+    vocab_adapter.uijson_vocabulary_dict(MATERIALSAMPLEOBJECTTYPE_URI, repository)
 
     authorities = ["SMITHSONIAN", "GEOME", "OPENCONTEXT", "SESAR"]
     taxon_name_map = taxonomy_name_to_kingdom_map(session)
@@ -53,7 +53,7 @@ def main(ctx, db_url, authority, verbosity):
             transformed = transformer.transform()
             assert len(transformed.get(METADATA_HAS_MATERIAL_CATEGORY)) >= 1
             assert len(transformed.get(METADATA_HAS_CONTEXT_CATEGORY)) >= 1
-            assert len(transformed.get(METADATA_HAS_SPECIMEN_CATEGORY)) >= 1
+            assert len(transformed.get(METADATA_HAS_SAMPLE_OBJECT_TYPE)) >= 1
         print("")
 
 

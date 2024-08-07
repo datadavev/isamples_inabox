@@ -148,7 +148,7 @@ class SmithsonianTransformer(Transformer):
         else:
             return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial")]
 
-    def has_specimen_categories(self) -> typing.List[VocabularyTerm]:
+    def has_sample_object_types(self) -> typing.List[VocabularyTerm]:
         preparation_type = self.source_record.get("preparationType", "")
         return SpecimenCategoryMetaMapper.categories(preparation_type)
 

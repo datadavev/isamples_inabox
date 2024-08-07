@@ -73,7 +73,7 @@ class Settings(BaseSettings):
     logout_redirect_fragment: str = "/isamples_central/ui"
 
     # The list of orcid ids that are allowed to add other orcid ids to the iSB instance.
-    # This shouldn't be checked in.  Set by doing export ORCID_SUPERUSERS="foobar1,foobar2" etc.
+    # This shouldn't be checked in.  Set by doing export ORCID_SUPERUSERS='["foobar1","foobar2"]' etc.
     orcid_superusers: list[str] = Field(default_factory=list)
 
     # The authority id used for samples directly created in the iSB instance

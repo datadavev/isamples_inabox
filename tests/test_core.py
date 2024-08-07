@@ -434,7 +434,7 @@ def test_vocabulary_included():
     assert material_categories[0] == "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial"
     specimen_categories = solr_doc.get("hasSpecimenCategory")
     assert specimen_categories is not None
-    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart"
+    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart"
     keywords = solr_doc.get("keywords")
     assert keywords is not None
     assert keywords[0] == "Aceh"

@@ -22,13 +22,13 @@
     "has_material_category_confidence": [
         1.0
     ],
-    "has_specimen_category": [
+    "has_sample_object_type": [
         {
             "label": "Artifact",
-            "identifier": "https://w3id.org/isample/vocabulary/specimentype/1.0/artifact"
+            "identifier": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/artifact"
         }
     ],
-    "has_specimen_category_confidence": [
+    "has_sample_object_type_confidence": [
         1.0
     ],
     "keywords": [],

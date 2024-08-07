@@ -1,7 +1,7 @@
 import os
 import datetime
 
-from pydantic import BaseSettings
+from pydantic import BaseSettings, Field, validator
 
 
 class Settings(BaseSettings):
@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     configuration file "isb_web_config.env", normally located in
     the root folder of the web application startup.
     """
+
+    @validator("orcid_superusers", pre=True)
+    def split_string(cls, v):
+        if isinstance(v, str):
+            return [] if v == "" else v.split(",")
+        return v
 
     logging_config: str = "logging.conf"
 
@@ -67,7 +73,8 @@ class Settings(BaseSettings):
     logout_redirect_fragment: str = "/isamples_central/ui"
 
     # The list of orcid ids that are allowed to add other orcid ids to the iSB instance.
-    orcid_superusers: list[str] = []
+    # This shouldn't be checked in.  Set by doing export ORCID_SUPERUSERS="foobar1,foobar2" etc.
+    orcid_superusers: list[str] = Field(default_factory=list)
 
     # The authority id used for samples directly created in the iSB instance
     authority_id: str = "iSamples"

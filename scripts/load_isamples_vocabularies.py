@@ -11,7 +11,7 @@ from isb_web.sqlmodel_database import SQLModelDAO
 
 def load_terms(repository: TermRepository):
     vocab = term_store.vocab_terms.SKOSVocabulary()
-    vocab.load("https://raw.githubusercontent.com/isamplesorg/vocabularies/main/vocabulary/material_sample_type.ttl")
+    vocab.load("https://raw.githubusercontent.com/isamplesorg/vocabularies/develop/vocabulary/material_sample_object_type.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/vocabularies/main/vocabulary/material_type.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/vocabularies/main/vocabulary/sampled_feature_type.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_biology/main/vocabulary/biology_sampledfeature_extension.ttl")

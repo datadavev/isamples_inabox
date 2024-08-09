@@ -9,7 +9,6 @@ from isb_lib.vocabulary import vocab_adapter
 from isb_web.sqlmodel_database import SQLModelDAO
 
 
-
 SAMPLEDFEATURE_URI = "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
 MATERIAL_URI = "https://w3id.org/isample/vocabulary/material/1.0/material"
 MATERIALSAMPLEOBJECTTYPE_URI = "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample"

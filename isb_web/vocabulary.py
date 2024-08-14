@@ -28,6 +28,8 @@ def get_repository(session: Session = Depends(get_session)) -> TermRepository:
     return term_store.get_repository(session)
 
 
+# Include the deperecated naming here so that this can be compatible with older versions of the JS if need be
+@router.get("/material_sample_type", tags=["vocabularies"])
 @router.get("/material_sample_object_type", tags=["vocabularies"])
 def material_sample_object_type(repository: TermRepository = Depends(get_repository)) -> dict:
     return vocab_adapter.uijson_vocabulary_dict(MATERIALSAMPLEOBJECTTYPE_URI, repository)

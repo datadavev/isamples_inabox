@@ -74,12 +74,9 @@ CONTEXT_CATEGORY_DICT = {
 
 MATERIAL_SAMPLE_DICT = {
     "other solid object": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/othersolidobject",
-    # TODO: need new opencontext url
-    "container": "https://w3id.org/isample/opencontext/specimentype/0.1/containerobject",
-    # TODO: need new opencontext url
-    "ornament": "https://w3id.org/isample/opencontext/specimentype/0.1/ornament",
-    # TODO: need new opencontext url
-    "architectural element": "https://w3id.org/isample/opencontext/specimentype/0.1/architecturalelement",
+    "container": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/containerobject",
+    "ornament": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/ornament",
+    "architectural element": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/architecturalelement",
     "organism part": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart",
     "whole organism": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
     "physicalspecimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
@@ -88,20 +85,17 @@ MATERIAL_SAMPLE_DICT = {
     "not provided": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
     "biologicalspecimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biologicalmaterialsample",
     "analytical preparation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/analyticalpreparation",
-    # TODO: need new opencontext url
-    "tile": "https://w3id.org/isample/opencontext/specimentype/0.1/tile",
+    "tile": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/tile",
     "whole organism specimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
     "": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
-    # TODO: need new opencontext url
-    "clothing": "https://w3id.org/isample/opencontext/specimentype/0.1/clothing",
+    "clothing": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/clothing",
     "fluid in container": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/fluidincontainer",
     "organismproduct": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismproduct",
     "organismpart": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart",
     "experiment product": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/experimentalproduct",
     "biome aggregation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biomeaggregation",
     "biomeaggregation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biomeaggregation",
-    # TODO: need new opencontext url
-    "domestic item": "https://w3id.org/isample/opencontext/specimentype/0.1/domesticitem",
+    "domestic item": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/domesticitem",
     "wholeorganism": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
     "biological specimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biologicalmaterialsample",
     "organism product": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismproduct",

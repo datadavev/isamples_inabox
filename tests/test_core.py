@@ -63,13 +63,13 @@ def test_coreRecordAsSolrDoc():
     "has_material_category_confidence": [
         1.0
     ],
-    "has_specimen_category": [
+    "has_sample_object_type": [
         {
             "label": "Organism part",
             "identifier": "https://w3id.org/isample/vocabulary/specimentype/0.9/spec:organismpart"
         }
     ],
-    "has_specimen_category_confidence": [
+    "has_sample_object_type_confidence": [
         1.0
     ],
     "informal_classification": [
@@ -205,13 +205,13 @@ def test_coreRecordAsSolrDoc2():
     "has_material_category_confidence": [
         1.0
     ],
-    "has_specimen_category": [
+    "has_sample_object_type": [
         {
-            "label": "Physical specimen",
-            "identifier": "https://w3id.org/isample/vocabulary/specimen/0.9/spec:physicalspecimen"
+            "label": "Material sample",
+            "identifier": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample"
         }
     ],
-    "has_specimen_category_confidence": [
+    "has_sample_object_type_confidence": [
         1.0
     ],
     "informal_classification": [],
@@ -321,13 +321,13 @@ def test_core_record_as_solr_doc_3():
     0.32352039217948914,
     0.22828949987888336
   ],
-  "has_specimen_category": [
+  "has_sample_object_type": [
     {
       "label": "physicalspecimen",
       "identifier": "https://w3id.org/isample/vocabulary/material/0.9/mat:otheranthropogenicmaterial"
     }
   ],
-  "has_specimen_category_confidence": [
+  "has_sample_object_type_confidence": [
     1
   ],
   "informal_classification": [],
@@ -434,7 +434,7 @@ def test_vocabulary_included():
     assert material_categories[0] == "https://w3id.org/isample/vocabulary/material/1.0/organicmaterial"
     specimen_categories = solr_doc.get("hasSpecimenCategory")
     assert specimen_categories is not None
-    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart"
+    assert specimen_categories[0] == "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart"
     keywords = solr_doc.get("keywords")
     assert keywords is not None
     assert keywords[0] == "Aceh"

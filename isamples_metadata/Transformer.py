@@ -9,7 +9,7 @@ from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, MET
     METADATA_LABEL, METADATA_DESCRIPTION, \
     METADATA_HAS_CONTEXT_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY_CONFIDENCE, METADATA_HAS_MATERIAL_CATEGORY, \
     METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE, \
-    METADATA_HAS_SPECIMEN_CATEGORY, METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE, METADATA_KEYWORDS, METADATA_KEYWORD, \
+    METADATA_HAS_SAMPLE_OBJECT_TYPE, METADATA_HAS_SAMPLE_OBJECT_TYPE_CONFIDENCE, METADATA_KEYWORDS, METADATA_KEYWORD, \
     METADATA_KEYWORD_URI, METADATA_SCHEME_NAME, METADATA_PRODUCED_BY, \
     METADATA_RESPONSIBILITY, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_RESULT_TIME, METADATA_SAMPLING_SITE, \
     METADATA_ELEVATION, METADATA_LATITUDE, METADATA_LONGITUDE, \
@@ -99,7 +99,7 @@ class Transformer(ABC):
         """
         context_categories = self.has_context_categories()
         material_categories = self.has_material_categories()
-        specimen_categories = self.has_specimen_categories()
+        specimen_categories = self.has_sample_object_types()
         sampling_site_elevation = self.sampling_site_elevation()
         sampling_site_latitude = self.sampling_site_latitude()
         sampling_site_longitude = self.sampling_site_longitude()
@@ -121,8 +121,8 @@ class Transformer(ABC):
             METADATA_HAS_CONTEXT_CATEGORY_CONFIDENCE: self.has_context_category_confidences(context_categories),
             METADATA_HAS_MATERIAL_CATEGORY: material_categories,
             METADATA_HAS_MATERIAL_CATEGORY_CONFIDENCE: self.has_material_category_confidences(material_categories),
-            METADATA_HAS_SPECIMEN_CATEGORY: specimen_categories,
-            METADATA_HAS_SPECIMEN_CATEGORY_CONFIDENCE: self.has_specimen_category_confidences(specimen_categories),
+            METADATA_HAS_SAMPLE_OBJECT_TYPE: specimen_categories,
+            METADATA_HAS_SAMPLE_OBJECT_TYPE_CONFIDENCE: self.has_sample_object_type_confidences(specimen_categories),
             METADATA_KEYWORDS: self.keywords(),
             METADATA_PRODUCED_BY: {
                 METADATA_IDENTIFIER: self.produced_by_id_string(),
@@ -217,11 +217,11 @@ class Transformer(ABC):
         return Transformer._rule_based_confidence_list_for_categories_list(material_categories)
 
     @abstractmethod
-    def has_specimen_categories(self) -> typing.List[VocabularyTerm]:
+    def has_sample_object_types(self) -> typing.List[VocabularyTerm]:
         """Map from the source record into an iSamples specimen category"""
         pass
 
-    def has_specimen_category_confidences(self, specimen_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
+    def has_sample_object_type_confidences(self, specimen_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         """If a machine-predicted label is used for specimen, subclasses should return non-None confidence values"""
         return Transformer._rule_based_confidence_list_for_categories_list(specimen_categories)
 

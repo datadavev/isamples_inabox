@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from isamples_metadata.metadata_constants import METADATA_LABEL, METADATA_IDENTIFIER
 from isb_lib.vocabulary import vocab_adapter
-from isb_web.vocabulary import SAMPLEDFEATURE_URI, PHYSICALSPECIMEN_URI, MATERIAL_URI
+from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIALSAMPLEOBJECTTYPE_URI, MATERIAL_URI
 
 """
 Note that this module operates on a CSV-derived form of the vocabulary sourced at
@@ -97,7 +97,7 @@ SAMPLED_FEATURE_TYPE = None
 def specimen_type() -> ControlledVocabulary:
     global SPECIMEN_TYPE
     if SPECIMEN_TYPE is None:
-        uijson = vocab_adapter.VOCAB_CACHE.get(PHYSICALSPECIMEN_URI)
+        uijson = vocab_adapter.VOCAB_CACHE.get(MATERIALSAMPLEOBJECTTYPE_URI)
         assert uijson is not None
         SPECIMEN_TYPE = ControlledVocabulary(uijson, "spec")
     return SPECIMEN_TYPE

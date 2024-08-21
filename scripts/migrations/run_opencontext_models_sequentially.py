@@ -63,9 +63,9 @@ async def run_models(session: Session, dest_path: str):
                 material_category_confidences_str = await category_confidences_str(
                     material_category_confidences
                 )
-                specimen_categories = transformer.has_specimen_categories()
+                specimen_categories = transformer.has_sample_object_types()
                 specimen_category_confidences = (
-                    transformer.has_specimen_category_confidences(specimen_categories)
+                    transformer.has_sample_object_type_confidences(specimen_categories)
                 )
                 specimen_categories_str = ""  # ",".join(specimen_categories)
                 specimen_category_confidences_str = await category_confidences_str(

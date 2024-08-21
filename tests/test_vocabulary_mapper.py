@@ -32,7 +32,7 @@ def test_material_sample_type():
     _assert_on_vocabulary_term(whole_organism)
     organism_part = material_sample_type_vocabulary.term_for_key("spec:organismpart")
     _assert_on_vocabulary_term(organism_part)
-    assert material_sample_type_vocabulary.root_term().uri == "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
+    assert material_sample_type_vocabulary.root_term().uri == "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample"
 
 
 def test_material_type():

@@ -38,7 +38,7 @@ class CoreJSONTransformer(Transformer):
     def has_material_categories(self) -> typing.List[VocabularyTerm]:
         return []
 
-    def has_specimen_categories(self) -> typing.List[VocabularyTerm]:
+    def has_sample_object_types(self) -> typing.List[VocabularyTerm]:
         return []
 
     def informal_classification(self) -> typing.List[str]:

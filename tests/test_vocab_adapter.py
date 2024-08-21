@@ -45,7 +45,7 @@ def client_fixture():
 
 
 def test_vocabulary_fast_api_material_sample_type(client: TestClient):
-    response = client.get("/vocabulary/material_sample_type")
+    response = client.get("/vocabulary/material_sample_object_type")
     assert response.status_code == 200
 
 

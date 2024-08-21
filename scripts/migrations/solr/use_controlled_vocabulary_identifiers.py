@@ -12,7 +12,7 @@ from isamples_metadata.solr_field_constants import SOLR_HAS_MATERIAL_CATEGORY, S
     SOLR_HAS_CONTEXT_CATEGORY
 from isb_web.isb_solr_query import ISBCoreSolrRecordIterator
 
-TOP_LEVEL_SPECIMEN_URI = "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
+TOP_LEVEL_MATERIAL_SAMPLE_URI = "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample"
 TOP_LEVEL_CONTEXT_URI = "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
 TOP_LEVEL_MATERIAL_URI = "https://w3id.org/isample/vocabulary/material/1.0/material"
 
@@ -72,34 +72,45 @@ CONTEXT_CATEGORY_DICT = {
     "lake river or stream bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom"
 }
 
-SPECIMEN_CATEGORY_DICT = {
-    "other solid object": "https://w3id.org/isample/vocabulary/specimentype/1.0/othersolidobject",
-    "container": "https://w3id.org/isample/opencontext/specimentype/0.1/containerobject",
-    "ornament": "https://w3id.org/isample/opencontext/specimentype/0.1/ornament",
-    "architectural element": "https://w3id.org/isample/opencontext/specimentype/0.1/architecturalelement",
-    "organism part": "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart",
-    "whole organism": "https://w3id.org/isample/vocabulary/specimentype/1.0/wholeorganism",
-    "physicalspecimen": "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen",
-    "artifact": "https://w3id.org/isample/vocabulary/specimentype/1.0/artifact",
-    "aggregation": "https://w3id.org/isample/vocabulary/specimentype/1.0/genericaggregation",
-    "not provided": "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen",
-    "biologicalspecimen": "https://w3id.org/isample/vocabulary/specimentype/1.0/biologicalspecimen",
-    "analytical preparation": "https://w3id.org/isample/vocabulary/specimentype/1.0/analyticalpreparation",
-    "tile": "https://w3id.org/isample/opencontext/specimentype/0.1/tile",
-    "whole organism specimen": "https://w3id.org/isample/vocabulary/specimentype/1.0/wholeorganism",
-    "": "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen",
-    "clothing": "https://w3id.org/isample/opencontext/specimentype/0.1/clothing",
-    "fluid in container": "https://w3id.org/isample/vocabulary/specimentype/1.0/fluidincontainer",
-    "organismproduct": "https://w3id.org/isample/vocabulary/specimentype/1.0/organismproduct",
-    "organismpart": "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart",
-    "experiment product": "https://w3id.org/isample/vocabulary/specimentype/1.0/experimentalproduct",
-    "biome aggregation": "https://w3id.org/isample/vocabulary/specimentype/1.0/biomeaggregation",
-    "biomeaggregation": "https://w3id.org/isample/vocabulary/specimentype/1.0/biomeaggregation",
-    "domestic item": "https://w3id.org/isample/opencontext/specimentype/0.1/domesticitem",
-    "wholeorganism": "https://w3id.org/isample/vocabulary/specimentype/1.0/wholeorganism",
-    "biological specimen": "https://w3id.org/isample/vocabulary/specimentype/1.0/biologicalspecimen",
-    "organism product": "https://w3id.org/isample/vocabulary/specimentype/1.0/organismproduct",
-    "physical specimen": "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
+MATERIAL_SAMPLE_DICT = {
+    "other solid object": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/othersolidobject",
+    "container": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/containerobject",
+    "ornament": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/ornament",
+    "architectural element": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/architecturalelement",
+    "organism part": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart",
+    "whole organism": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
+    "physicalspecimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
+    "artifact": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/artifact",
+    "aggregation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/genericaggregation",
+    "not provided": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
+    "biologicalspecimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biologicalmaterialsample",
+    "analytical preparation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/analyticalpreparation",
+    "tile": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/tile",
+    "whole organism specimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
+    "": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
+    "clothing": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/clothing",
+    "fluid in container": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/fluidincontainer",
+    "organismproduct": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismproduct",
+    "organismpart": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart",
+    "experiment product": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/experimentalproduct",
+    "biome aggregation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biomeaggregation",
+    "biomeaggregation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biomeaggregation",
+    "domestic item": "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/domesticitem",
+    "wholeorganism": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
+    "biological specimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biologicalmaterialsample",
+    "organism product": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismproduct",
+    "physical specimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
+
+    # BEGIN RENAMED VOCABULARY
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismpart",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/othersolidobject": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/othersolidobject",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/wholeorganism": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/wholeorganism",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/artifact": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/artifact",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/biologicalspecimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biologicalmaterialsample",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/organismproduct": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/organismproduct",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/experimentalproduct": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/experimentalproduct",
+    "https://w3id.org/isample/vocabulary/specimentype/1.0/biomeaggregation": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/biomeaggregation"
 }
 
 
@@ -167,7 +178,7 @@ def mutate_record(record: dict) -> Optional[dict]:
         if label.startswith("https://w3id.org"):
             # we've already touched it, bail
             return None
-        identifier = SPECIMEN_CATEGORY_DICT.get(label.lower())
+        identifier = MATERIAL_SAMPLE_DICT.get(label.lower())
         if identifier is None:
             logging.error(f"Unable to look up specimen value for label {label}")
         else:

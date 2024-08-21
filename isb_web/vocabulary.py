@@ -8,9 +8,10 @@ from sqlmodel import Session
 from isb_lib.vocabulary import vocab_adapter
 from isb_web.sqlmodel_database import SQLModelDAO
 
+
 SAMPLEDFEATURE_URI = "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"
 MATERIAL_URI = "https://w3id.org/isample/vocabulary/material/1.0/material"
-PHYSICALSPECIMEN_URI = "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen"
+MATERIALSAMPLEOBJECTTYPE_URI = "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample"
 
 router = APIRouter(prefix="/vocabulary")
 dao: Optional[SQLModelDAO] = None
@@ -27,9 +28,11 @@ def get_repository(session: Session = Depends(get_session)) -> TermRepository:
     return term_store.get_repository(session)
 
 
+# Include the deperecated naming here so that this can be compatible with older versions of the JS if need be
 @router.get("/material_sample_type", tags=["vocabularies"])
-def material_sample_type(repository: TermRepository = Depends(get_repository)) -> dict:
-    return vocab_adapter.uijson_vocabulary_dict(PHYSICALSPECIMEN_URI, repository)
+@router.get("/material_sample_object_type", tags=["vocabularies"])
+def material_sample_object_type(repository: TermRepository = Depends(get_repository)) -> dict:
+    return vocab_adapter.uijson_vocabulary_dict(MATERIALSAMPLEOBJECTTYPE_URI, repository)
 
 
 @router.get("/material_type", tags=["vocabularies"])

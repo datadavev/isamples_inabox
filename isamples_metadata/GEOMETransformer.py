@@ -192,7 +192,7 @@ class GEOMETransformer(Transformer):
         # ["'Organic material' unless record/entity, record/basisOfRecord, or record/collectionCode indicate otherwise"]
         return [vocabulary_mapper.material_type().term_for_key("mat:organicmaterial")]
 
-    def has_specimen_categories(self) -> list[VocabularyTerm]:
+    def has_sample_object_types(self) -> list[VocabularyTerm]:
         return [vocabulary_mapper.specimen_type().term_for_key("spec:wholeorganism")]
 
     def informal_classification(self) -> typing.List[str]:
@@ -624,7 +624,7 @@ class GEOMEChildTransformer(GEOMETransformer):
         # TODO
         return ""
 
-    def has_specimen_categories(self) -> list:
+    def has_sample_object_types(self) -> list:
         return [vocabulary_mapper.specimen_type().term_for_key("spec:organismpart").metadata_dict()]
 
     def produced_by_label(self) -> str:

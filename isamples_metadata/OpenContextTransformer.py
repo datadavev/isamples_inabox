@@ -136,7 +136,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Sample, Collection, or Aggregation",
             "Object"
         ],
-        "physicalspecimen",
+        "materialsample",
         vocabulary_mapper.specimen_type
     )
     _organismProductMapper = StringEqualityCategoryMapper(
@@ -148,7 +148,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Human Subject",
             "Reference Collection",
         ],
-        "physicalspecimen",
+        "materialsample",
         vocabulary_mapper.specimen_type
     )
 
@@ -311,7 +311,7 @@ class OpenContextTransformer(Transformer):
             self._specimen_prediction_results = MODEL_SERVER_CLIENT.make_opencontext_sample_request(self.source_record)
             return self._specimen_prediction_results
 
-    def has_specimen_categories(self) -> list[VocabularyTerm]:
+    def has_sample_object_types(self) -> list[VocabularyTerm]:
         item_category = self._item_category()
         to_classify_items = ["Animal Bone"]
         if item_category in to_classify_items:
@@ -322,11 +322,11 @@ class OpenContextTransformer(Transformer):
                 return []
         return SpecimenCategoryMetaMapper.categories(item_category)
 
-    def has_specimen_category_confidences(self, specimen_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
+    def has_sample_object_type_confidences(self, specimen_categories: list[VocabularyTerm]) -> typing.Optional[typing.List[float]]:
         prediction_results = self._compute_specimen_prediction_results()
         if prediction_results is None:
             # Not computed, so default to human entered confidence
-            specimen_category_terms = self.has_specimen_categories()
+            specimen_category_terms = self.has_sample_object_types()
             return Transformer._rule_based_confidence_list_for_categories_list(specimen_category_terms)
         else:
             return [prediction.confidence for prediction in prediction_results]

@@ -46,7 +46,7 @@ from isb_web.api_types import ThingsSitemapParams, ReliqueryResponse, ReliqueryP
 from isb_web.schemas import ThingPage
 from isb_web.sqlmodel_database import SQLModelDAO, taxonomy_name_to_kingdom_map
 import isb_lib.stac
-from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, PHYSICALSPECIMEN_URI
+from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, MATERIALSAMPLEOBJECTTYPE_URI
 
 THIS_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -152,7 +152,7 @@ def on_startup():
     repository = term_store.get_repository(session)
     vocab_adapter.uijson_vocabulary_dict(SAMPLEDFEATURE_URI, repository)
     vocab_adapter.uijson_vocabulary_dict(MATERIAL_URI, repository)
-    vocab_adapter.uijson_vocabulary_dict(PHYSICALSPECIMEN_URI, repository)
+    vocab_adapter.uijson_vocabulary_dict(MATERIALSAMPLEOBJECTTYPE_URI, repository)
     vocabulary_mapper.sampled_feature_type()
     vocabulary_mapper.material_type()
     vocabulary_mapper.specimen_type()

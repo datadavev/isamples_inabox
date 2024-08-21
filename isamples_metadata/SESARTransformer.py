@@ -362,7 +362,7 @@ class SESARTransformer(Transformer):
         else:
             return [prediction.confidence for prediction in prediction_results]
 
-    def has_specimen_categories(self) -> list:
+    def has_sample_object_types(self) -> list:
         sample_type = self._source_record_description()["sampleType"]
         return SpecimenCategoryMetaMapper.categories(sample_type)
 

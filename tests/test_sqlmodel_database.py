@@ -140,9 +140,10 @@ def test_things_for_sitemap(session: Session):
     # should have a list of 20
     assert 20 == len(things)
     for thing in things:
-        assert 2 == len(thing)
+        assert 3 == len(thing)
         assert type(thing[0]) is str
         assert type(thing[1]) is datetime.datetime
+        assert type(thing[2]) is dict
     # remember this for later
     last_tstamp = things[-1][1]
     last_id = things[-1][0]

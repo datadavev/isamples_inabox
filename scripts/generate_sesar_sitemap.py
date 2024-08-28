@@ -27,7 +27,7 @@ def main(ctx, path: str, host: str):
     print("main")
     isb_lib.core.things_main(ctx, isb_web.config.Settings().database_url, isb_web.config.Settings().solr_url, "INFO")
     session = SQLModelDAO(isb_web.config.Settings().database_url).get_session()
-    build_sesar_sitemap(path, host, SESARThingSitemapIndexIterator(session, "SESAR", 100))
+    build_sesar_sitemap(path, host, SESARThingSitemapIndexIterator(session, "SESAR"))
 
 
 if __name__ == "__main__":

@@ -6,8 +6,7 @@ from typing import Optional
 from sqlmodel import Session
 
 from isb_lib.core import datetimeToSolrStr
-from isb_lib.sitemaps import SitemapIndexEntry, UrlSetEntry, ThingUrlSetEntry, ThingSitemapIndexEntry, \
-    SESARThingUrlSetEntry
+from isb_lib.sitemaps import SitemapIndexEntry, UrlSetEntry, ThingSitemapIndexEntry, SESARThingUrlSetEntry
 from isb_web.sqlmodel_database import things_for_sitemap
 
 MAX_URLS_IN_SITEMAP = 50000
@@ -49,7 +48,7 @@ class SESARThingUrlSetIterator:
 
     def sitemap_index_entry(self) -> SitemapIndexEntry:
         return ThingSitemapIndexEntry(
-            f"sitemap-{self.sitemap_index}.xml", self.last_tstamp_str or ""
+            f"sitemap-{self.sitemap_index}.jsonl", self.last_tstamp_str or ""
         )
 
 

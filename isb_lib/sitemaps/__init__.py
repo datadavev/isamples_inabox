@@ -5,6 +5,7 @@ Chunks of this code based on https://github.com/scrapy/scrapy/blob/master/scrapy
 """
 import asyncio
 import datetime
+import json
 import types
 import logging
 import re
@@ -58,6 +59,12 @@ class UrlSetEntry:
 class ThingUrlSetEntry(UrlSetEntry):
     def loc_suffix(self):
         return f"sitemaps/{self.identifier}"
+
+
+class SESARThingUrlSetEntry(ThingUrlSetEntry):
+    def __init__(self, identifier: str, last_mod_str, resolved_content: str):
+        super().__init__(identifier, last_mod_str)
+        self.resolved_content = resolved_content
 
 
 table = str.maketrans(
@@ -134,6 +141,12 @@ def build_sitemap(base_path: str, host: str, iterator: typing.Iterator):
     loop.run_until_complete(future)
 
 
+def build_sesar_sitemap(base_path: str, host: str, iterator: typing.Iterator):
+    loop = asyncio.get_event_loop()
+    future = asyncio.ensure_future(_build_sesar_sitemap(base_path, host, iterator))
+    loop.run_until_complete(future)
+
+
 async def _build_sitemap(base_path: str, host: str, iterator: typing.Iterator):
     sitemap_index_entries = []
     for urlset_iterator in iterator:
@@ -143,6 +156,46 @@ async def _build_sitemap(base_path: str, host: str, iterator: typing.Iterator):
         sitemap_index_entry = urlset_iterator.sitemap_index_entry()
         sitemap_index_entries.append(sitemap_index_entry)
         urlset_dest_path = os.path.join(base_path, sitemap_index_entry.sitemap_filename)
+        await write_urlset_file(urlset_dest_path, host, entries_for_urlset)
+        logging.info(
+            "Done with urlset_iterator, wrote "
+            + str(urlset_iterator.num_urls)
+            + " records to "
+            + sitemap_index_entry.sitemap_filename
+        )
+    await write_sitemap_index_file(base_path, host, sitemap_index_entries)
+
+
+async def _build_sesar_sitemap(base_path: str, host: str, iterator: typing.Iterator):
+    sitemap_index_entries = []
+    for urlset_iterator in iterator:
+        entries_for_urlset = []
+        jsonl_filename = os.path.join(base_path, f"sitemap-{urlset_iterator.num_urls}.jsonl")
+        async with AIOFile(jsonl_filename, "w") as aiodf:
+            writer = Writer(aiodf)
+            for urlset_entry in urlset_iterator:
+                # Here is probably where we need to write the individual resolved content to the .jsonl
+                entries_for_urlset.append(urlset_entry)
+                json_line = json.dumps(urlset_entry.resolved_content)
+                await writer(json_line + "\n")
+                await aiodf.fsync()
+
+
+
+        sitemap_index_entry = urlset_iterator.sitemap_index_entry()
+        sitemap_index_entries.append(sitemap_index_entry)
+        urlset_dest_path = os.path.join(base_path, sitemap_index_entry.sitemap_filename)
+        # At this point, the entries_for_urlset are the actual things.  We shouldn't write them to the urlset file.
+        # We just need them to be written to a json lines file.  Then, the json lines file should show up in the urlset.
+        # The urlset should look something like this:
+        """
+        <url>
+            <loc>
+            https://henry.cyverse.org/geome/sitemaps/sitemap-0.jsonl
+            </loc>
+            <lastmod>2022-12-15T09:26:07.680000Z</lastmod>
+        </url>
+        """
         await write_urlset_file(urlset_dest_path, host, entries_for_urlset)
         logging.info(
             "Done with urlset_iterator, wrote "

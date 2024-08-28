@@ -178,6 +178,7 @@ async def _build_sesar_sitemap(base_path: str, host: str, iterator: typing.Itera
                 json_line = json.dumps(urlset_entry.resolved_content)
                 await writer(json_line + "\n")
                 await aiodf.fsync()
+                sitemap_index_entry.last_mod_str = urlset_entry.last_mod_str
 
         logging.info(
             "Done with urlset_iterator, wrote "

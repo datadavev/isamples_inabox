@@ -297,7 +297,7 @@ def things_for_sitemap(
     In order to allow older unchanged records to not be refetched, order by the timestamp to support automatic diffing
     """
     thing_select = _base_thing_select(authority, status, limit, offset, min_id)
-    thing_select = thing_select.with_only_columns(Thing.id, Thing.tstamp)
+    thing_select = thing_select.with_only_columns(Thing.id, Thing.tstamp, Thing.resolved_content)
     if min_tstamp is not None:
         thing_select = thing_select.filter(Thing.tstamp >= min_tstamp)
     thing_select = thing_select.order_by(Thing.tstamp.asc(), Thing.primary_key.asc())

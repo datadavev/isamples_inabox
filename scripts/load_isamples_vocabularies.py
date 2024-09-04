@@ -18,7 +18,6 @@ def load_terms(repository: TermRepository):
     vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_earth_science/main/vocabulary/earthenv_material_extension_mineral_group.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_earth_science/main/vocabulary/earthenv_material_extension_rock_sediment.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_earth_science/main/vocabulary/earthenv_materialsampleobject_type.ttl")
-    vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_earth_science/main/vocabulary/SESAR_material_extension_rock_sediment.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_archaeology/main/vocabulary/opencontext_material_extension.ttl")
     vocab.load("https://raw.githubusercontent.com/isamplesorg/metadata_profile_archaeology/main/vocabulary/opencontext_materialsampleobjecttype.ttl")
     vocab.load_terms_to_model_store(repository)

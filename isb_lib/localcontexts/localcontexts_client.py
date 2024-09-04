@@ -11,10 +11,16 @@ class LocalContextsInfo:
     def __init__(self, project_json: dict):
         self.title = project_json.get("title")
         project_notice = project_json.get("notice")
+        bc_labels = project_json.get("bc_labels")
+        tk_labels = project_json.get("tk_labels")
+        notices_or_labels = []
         if project_notice is not None:
-            self.notices = [LocalContextsNotice(current_notice.get("img_url"), current_notice.get("default_text"), current_notice.get("name")) for current_notice in project_notice]
-        else:
-            self.notices = []
+            notices_or_labels.extend([LocalContextsNotice(current_notice.get("img_url"), current_notice.get("default_text"), current_notice.get("name")) for current_notice in project_notice])
+        if bc_labels is not None:
+            notices_or_labels.extend([LocalContextsNotice(current_label.get("img_url"), current_label.get("label_text"), current_label.get("name")) for current_label in bc_labels])
+        if tk_labels is not None:
+            notices_or_labels.extend([LocalContextsNotice(current_label.get("img_url"), current_label.get("label_text"), current_label.get("name")) for current_label in tk_labels])
+        self.notices = notices_or_labels
         self.project_page = project_json.get("project_page")
 
 

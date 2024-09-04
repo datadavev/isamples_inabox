@@ -41,8 +41,8 @@ def test_fetch_project_detail(mock_local_contexts_request: MagicMock):
     project_info = client.project_info("123456", mock_local_contexts_request)
     assert project_info is not None
     notices = project_info.notices
-    assert "https://storage.googleapis.com/local-contexts-hub.appspot.com/labels/notices/ci-attribution-incomplete.png" == notices[0].img_url
-    text = "Collections and items in our institution have incomplete, inaccurate, and/or missing attribution. We are using this notice to clearly identify this material so that it can be updated, or corrected by communities of origin. Our institution is committed to collaboration and partnerships to address this problem of incorrect or missing attribution."
+    assert "https://storage.googleapis.com/local-contexts-hub.appspot.com/labels/bclabels/bc-consent-verified.png" == notices[0].img_url
+    text = "This Label is being used to verify that [community name or authorizing party] have consent conditions in place for the use of this information, collections, data, and digital sequence information. [These can be found at ….]."
     assert text == notices[0].text
     assert "Moorea Biocode 1.0" == project_info.title
     assert "https://localcontextshub.org/projects/71b32571-0176-4627-8e01-4d78818432a7" == project_info.project_page

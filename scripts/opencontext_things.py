@@ -11,7 +11,7 @@ import sqlalchemy.exc
 
 from isamples_metadata import OpenContextTransformer
 from isb_lib import opencontext_adapter
-from isb_lib.core import MEDIA_JSON
+from isb_lib.core import MEDIA_JSON, initialize_vocabularies
 from isb_lib.opencontext_adapter import OPENCONTEXT_PAGE_SIZE
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import SQLModelDAO, save_thing, DatabaseBulkUpdater
@@ -163,6 +163,8 @@ def populate_isb_core_solr(ctx, ignore_last_modified: bool):
             url=solr_url,
             authority_id=isb_lib.opencontext_adapter.OpenContextItem.AUTHORITY_ID,
         )
+    session = SQLModelDAO(db_url).get_session()
+    initialize_vocabularies(session)
     L.info(f"Going to index Things with tcreated > {max_solr_updated_date}")
     solr_importer = isb_lib.core.CoreSolrImporter(
         db_url=db_url,

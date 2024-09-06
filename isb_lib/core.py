@@ -11,6 +11,8 @@ import faulthandler
 from signal import SIGINT
 
 import igsn_lib.time
+import term_store
+from sqlmodel import Session
 
 from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_AT_ID, METADATA_LABEL, \
     METADATA_HAS_CONTEXT_CATEGORY, \
@@ -27,6 +29,7 @@ from isamples_metadata.metadata_exceptions import MetadataException
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, \
     SOLR_CURATION_LABEL, SOLR_CURATION_DESCRIPTION, SOLR_CURATION_ACCESS_CONSTRAINTS, SOLR_CURATION_LOCATION, \
     SOLR_CURATION_RESPONSIBILITY
+from isamples_metadata.vocabularies import vocabulary_mapper
 from isb_lib.models.thing import Thing
 from isamples_metadata.Transformer import Transformer, geo_to_h3
 import dateparser
@@ -36,9 +39,12 @@ import requests
 import shapely.wkt
 import shapely.geometry
 
+from isb_lib.vocabulary import vocab_adapter
 from isb_web import sqlmodel_database
 from isb_web.sqlmodel_database import SQLModelDAO
 from typing import Optional
+
+from isb_web.vocabulary import SAMPLEDFEATURE_URI, MATERIAL_URI, MATERIALSAMPLEOBJECTTYPE_URI
 
 RECOGNIZED_DATE_FORMATS = [
     "%Y",  # e.g. 1985
@@ -101,6 +107,16 @@ def things_main(ctx, db_url, solr_url, verbosity="INFO"):
     ctx.obj["db_url"] = db_url
     getLogger().info("Using solr at: %s", solr_url)
     ctx.obj["solr_url"] = solr_url
+
+
+def initialize_vocabularies(session: Session):
+    repository = term_store.get_repository(session)
+    vocab_adapter.uijson_vocabulary_dict(SAMPLEDFEATURE_URI, repository)
+    vocab_adapter.uijson_vocabulary_dict(MATERIAL_URI, repository)
+    vocab_adapter.uijson_vocabulary_dict(MATERIALSAMPLEOBJECTTYPE_URI, repository)
+    vocabulary_mapper.sampled_feature_type()
+    vocabulary_mapper.material_type()
+    vocabulary_mapper.specimen_type()
 
 
 def datetimeToSolrStr(dt):

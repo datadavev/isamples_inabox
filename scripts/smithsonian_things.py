@@ -128,6 +128,8 @@ def populate_isb_core_solr(ctx):
     logger = isb_lib.core.getLogger()
     db_url = ctx.obj["db_url"]
     solr_url = ctx.obj["solr_url"]
+    session = SQLModelDAO(db_url).get_session()
+    isb_lib.initialize_vocabularies(session)
     solr_importer = isb_lib.core.CoreSolrImporter(
         db_url=db_url,
         authority_id=isb_lib.smithsonian_adapter.SmithsonianItem.AUTHORITY_ID,

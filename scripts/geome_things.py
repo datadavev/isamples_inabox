@@ -352,7 +352,7 @@ def populateIsbCoreSolr(ctx, ignore_last_modified: bool):
     )
     dao = SQLModelDAO(db_url)
     session = dao.get_session()
-    isb_lib.initialize_vocabularies(session)
+    isb_lib.core.initialize_vocabularies(session)
     allkeys = solr_importer.run_solr_import(isb_lib.geome_adapter.reparseAsCoreRecord)
     logger.info(f"Total keys= {len(allkeys)}")
 

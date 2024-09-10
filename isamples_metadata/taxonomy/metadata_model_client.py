@@ -139,7 +139,7 @@ class ModelServerClient:
     def _convert_to_prediction_result_list(result: Any, mapped_values: dict = {}) -> list[PredictionResult]:
         prediction_results: list[PredictionResult] = []
         for prediction_dict in result:
-            mapped_term = mapped_values.get(prediction_dict["value"], prediction_dict["value"])
+            mapped_term = mapped_values.get(prediction_dict["value"].lower(), prediction_dict["value"])
             prediction_results.append(PredictionResult(mapped_term, prediction_dict["confidence"]))
         return prediction_results
 
@@ -165,7 +165,7 @@ class ModelServerClient:
         url = f"{self.base_url}smithsonian"
         vocabulary_term: str = self._make_json_request(url, params, rsession)
         if vocabulary_term is not None and len(vocabulary_term) > 0:
-            vocabulary_term = ModelServerClient.CONTEXT_CATEGORY_DICT.get(vocabulary_term, vocabulary_term)
+            vocabulary_term = ModelServerClient.CONTEXT_CATEGORY_DICT.get(vocabulary_term.lower(), vocabulary_term)
         return vocabulary_term
 
 

@@ -16,6 +16,7 @@ def test_opencontext_material_client(mock_request):
     result = MODEL_SERVER_CLIENT.make_opencontext_material_request({}, mock_request)
     _assert_on_result(expected_confidence, expected_value, result)
 
+
 @patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
 def test_opencontext_material_client_mapped_value(mock_request):
     expected_confidence, expected_value = _construct_mock_response(mock_request, "ocmat:ceramicclay")
@@ -28,6 +29,7 @@ def test_opencontext_sample_client(mock_request):
     expected_confidence, expected_value = _construct_mock_response(mock_request)
     result = MODEL_SERVER_CLIENT.make_opencontext_sample_request({}, mock_request)
     _assert_on_result(expected_confidence, expected_value, result)
+
 
 @patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
 def test_opencontext_sample_client_mapped_value(mock_request):

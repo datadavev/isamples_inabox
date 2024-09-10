@@ -129,7 +129,7 @@ class SpecimenCategoryMetaMapper(AbstractCategoryMetaMapper):
             "Biological record",
             "Biological subject, Ecofact",
             "Plant remains",
-        ], "biologicalspecimen", vocabulary_mapper.specimen_type
+        ], "biological material sample", vocabulary_mapper.specimen_type
     )
     _physicalSpecimenMapper = StringEqualityCategoryMapper(
         [

@@ -90,6 +90,30 @@ class ModelServerClient:
         "physical specimen": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
     }
 
+    CONTEXT_CATEGORY_DICT = {
+        "not provided": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature",
+        "site of past human activities": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/pasthumanoccupationsite",
+        "earth interior": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthinterior",
+        "animalia": "https://w3id.org/isample/biology/biosampledfeature/1.0/Animalia",
+        " ": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature",
+        "subaerial surface environment": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/subaerialsurfaceenvironment",
+        "marine environment": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody",
+        "plantae": "https://w3id.org/isample/biology/biosampledfeature/1.0/Plantae",
+        "marine water body bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbodybottom",
+        "terrestrial water body": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/terrestrialwaterbody",
+        "fungi": "https://w3id.org/isample/biology/biosampledfeature/1.0/Fungi",
+        "marine water body": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/waterbody",
+        "lake, river or stream bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom",
+        "subsurface fluid reservoir": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/subsurfacefluidreservoir",
+        "marine biome": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody",
+        "chromista": "",
+        "subaerial terrestrial biome": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/subaerialsurfaceenvironment",
+        "bacteria": "https://w3id.org/isample/biology/biosampledfeature/1.0/bacteria",
+        "protozoa": "https://w3id.org/isample/biology/biosampledfeature/1.0/protozoa",
+        "active human occupation site": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/activehumanoccupationsite",
+        "lake river or stream bottom": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom"
+    }
+
     def __init__(self, base_url: str, base_headers: dict = {}):
         self.base_url = base_url
         self.base_headers = base_headers
@@ -139,7 +163,10 @@ class ModelServerClient:
     def make_smithsonian_sampled_feature_request(self, input_strs: list[str], rsession: requests.Session = requests.Session()) -> str:
         params: dict = {"input": input_strs, "type": "context"}
         url = f"{self.base_url}smithsonian"
-        return self._make_json_request(url, params, rsession)
+        vocabulary_term: str = self._make_json_request(url, params, rsession)
+        if vocabulary_term is not None and len(vocabulary_term) > 0:
+            vocabulary_term = ModelServerClient.CONTEXT_CATEGORY_DICT.get(vocabulary_term, vocabulary_term)
+        return vocabulary_term
 
 
 headers = {"accept": "application/json", "User-Agent": "iSamples Integration Bot 2000"}

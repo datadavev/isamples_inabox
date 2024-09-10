@@ -32,6 +32,7 @@ class ControlledVocabulary:
     def __init__(self, uijson_dict: dict[str, Any], key_prefix: str):
         self.vocabulary_terms_by_key: dict[str, VocabularyTerm] = {}
         self.vocabulary_terms_by_label: dict[str, VocabularyTerm] = {}
+        self.vocabulary_terms_by_uri: dict[str, VocabularyTerm] = {}
         self._uijson_dict = uijson_dict
         self._key_prefix = key_prefix
         self._is_first = True
@@ -63,6 +64,7 @@ class ControlledVocabulary:
             self.vocabulary_terms_by_key[term_key.lower()] = term
             self.vocabulary_terms_by_key[last_piece_of_uri] = term
             self.vocabulary_terms_by_label[label.lower()] = term
+            self.vocabulary_terms_by_uri[uri] = term
             if self._is_first:
                 self._root_term = term
                 self._is_first = False
@@ -83,6 +85,11 @@ class ControlledVocabulary:
 
     def term_for_label(self, label: str) -> VocabularyTerm:
         term = self.vocabulary_terms_by_label.get(label.lower())
+        if term is None:
+            # There are cases where we may already have the uri, allow those through
+            term = self.vocabulary_terms_by_uri.get(label.lower())
+        if term is None:
+            term = self.vocabulary_terms_by_key.get(label.lower())
         if term is None:
             logging.warning(f"Unable to look up vocabulary term for label {label}, returning root term instead.")
             term = self.root_term()

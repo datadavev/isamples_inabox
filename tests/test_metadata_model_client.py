@@ -43,10 +43,20 @@ def test_smithsonian_sampled_feature_client(mock_request):
     # Smithsonian is a different response format since the underlying model is differnet
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = ["hi"]
+    mock_response.json.return_value = "hi"
     mock_request.post.return_value = mock_response
     result = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request([], mock_request)
     assert result is not None
+
+@patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
+def test_smithsonian_sampled_feature_client_mapped_term(mock_request):
+    # Smithsonian is a different response format since the underlying model is differnet
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = "animalia"
+    mock_request.post.return_value = mock_response
+    result = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request([], mock_request)
+    assert result == "https://w3id.org/isample/biology/biosampledfeature/1.0/Animalia"
 
 
 def _assert_on_result(expected_confidence, expected_value, result):

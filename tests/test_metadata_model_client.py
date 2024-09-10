@@ -16,12 +16,24 @@ def test_opencontext_material_client(mock_request):
     result = MODEL_SERVER_CLIENT.make_opencontext_material_request({}, mock_request)
     _assert_on_result(expected_confidence, expected_value, result)
 
+@patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
+def test_opencontext_material_client_mapped_value(mock_request):
+    expected_confidence, expected_value = _construct_mock_response(mock_request, "ocmat:ceramicclay")
+    result = MODEL_SERVER_CLIENT.make_opencontext_material_request({}, mock_request)
+    _assert_on_result(expected_confidence, "https://w3id.org/isample/opencontext/material/0.1/ceramicclay", result)
+
 
 @patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
 def test_opencontext_sample_client(mock_request):
     expected_confidence, expected_value = _construct_mock_response(mock_request)
     result = MODEL_SERVER_CLIENT.make_opencontext_sample_request({}, mock_request)
     _assert_on_result(expected_confidence, expected_value, result)
+
+@patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
+def test_opencontext_sample_client_mapped_value(mock_request):
+    expected_confidence, expected_value = _construct_mock_response(mock_request, "clothing")
+    result = MODEL_SERVER_CLIENT.make_opencontext_sample_request({}, mock_request)
+    _assert_on_result(expected_confidence, "https://w3id.org/isample/opencontext/materialsampleobjecttype/0.1/clothing", result)
 
 
 @patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
@@ -43,10 +55,9 @@ def _assert_on_result(expected_confidence, expected_value, result):
     assert prediction_result.confidence == expected_confidence
 
 
-def _construct_mock_response(mock_request):
+def _construct_mock_response(mock_request, expected_value="foo"):
     mock_response = MagicMock()
     mock_response.status_code = 200
-    expected_value = "foo"
     expected_confidence = 0.78
     mock_response.json.return_value = [{
         "value": expected_value,

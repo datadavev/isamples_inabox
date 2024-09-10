@@ -48,6 +48,7 @@ def test_smithsonian_sampled_feature_client(mock_request):
     result = MODEL_SERVER_CLIENT.make_smithsonian_sampled_feature_request([], mock_request)
     assert result is not None
 
+
 @patch("isamples_metadata.taxonomy.metadata_model_client.requests.session")
 def test_smithsonian_sampled_feature_client_mapped_term(mock_request):
     # Smithsonian is a different response format since the underlying model is differnet

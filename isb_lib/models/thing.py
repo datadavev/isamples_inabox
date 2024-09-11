@@ -11,6 +11,7 @@ from isb_lib.models.string_list_type import StringListType
 
 MEDIA_JSONL = "application/jsonl"
 
+
 class Thing(SQLModel, table=True):
     primary_key: Optional[int] = Field(
         # Need to use SQLAlchemy here because we can't have the Python attribute named _id or SQLModel won't see it

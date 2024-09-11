@@ -6,10 +6,10 @@ from sqlmodel import Field, SQLModel
 from datetime import datetime
 import sqlalchemy
 
-from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.conditional_jsonb_type import ConditionalJSONB
 from isb_lib.models.string_list_type import StringListType
 
+MEDIA_JSONL = "application/jsonl"
 
 class Thing(SQLModel, table=True):
     primary_key: Optional[int] = Field(

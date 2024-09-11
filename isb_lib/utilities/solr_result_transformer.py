@@ -157,6 +157,8 @@ class SolrResultTransformer:
                                            container: dict,
                                            default_role: Optional[str] = None):
         responsibilities = rec.get(responsibility_key_solr, [])
+        if type(responsibilities) is str:
+            responsibilities = [responsibilities]
         responsibility_dicts = []
         for responsibility in responsibilities:
             if ":" in responsibility:

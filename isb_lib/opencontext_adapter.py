@@ -11,7 +11,6 @@ import dateparser
 from isamples_metadata import OpenContextTransformer
 from isamples_metadata.Transformer import Transformer
 from isamples_metadata.core_json_transformer import CoreJSONTransformer
-from isb_lib.core import MEDIA_JSONL
 from isb_lib.utilities.requests_utilities import RetryingRequests
 
 HTTP_TIMEOUT = 60  # seconds
@@ -178,7 +177,7 @@ def reparse_as_core_record(thing: isb_lib.models.thing.Thing) -> typing.List[typ
     resolved_content = _validate_resolved_content(thing)
     try:
         transformer: Transformer
-        if thing.resolved_media_type == MEDIA_JSONL:
+        if thing.is_transformed():
             transformer = CoreJSONTransformer(resolved_content)
         else:
             transformer = OpenContextTransformer.OpenContextTransformer(resolved_content)

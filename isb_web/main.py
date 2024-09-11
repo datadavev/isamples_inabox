@@ -580,7 +580,7 @@ async def get_thing(
     if request_profile is not None:
         headers.update(profiles.content_profile_headers(request_profile))
     return fastapi.responses.JSONResponse(
-        content=content, media_type=item.resolved_media_type, headers=headers
+        content=content, media_type=MEDIA_JSON, headers=headers
     )
 
 
@@ -605,23 +605,27 @@ async def resolve_thing(
 
 async def thing_resolved_content(identifier: str, item: Thing, session: Session) -> dict:
     authority_id = item.authority_id
-    if authority_id == "SESAR":
-        content = SESARTransformer(item.resolved_content).transform(False)
-    elif authority_id == "GEOME":
-        content = (
-            isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
-                identifier, item.resolved_content, session, TAXONOMY_NAME_TO_KINGDOM_MAP
-            ).transform(False)
-        )
-    elif authority_id == "OPENCONTEXT":
-        content = OpenContextTransformer(item.resolved_content).transform(False)
-    elif authority_id == "SMITHSONIAN":
-        content = SmithsonianTransformer(item.resolved_content).transform(False)
+    if item.is_transformed():
+        # It's already been transformed
+        content = item.resolved_content
     else:
-        raise fastapi.HTTPException(
-            status_code=400,
-            detail=f"Core format not available for authority_id: {authority_id}",
-        )
+        if authority_id == "SESAR":
+            content = SESARTransformer(item.resolved_content).transform(False)
+        elif authority_id == "GEOME":
+            content = (
+                isamples_metadata.GEOMETransformer.geome_transformer_for_identifier(
+                    identifier, item.resolved_content, session, TAXONOMY_NAME_TO_KINGDOM_MAP
+                ).transform(False)
+            )
+        elif authority_id == "OPENCONTEXT":
+            content = OpenContextTransformer(item.resolved_content).transform(False)
+        elif authority_id == "SMITHSONIAN":
+            content = SmithsonianTransformer(item.resolved_content).transform(False)
+        else:
+            raise fastapi.HTTPException(
+                status_code=400,
+                detail=f"Core format not available for authority_id: {authority_id}",
+            )
     return content
 
 

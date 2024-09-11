@@ -6,6 +6,7 @@ from sqlmodel import Field, SQLModel
 from datetime import datetime
 import sqlalchemy
 
+from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.conditional_jsonb_type import ConditionalJSONB
 from isb_lib.models.string_list_type import StringListType
 
@@ -122,6 +123,9 @@ class Thing(SQLModel, table=True):
             "resolved_media_type": self.resolved_media_type,
         }
         return res
+
+    def is_transformed(self):
+        return self.resolved_media_type is not None and self.resolved_media_type == MEDIA_JSONL
 
 
 class ThingIdentifier(SQLModel, table=True):

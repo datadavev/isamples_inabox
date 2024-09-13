@@ -2,7 +2,6 @@ import json
 import os.path
 import shutil
 import uuid
-from unittest.mock import patch, MagicMock
 
 import petl
 import pytest

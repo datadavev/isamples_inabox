@@ -174,7 +174,7 @@ async def create_sitemap(request: fastapi.Request, session: Session = Depends(ge
     orcid_id = auth.orcid_id_from_session_or_scope(request)
     if orcid_id not in isb_web.config.Settings().orcid_superusers:
         raise HTTPException(401, "orcid id not authorized to create sitemap")
-    solr_api_defparams = _default_export_params("indexUpdatedTime asc")
+    solr_api_defparams = _default_export_params("sourceUpdatedTime asc")
     solr_api_defparams["q"] = isb_web.config.Settings().sitemap_solr_query
     return await _create_export_job(TargetExportFormat.JSONL, solr_api_defparams, request, session, True)
 

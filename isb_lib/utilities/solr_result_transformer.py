@@ -28,7 +28,7 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_RESULT_TIME, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, \
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
-    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT, SOLR_ISB_CORE_ID, SOLR_SOURCE_UPDATED_TIME
+    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT, SOLR_ISB_CORE_ID, SOLR_SOURCE_UPDATED_TIME, SOLR_TIME_FORMAT_NO_MILLIS
 
 
 class ExportTransformException(Exception):
@@ -121,7 +121,11 @@ class JSONExportTransformer(AbstractExportTransformer):
         for file_path, last_mod_time in file_path_to_last_mod_time.items():
             # For sitemap generation we set the mod date of the file to be the solr index updated time of the
             # last record in the file.  This lets the sitemap index properly emit a last mod date on the file.
-            date_object = datetime.datetime.strptime(last_mod_time, SOLR_TIME_FORMAT)
+            try:
+                date_object = datetime.datetime.strptime(last_mod_time, SOLR_TIME_FORMAT)
+            except ValueError:
+                # seems like some of these don't have any fractional seconds?
+                date_object = datetime.datetime.strptime(last_mod_time, SOLR_TIME_FORMAT_NO_MILLIS)
             # Convert the datetime to seconds since the epoch
             new_modification_time = date_object.timestamp()
             os.utime(file_path, (new_modification_time, new_modification_time))

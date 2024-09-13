@@ -50,3 +50,5 @@ SOLR_ISB_CORE_ID = "isb_core_id"
 SOLR_ID = "id"
 
 SOLR_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+# "2020-01-17T00:00:00Z"
+SOLR_TIME_FORMAT_NO_MILLIS = "%Y-%m-%dT%H:%M:%SZ"

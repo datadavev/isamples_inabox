@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 import math
 import os
 from abc import ABC, abstractmethod
@@ -11,7 +10,6 @@ from typing import Optional
 import petl
 from petl import Table
 
-import isb_web
 from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_AUTHORIZED_BY, METADATA_COMPLIES_WITH, \
     METADATA_LONGITUDE, METADATA_LATITUDE, METADATA_RELATED_RESOURCE, \
     METADATA_CURATION_LOCATION, METADATA_ACCESS_CONSTRAINTS, METADATA_CURATION, METADATA_SAMPLING_PURPOSE, \
@@ -19,7 +17,8 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_RESULT_TIME, METADATA_HAS_FEATURE_OF_INTEREST, METADATA_DESCRIPTION, METADATA_INFORMAL_CLASSIFICATION, \
     METADATA_KEYWORDS, METADATA_HAS_SAMPLE_OBJECT_TYPE, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
-    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE, METADATA_AT_ID, METADATA_TARGET
+    METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE, METADATA_AT_ID, METADATA_TARGET, \
+    METADATA_LAST_UPDATED_TIME
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_CURATION_RESPONSIBILITY, \
@@ -29,7 +28,7 @@ from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SIT
     SOLR_PRODUCED_BY_RESULT_TIME, SOLR_PRODUCED_BY_RESPONSIBILITY, SOLR_PRODUCED_BY_FEATURE_OF_INTEREST, \
     SOLR_PRODUCED_BY_DESCRIPTION, SOLR_PRODUCED_BY_LABEL, SOLR_PRODUCED_BY_ISB_CORE_ID, SOLR_INFORMAL_CLASSIFICATION, \
     SOLR_KEYWORDS, SOLR_HAS_SPECIMEN_CATEGORY, SOLR_HAS_MATERIAL_CATEGORY, SOLR_HAS_CONTEXT_CATEGORY, SOLR_DESCRIPTION, \
-    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT, SOLR_ISB_CORE_ID
+    SOLR_LABEL, SOLR_SOURCE, SOLR_TIME_FORMAT, SOLR_ISB_CORE_ID, SOLR_SOURCE_UPDATED_TIME
 
 
 class ExportTransformException(Exception):
@@ -97,11 +96,10 @@ class JSONExportTransformer(AbstractExportTransformer):
             full_file_paths = [os.path.join(dest_path_no_extension, f"sitemap-{current_file_number}.{extension}") for current_file_number in range(0, num_files)]
         dicts_view = petl.util.base.dicts(table)
         rows_generator = (row for row in dicts_view)
-        file_path_to_last_id_in_file_paths: dict[str, str] = {}
-        last_id_in_file_to_file_paths: dict[str, str] = {}
+        file_path_to_last_mod_time: dict[str, str] = {}
         for full_file_path in full_file_paths:
             rows_in_file = 0
-            last_id_in_file = None
+            last_mod_time_in_file = None
             with open(full_file_path, "w") as file:
                 while lines_per_file == -1 or (rows_in_file) < lines_per_file:
                     rows_in_file += 1
@@ -110,29 +108,23 @@ class JSONExportTransformer(AbstractExportTransformer):
                     except StopIteration:
                         break
                     json.dump(JSONExportTransformer.filter_null_values(row), file)
-                    last_id_in_file = row.get(METADATA_SAMPLE_IDENTIFIER)
+                    last_mod_time_in_file = row.get(METADATA_LAST_UPDATED_TIME)
                     file.write("\n")
-            if last_id_in_file is not None:
-                file_path_to_last_id_in_file_paths[full_file_path] = last_id_in_file
-                last_id_in_file_to_file_paths[last_id_in_file] = full_file_path
+            if last_mod_time_in_file is not None:
+                file_path_to_last_mod_time[full_file_path] = last_mod_time_in_file
         if is_sitemap:
-            JSONExportTransformer._update_mod_dates_for_sitemap(file_path_to_last_id_in_file_paths,
-                                                                last_id_in_file_to_file_paths)
+            JSONExportTransformer._update_mod_dates_for_sitemap(file_path_to_last_mod_time)
         return full_file_paths
 
     @staticmethod
-    def _update_mod_dates_for_sitemap(file_path_to_last_id_in_file_paths, last_id_in_file_to_file_paths):
-        logging.info(f"Going to fetch solr mod dates for {file_path_to_last_id_in_file_paths}")
-        last_mod_date_for_ids = isb_web.isb_solr_query.solr_last_mod_date_for_ids(file_path_to_last_id_in_file_paths.values())
-        logging.info(f"Received solr mod dates {last_mod_date_for_ids}")
-        for id, last_mod_date in last_mod_date_for_ids.items():
+    def _update_mod_dates_for_sitemap(file_path_to_last_mod_time):
+        for file_path, last_mod_time in file_path_to_last_mod_time.items():
             # For sitemap generation we set the mod date of the file to be the solr index updated time of the
             # last record in the file.  This lets the sitemap index properly emit a last mod date on the file.
-            date_object = datetime.datetime.strptime(last_mod_date, SOLR_TIME_FORMAT)
+            date_object = datetime.datetime.strptime(last_mod_time, SOLR_TIME_FORMAT)
             # Convert the datetime to seconds since the epoch
             new_modification_time = date_object.timestamp()
-            full_file_path = last_id_in_file_to_file_paths.get(id)
-            os.utime(full_file_path, (new_modification_time, new_modification_time))
+            os.utime(file_path, (new_modification_time, new_modification_time))
 
 
 class SolrResultTransformer:
@@ -290,6 +282,7 @@ class SolrResultTransformer:
         mappings[METADATA_RELATED_RESOURCE] = self._related_resource_dicts
         mappings[METADATA_AUTHORIZED_BY] = SOLR_AUTHORIZED_BY
         mappings[METADATA_COMPLIES_WITH] = SOLR_COMPLIES_WITH
+        mappings[METADATA_LAST_UPDATED_TIME] = SOLR_SOURCE_UPDATED_TIME
         self._table = petl.fieldmap(self._table, mappings)
 
     def transform(self) -> list[str]:

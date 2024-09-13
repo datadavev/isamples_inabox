@@ -217,6 +217,7 @@ def _json_line_to_thing_dict(json_dict: dict, json_lines_url: str, now: datetime
     thing_dict["resolved_status"] = 200
     thing_dict["tresolved"] = time_fetched
     thing_dict["resolved_media_type"] = MEDIA_JSONL
+    thing_dict["tcreated"] = json_dict["last_modified_time"]
     produced_by = json_dict.get(METADATA_PRODUCED_BY)
     if produced_by is not None:
         sampling_site = produced_by.get(METADATA_SAMPLING_SITE)

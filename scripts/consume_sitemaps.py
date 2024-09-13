@@ -186,7 +186,6 @@ def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str
                             thing_dict["primary_key"] = thing_ids[thing_identifier]
                             current_existing_things_batch.append(thing_dict)
                         else:
-                            thing_dict["tcreated"] = now
                             current_new_things_batch.append(thing_dict)
                     db_session.bulk_insert_mappings(
                         mapper=Thing,

@@ -111,7 +111,7 @@ class SitemapFetcher(ABC):
             lastmod_date = isb_lib.core.parsed_datetime_from_isamples_format(lastmod)
             if (
                 self._last_modified is None
-                or lastmod_date.timestamp() >= self._last_modified.timestamp()
+                or lastmod_date.timestamp() > self._last_modified.timestamp()
             ):
                 self.urls_to_fetch.append(loc)
 

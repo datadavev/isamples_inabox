@@ -17,7 +17,7 @@ import logging
 
 from isamples_metadata.Transformer import Transformer
 from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, METADATA_PRODUCED_BY, \
-    METADATA_SAMPLING_SITE, METADATA_SAMPLE_LOCATION, METADATA_LATITUDE, METADATA_LONGITUDE
+    METADATA_SAMPLING_SITE, METADATA_SAMPLE_LOCATION, METADATA_LATITUDE, METADATA_LONGITUDE, METADATA_LAST_UPDATED_TIME
 from isb_lib.core import MEDIA_JSONL
 from isb_lib.models.thing import Thing
 from isb_lib.sitemaps.sitemap_fetcher import (
@@ -186,7 +186,6 @@ def fetch_sitemap_files(authority, last_updated_date, thing_ids: typing.Dict[str
                             thing_dict["primary_key"] = thing_ids[thing_identifier]
                             current_existing_things_batch.append(thing_dict)
                         else:
-                            thing_dict["tcreated"] = now
                             current_new_things_batch.append(thing_dict)
                     db_session.bulk_insert_mappings(
                         mapper=Thing,
@@ -217,7 +216,7 @@ def _json_line_to_thing_dict(json_dict: dict, json_lines_url: str, now: datetime
     thing_dict["resolved_status"] = 200
     thing_dict["tresolved"] = time_fetched
     thing_dict["resolved_media_type"] = MEDIA_JSONL
-    thing_dict["tcreated"] = json_dict["last_modified_time"]
+    thing_dict["tcreated"] = json_dict[METADATA_LAST_UPDATED_TIME]
     produced_by = json_dict.get(METADATA_PRODUCED_BY)
     if produced_by is not None:
         sampling_site = produced_by.get(METADATA_SAMPLING_SITE)

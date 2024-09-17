@@ -6,6 +6,7 @@ import json
 import requests
 
 from isamples_metadata.metadata_constants import METADATA_KEYWORDS
+from isamples_metadata.solr_field_constants import SOLR_SOURCE_UPDATED_TIME
 from isb_lib.core import things_main
 
 TEST_LIVE_SERVER = 0
@@ -410,11 +411,13 @@ def test_core_record_as_solr_doc_3():
   "producedBy_samplingSite_location_h3_11": "8b3e6dca5012fff",
   "producedBy_samplingSite_location_h3_12": "8c3e6dca50121ff",
   "producedBy_samplingSite_location_h3_13": "8d3e6dca50120bf",
-  "producedBy_samplingSite_location_h3_14": "8e3e6dca50120b7"
+  "producedBy_samplingSite_location_h3_14": "8e3e6dca50120b7",
+  "last_modified_time":"2009-07-16T00:00:00Z"  
 }
 """
     solr_dict = _try_to_add_solr_doc(core_doc_str)
     assert "fossils" in solr_dict.get(METADATA_KEYWORDS)
+    assert solr_dict.get(SOLR_SOURCE_UPDATED_TIME) is not None
 
 
 def _load_test_file_into_solr_doc(file_path: str) -> dict:

@@ -24,11 +24,11 @@ from isamples_metadata.metadata_constants import METADATA_SAMPLE_IDENTIFIER, MET
     METADATA_CURATION, METADATA_ACCESS_CONSTRAINTS, METADATA_RESPONSIBILITY, \
     METADATA_RELATED_RESOURCE, METADATA_DESCRIPTION, METADATA_HAS_SAMPLE_OBJECT_TYPE_CONFIDENCE, \
     METADATA_CURATION_LOCATION, METADATA_SAMPLE_LOCATION, METADATA_KEYWORD, METADATA_NAME, \
-    METADATA_ROLE, METADATA_IDENTIFIER
+    METADATA_ROLE, METADATA_IDENTIFIER, METADATA_LAST_MODIFIED_TIME
 from isamples_metadata.metadata_exceptions import MetadataException
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_ELEVATION_IN_METERS, \
     SOLR_CURATION_LABEL, SOLR_CURATION_DESCRIPTION, SOLR_CURATION_ACCESS_CONSTRAINTS, SOLR_CURATION_LOCATION, \
-    SOLR_CURATION_RESPONSIBILITY
+    SOLR_CURATION_RESPONSIBILITY, SOLR_SOURCE_UPDATED_TIME
 from isamples_metadata.vocabularies import vocabulary_mapper
 from isb_lib.models.thing import Thing
 from isamples_metadata.Transformer import Transformer, geo_to_h3
@@ -214,8 +214,8 @@ def _coreRecordAsSolrDoc(coreMetadata: typing.Dict) -> typing.Dict:  # noqa: C90
         "isb_core_id": coreMetadata[METADATA_AT_ID],
         "indexUpdatedTime": datetimeToSolrStr(igsn_lib.time.dtnow())
     }
-    if _shouldAddMetadataValueToSolrDoc(coreMetadata, "sourceUpdatedTime"):
-        doc["sourceUpdatedTime"] = coreMetadata["sourceUpdatedTime"]
+    if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_LAST_MODIFIED_TIME):
+        doc[SOLR_SOURCE_UPDATED_TIME] = coreMetadata[METADATA_LAST_MODIFIED_TIME]
     if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_LABEL):
         doc["label"] = coreMetadata[METADATA_LABEL]
     if _shouldAddMetadataValueToSolrDoc(coreMetadata, METADATA_DESCRIPTION):

@@ -412,7 +412,7 @@ def test_core_record_as_solr_doc_3():
   "producedBy_samplingSite_location_h3_12": "8c3e6dca50121ff",
   "producedBy_samplingSite_location_h3_13": "8d3e6dca50120bf",
   "producedBy_samplingSite_location_h3_14": "8e3e6dca50120b7",
-  "last_modified_time":"2009-07-16T00:00:00Z"  
+  "last_modified_time":"2009-07-16T00:00:00Z"
 }
 """
     solr_dict = _try_to_add_solr_doc(core_doc_str)

@@ -18,7 +18,7 @@ from isamples_metadata.metadata_constants import METADATA_PLACE_NAME, METADATA_A
     METADATA_KEYWORDS, METADATA_HAS_SAMPLE_OBJECT_TYPE, METADATA_HAS_MATERIAL_CATEGORY, METADATA_HAS_CONTEXT_CATEGORY, \
     METADATA_LABEL, METADATA_SAMPLE_IDENTIFIER, METADATA_RESPONSIBILITY, METADATA_PRODUCED_BY, \
     METADATA_NAME, METADATA_KEYWORD, METADATA_IDENTIFIER, METADATA_ROLE, METADATA_AT_ID, METADATA_TARGET, \
-    METADATA_LAST_UPDATED_TIME
+    METADATA_LAST_MODIFIED_TIME
 from isamples_metadata.solr_field_constants import SOLR_PRODUCED_BY_SAMPLING_SITE_PLACE_NAME, SOLR_AUTHORIZED_BY, \
     SOLR_COMPLIES_WITH, SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LONGITUDE, \
     SOLR_PRODUCED_BY_SAMPLING_SITE_LOCATION_LATITUDE, SOLR_RELATED_RESOURCE_ISB_CORE_ID, SOLR_CURATION_RESPONSIBILITY, \
@@ -108,7 +108,7 @@ class JSONExportTransformer(AbstractExportTransformer):
                     except StopIteration:
                         break
                     json.dump(JSONExportTransformer.filter_null_values(row), file)
-                    last_mod_time_in_file = row.get(METADATA_LAST_UPDATED_TIME)
+                    last_mod_time_in_file = row.get(METADATA_LAST_MODIFIED_TIME)
                     file.write("\n")
             if last_mod_time_in_file is not None:
                 file_path_to_last_mod_time[full_file_path] = last_mod_time_in_file
@@ -286,7 +286,7 @@ class SolrResultTransformer:
         mappings[METADATA_RELATED_RESOURCE] = self._related_resource_dicts
         mappings[METADATA_AUTHORIZED_BY] = SOLR_AUTHORIZED_BY
         mappings[METADATA_COMPLIES_WITH] = SOLR_COMPLIES_WITH
-        mappings[METADATA_LAST_UPDATED_TIME] = SOLR_SOURCE_UPDATED_TIME
+        mappings[METADATA_LAST_MODIFIED_TIME] = SOLR_SOURCE_UPDATED_TIME
         self._table = petl.fieldmap(self._table, mappings)
 
     def transform(self) -> list[str]:

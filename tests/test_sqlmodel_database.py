@@ -126,7 +126,7 @@ def test_paged_things_with_ids(session: Session):
     assert 1 == len(things_with_id)
     now = datetime.datetime.now()
     # Now add some stuff with the current date, and verify we don't get the old ones anymore
-    _add_some_things(session, 5, authority, now)
+    _add_some_things(session, 5, authority, now.replace(second=now.second + 1))
     things_with_tcreated = paged_things_with_ids(session, authority, 200, 10, 0, now, 0)
     assert 5 == len(things_with_tcreated)
     all_things = paged_things_with_ids(session, authority, 200, 100, 0, None, 0)

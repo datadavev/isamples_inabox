@@ -500,7 +500,8 @@ def solr_max_source_updated_time(
         dict = res.json()
         docs = dict["response"]["docs"]
         if docs is not None and len(docs) > 0:
-            return dateparser.parse(docs[0]["sourceUpdatedTime"])
+            # Strip out the time zone since that is confusing matters
+            return dateparser.parse(docs[0]["sourceUpdatedTime"]).replace(tzinfo=None)
     except Exception:
         getLogger().error("Didn't get expected JSON back from %s when fetching max source updated time for %s", _url, authority_id)
 

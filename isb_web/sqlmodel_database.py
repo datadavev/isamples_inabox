@@ -278,7 +278,7 @@ def paged_things_with_ids(
     thing_select = _base_thing_select(authority, status, limit, offset, min_id)
 
     if min_time_created is not None:
-        thing_select = thing_select.filter(Thing.tcreated >= min_time_created)
+        thing_select = thing_select.filter(Thing.tcreated > min_time_created)
     thing_select = thing_select.order_by(Thing.primary_key.asc())
     return session.exec(thing_select).all()
 
